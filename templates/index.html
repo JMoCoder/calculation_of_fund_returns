@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收益分配测算系统</title>
+    
+    <!-- CSS框架和图标 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 自定义样式 -->
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --text-color: #262626;
+            --border-color: #d9d9d9;
+            --bg-light: #fafafa;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-color);
+        }
+        
+        .main-header {
+            background: linear-gradient(135deg, var(--primary-color), #40a9ff);
+            color: white;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .step-sidebar {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .step-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-item:hover {
+            background-color: #f0f8ff;
+        }
+        
+        .step-item.active {
+            background-color: rgba(24, 144, 255, 0.1);
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .step-item.completed {
+            color: var(--success-color);
+        }
+        
+        .step-number {
+            width: 24px;
+            height: 24px;
+            background-color: var(--border-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .step-item.active .step-number {
+            background-color: var(--primary-color);
+        }
+        
+        .step-item.completed .step-number {
+            background-color: var(--success-color);
+        }
+        
+        .content-area {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        
+        .form-floating label {
+            color: #666;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #096dd9;
+            border-color: #096dd9;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            border-top: none;
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 6px;
+        }
+        
+        .cash-flow-input {
+            margin-bottom: 0.75rem;
+        }
+        
+        .calculation-results {
+            margin-top: 2rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .loading.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 主标题 -->
+    <header class="main-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-calculator me-2"></i>
+                        收益分配测算系统
+                    </h1>
+                    <p class="mb-0 mt-2 opacity-75">专业的基金收益分配计算工具</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-light" onclick="downloadTemplate()">
+                        <i class="fas fa-download me-2"></i>下载模板
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="row">
+            <!-- 左侧步骤导航 -->
+            <div class="col-md-3">
+                <div class="step-sidebar">
+                    <h5 class="mb-3">计算步骤</h5>
+                    <div class="step-item active" onclick="showTab('basic-params')">
+                        <span class="step-number">1</span>
+                        <span>基本参数</span>
+                    </div>
+                    <div class="step-item" onclick="showTab('cash-flows')">
+                        <span class="step-number">2</span>
+                        <span>净现金流</span>
+                    </div>
+                    <div class="step-item" onclick="showTab('distribution-mode')">
+                        <span class="step-number">3</span>
+                        <span>分配模式</span>
+                    </div>
+                    <div class="step-item" onclick="showTab('results')">
+                        <span class="step-number">4</span>
+                        <span>计算结果</span>
+                    </div>
+                    <div class="step-item" onclick="showTab('visualization')">
+                        <span class="step-number">5</span>
+                        <span>图表分析</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容区域 -->
+            <div class="col-md-9">
+                <!-- 步骤1: 基本参数 -->
+                <div id="basic-params" class="content-area tab-content active">
+                    <h4 class="mb-4">
+                        <i class="fas fa-cog me-2"></i>基本投资参数
+                    </h4>
+                    
+                    <form id="basicParamsForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="investmentTarget" placeholder="投资标的">
+                                    <label for="investmentTarget">投资标的</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="number" class="form-control" id="investmentAmount" placeholder="投资金额" min="1" step="0.01">
+                                    <label for="investmentAmount">拟投资金额 (万元)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3">
+                                    <input type="number" class="form-control" id="investmentPeriod" placeholder="投资期限" min="1" max="30" step="1">
+                                    <label for="investmentPeriod">投资期限 (年)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3">
+                                    <input type="number" class="form-control" id="hurdleRate" placeholder="门槛收益率" min="0" max="100" step="0.1">
+                                    <label for="hurdleRate">门槛收益率 (%)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3">
+                                    <input type="number" class="form-control" id="managementCarry" placeholder="管理人Carry" min="0" max="100" step="0.1">
+                                    <label for="managementCarry">管理人Carry (%)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;" onchange="importExcel()">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('excelFile').click()">
+                                    <i class="fas fa-upload me-2"></i>导入Excel
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="saveBasicParams()">
+                                下一步 <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 步骤2: 净现金流 -->
+                <div id="cash-flows" class="content-area tab-content">
+                    <h4 class="mb-4">
+                        <i class="fas fa-chart-line me-2"></i>净现金流输入
+                    </h4>
+                    
+                    <div id="cashFlowInputs">
+                        <p class="text-muted">请先设置基本参数中的投资期限</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('basic-params')">
+                            <i class="fas fa-arrow-left me-2"></i>上一步
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveCashFlows()">
+                            下一步 <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 步骤3: 分配模式 -->
+                <div id="distribution-mode" class="content-area tab-content">
+                    <h4 class="mb-4">
+                        <i class="fas fa-sliders-h me-2"></i>分配模式设置
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">平层结构</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="distributionMode" id="flatPriorityRepayment" value="flat_priority_repayment">
+                                        <label class="form-check-label" for="flatPriorityRepayment">
+                                            <strong>优先还本</strong><br>
+                                            <small class="text-muted">净现金流优先还本，本金还完后分配门槛收益和Carry</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="distributionMode" id="flatPeriodicDistribution" value="flat_periodic_distribution">
+                                        <label class="form-check-label" for="flatPeriodicDistribution">
+                                            <strong>期间分配</strong><br>
+                                            <small class="text-muted">优先分配期间收益，然后还本和分配剩余收益</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div id="periodicRateInput" style="display: none;">
+                                        <div class="form-floating">
+                                            <input type="number" class="form-control" id="periodicRate" placeholder="期间收益率" min="0" max="100" step="0.1">
+                                            <label for="periodicRate">期间收益率 (%)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">结构化</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="distributionMode" id="structuredSeniorSubordinate" value="structured_senior_subordinate">
+                                        <label class="form-check-label" for="structuredSeniorSubordinate">
+                                            <strong>优先劣后</strong><br>
+                                            <small class="text-muted">优先级优先获得本息回报，劣后级承担风险</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div id="seniorRatioInput" style="display: none;">
+                                        <div class="form-floating mb-3">
+                                            <input type="number" class="form-control" id="seniorRatio" placeholder="优先级比例" min="0" max="100" step="1">
+                                            <label for="seniorRatio">优先级比例 (%)</label>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">优先级金额: <span id="seniorAmount">0</span> 万元</small>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">劣后级金额: <span id="subordinateAmount">0</span> 万元</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('cash-flows')">
+                            <i class="fas fa-arrow-left me-2"></i>上一步
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="calculate()">
+                            开始计算 <i class="fas fa-calculator ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 步骤4: 计算结果 -->
+                <div id="results" class="content-area tab-content">
+                    <h4 class="mb-4">
+                        <i class="fas fa-chart-bar me-2"></i>计算结果
+                    </h4>
+                    
+                    <div id="calculationResults">
+                        <p class="text-muted">请完成前面的步骤并执行计算</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('distribution-mode')">
+                            <i class="fas fa-arrow-left me-2"></i>上一步
+                        </button>
+                        <div>
+                            <button type="button" class="btn btn-success me-2" onclick="exportResults()" id="exportBtn" disabled>
+                                <i class="fas fa-download me-2"></i>导出Excel
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="showTab('visualization')" id="visualizeBtn" disabled>
+                                查看图表 <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤5: 图表分析 -->
+                <div id="visualization" class="content-area tab-content">
+                    <h4 class="mb-4">
+                        <i class="fas fa-chart-pie me-2"></i>可视化分析
+                    </h4>
+                    
+                    <div id="chartContainer">
+                        <p class="text-muted">请先完成计算步骤</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-start mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('results')">
+                            <i class="fas fa-arrow-left me-2"></i>返回结果
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示模态框 -->
+    <div class="modal fade" id="loadingModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-3 mb-0">正在计算中，请稍候...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        // 全局变量
+        let currentStep = 1;
+        let basicParams = {};
+        let cashFlows = [];
+        let calculationResults = null;
+        let loadingModal;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            
+            // 监听分配模式变化
+            document.querySelectorAll('input[name="distributionMode"]').forEach(radio => {
+                radio.addEventListener('change', handleDistributionModeChange);
+            });
+            
+            // 监听优先级比例变化
+            document.getElementById('seniorRatio').addEventListener('input', updateStructureAmounts);
+        });
+
+        /**
+         * 显示指定的标签页
+         * @param {string} tabId - 标签页ID
+         */
+        function showTab(tabId) {
+            // 隐藏所有标签页
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有步骤的活动状态
+            document.querySelectorAll('.step-item').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // 显示目标标签页
+            document.getElementById(tabId).classList.add('active');
+            
+            // 设置对应步骤为活动状态
+            const stepIndex = ['basic-params', 'cash-flows', 'distribution-mode', 'results', 'visualization'].indexOf(tabId);
+            if (stepIndex !== -1) {
+                document.querySelectorAll('.step-item')[stepIndex].classList.add('active');
+                currentStep = stepIndex + 1;
+            }
+        }
+
+        /**
+         * 保存基本参数
+         */
+        async function saveBasicParams() {
+            const form = document.getElementById('basicParamsForm');
+            const formData = new FormData(form);
+            
+            basicParams = {
+                investment_target: document.getElementById('investmentTarget').value,
+                investment_amount: parseFloat(document.getElementById('investmentAmount').value),
+                investment_period: parseInt(document.getElementById('investmentPeriod').value),
+                hurdle_rate: parseFloat(document.getElementById('hurdleRate').value),
+                management_carry: parseFloat(document.getElementById('managementCarry').value)
+            };
+            
+            // 验证表单
+            if (!basicParams.investment_target || !basicParams.investment_amount || 
+                !basicParams.investment_period || basicParams.hurdle_rate === undefined || 
+                basicParams.management_carry === undefined) {
+                showAlert('请填写所有必需字段', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/basic-params', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(basicParams)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('基本参数设置成功', 'success');
+                    document.querySelector('.step-item').classList.add('completed');
+                    generateCashFlowInputs();
+                    showTab('cash-flows');
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                showAlert('设置参数时发生错误: ' + error.message, 'danger');
+            }
+        }
+
+        /**
+         * 生成现金流输入框
+         */
+        function generateCashFlowInputs() {
+            const container = document.getElementById('cashFlowInputs');
+            const period = basicParams.investment_period;
+            
+            let html = '<div class="row">';
+            for (let i = 1; i <= period; i++) {
+                html += `
+                    <div class="col-md-6">
+                        <div class="form-floating cash-flow-input">
+                            <input type="number" class="form-control" id="cashFlow${i}" placeholder="第${i}年现金流" min="0" step="0.01">
+                            <label for="cashFlow${i}">第${i}年净现金流 (万元)</label>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+
+        /**
+         * 保存现金流数据
+         */
+        async function saveCashFlows() {
+            cashFlows = [];
+            
+            for (let i = 1; i <= basicParams.investment_period; i++) {
+                const value = parseFloat(document.getElementById(`cashFlow${i}`).value);
+                if (isNaN(value) || value < 0) {
+                    showAlert(`第${i}年现金流输入无效`, 'warning');
+                    return;
+                }
+                cashFlows.push(value);
+            }
+            
+            try {
+                const response = await fetch('/api/cash-flows', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cash_flows: cashFlows })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('现金流数据设置成功', 'success');
+                    document.querySelectorAll('.step-item')[1].classList.add('completed');
+                    showTab('distribution-mode');
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                showAlert('设置现金流时发生错误: ' + error.message, 'danger');
+            }
+        }
+
+        /**
+         * 处理分配模式变化
+         */
+        function handleDistributionModeChange() {
+            const selectedMode = document.querySelector('input[name="distributionMode"]:checked').value;
+            
+            // 隐藏所有额外输入
+            document.getElementById('periodicRateInput').style.display = 'none';
+            document.getElementById('seniorRatioInput').style.display = 'none';
+            
+            // 根据选择的模式显示相应输入
+            if (selectedMode === 'flat_periodic_distribution') {
+                document.getElementById('periodicRateInput').style.display = 'block';
+            } else if (selectedMode === 'structured_senior_subordinate') {
+                document.getElementById('seniorRatioInput').style.display = 'block';
+                updateStructureAmounts();
+            }
+        }
+
+        /**
+         * 更新结构化金额显示
+         */
+        function updateStructureAmounts() {
+            const seniorRatio = parseFloat(document.getElementById('seniorRatio').value) || 0;
+            const investmentAmount = basicParams.investment_amount || 0;
+            
+            const seniorAmount = investmentAmount * seniorRatio / 100;
+            const subordinateAmount = investmentAmount - seniorAmount;
+            
+            document.getElementById('seniorAmount').textContent = seniorAmount.toFixed(2);
+            document.getElementById('subordinateAmount').textContent = subordinateAmount.toFixed(2);
+        }
+
+        /**
+         * 执行计算
+         */
+        async function calculate() {
+            const selectedMode = document.querySelector('input[name="distributionMode"]:checked');
+            if (!selectedMode) {
+                showAlert('请选择分配模式', 'warning');
+                return;
+            }
+            
+            const calculationData = {
+                mode: selectedMode.value
+            };
+            
+            // 根据模式添加额外参数
+            if (selectedMode.value === 'flat_periodic_distribution') {
+                const periodicRate = parseFloat(document.getElementById('periodicRate').value);
+                if (isNaN(periodicRate)) {
+                    showAlert('请输入期间收益率', 'warning');
+                    return;
+                }
+                calculationData.periodic_rate = periodicRate;
+            } else if (selectedMode.value === 'structured_senior_subordinate') {
+                const seniorRatio = parseFloat(document.getElementById('seniorRatio').value);
+                if (isNaN(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
+                    showAlert('请输入有效的优先级比例(1-99%)', 'warning');
+                    return;
+                }
+                calculationData.senior_ratio = seniorRatio;
+            }
+            
+            loadingModal.show();
+            
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(calculationData)
+                });
+                
+                const result = await response.json();
+                loadingModal.hide();
+                
+                if (result.success) {
+                    calculationResults = result;
+                    showAlert('计算完成', 'success');
+                    document.querySelectorAll('.step-item')[2].classList.add('completed');
+                    displayResults(result);
+                    showTab('results');
+                    
+                    // 启用导出和可视化按钮
+                    document.getElementById('exportBtn').disabled = false;
+                    document.getElementById('visualizeBtn').disabled = false;
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                loadingModal.hide();
+                showAlert('计算时发生错误: ' + error.message, 'danger');
+            }
+        }
+
+        /**
+         * 显示计算结果
+         */
+        function displayResults(results) {
+            const container = document.getElementById('calculationResults');
+            
+            let html = `
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value">${results.core_metrics.irr}%</div>
+                            <div class="metric-label">内部收益率 (IRR)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value">${results.core_metrics.dpi}</div>
+                            <div class="metric-label">分配倍数 (DPI)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3">现金流分配详表</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>净现金流</th>
+                                <th>现金流分派率(%)</th>
+            `;
+            
+            // 根据计算模式添加相应的列标题
+            if (results.calculation_mode === '平层结构-优先还本') {
+                html += `
+                    <th>期初本金余额</th>
+                    <th>摊还本金</th>
+                    <th>计提门槛收益</th>
+                    <th>分配门槛收益</th>
+                    <th>Carry LP</th>
+                    <th>Carry GP</th>
+                `;
+            } else if (results.calculation_mode === '平层结构-期间分配') {
+                html += `
+                    <th>期初本金余额</th>
+                    <th>期间分配收益</th>
+                    <th>计提门槛收益</th>
+                    <th>摊还本金</th>
+                    <th>分配门槛收益</th>
+                    <th>Carry LP</th>
+                    <th>Carry GP</th>
+                `;
+            } else if (results.calculation_mode === '结构化-优先劣后') {
+                html += `
+                    <th>优先期初本金</th>
+                    <th>优先期间收益</th>
+                    <th>优先摊还本金</th>
+                    <th>劣后本金余额</th>
+                    <th>劣后摊还本金</th>
+                    <th>Carry LP</th>
+                    <th>Carry GP</th>
+                `;
+            }
+            
+            html += '</tr></thead><tbody>';
+            
+            // 添加数据行
+            results.cash_flow_table.forEach(row => {
+                html += `<tr>
+                    <td>${row.year}</td>
+                    <td>${row.net_cash_flow.toFixed(2)}</td>
+                    <td>${row.cash_flow_distribution_rate.toFixed(2)}</td>
+                `;
+                
+                // 根据计算模式添加相应的数据列
+                if (results.calculation_mode === '平层结构-优先还本') {
+                    html += `
+                        <td>${row.beginning_principal_balance.toFixed(2)}</td>
+                        <td>${row.principal_repayment.toFixed(2)}</td>
+                        <td>${row.accrued_hurdle_return.toFixed(2)}</td>
+                        <td>${row.distributed_hurdle_return.toFixed(2)}</td>
+                        <td>${row.carry_lp.toFixed(2)}</td>
+                        <td>${row.carry_gp.toFixed(2)}</td>
+                    `;
+                } else if (results.calculation_mode === '平层结构-期间分配') {
+                    html += `
+                        <td>${row.beginning_principal_balance.toFixed(2)}</td>
+                        <td>${row.periodic_distribution.toFixed(2)}</td>
+                        <td>${row.accrued_hurdle_return.toFixed(2)}</td>
+                        <td>${row.principal_repayment.toFixed(2)}</td>
+                        <td>${row.distributed_hurdle_return.toFixed(2)}</td>
+                        <td>${row.carry_lp.toFixed(2)}</td>
+                        <td>${row.carry_gp.toFixed(2)}</td>
+                    `;
+                } else if (results.calculation_mode === '结构化-优先劣后') {
+                    html += `
+                        <td>${row.senior_beginning_principal.toFixed(2)}</td>
+                        <td>${row.senior_periodic_return.toFixed(2)}</td>
+                        <td>${row.senior_principal_repayment.toFixed(2)}</td>
+                        <td>${row.subordinate_principal_balance.toFixed(2)}</td>
+                        <td>${row.subordinate_principal_repayment.toFixed(2)}</td>
+                        <td>${row.carry_lp.toFixed(2)}</td>
+                        <td>${row.carry_gp.toFixed(2)}</td>
+                    `;
+                }
+                
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            
+            container.innerHTML = html;
+        }
+
+        /**
+         * 导出结果到Excel
+         */
+        async function exportResults() {
+            if (!calculationResults) {
+                showAlert('没有可导出的结果', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ results: calculationResults })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `收益分配测算结果_${new Date().toISOString().slice(0,10)}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showAlert('导出成功', 'success');
+                } else {
+                    showAlert('导出失败', 'danger');
+                }
+            } catch (error) {
+                showAlert('导出时发生错误: ' + error.message, 'danger');
+            }
+        }
+
+        /**
+         * 下载Excel模板
+         */
+        async function downloadTemplate() {
+            try {
+                const response = await fetch('/api/template');
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = '收益分配测算模板.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showAlert('模板下载成功', 'success');
+                } else {
+                    showAlert('模板下载失败', 'danger');
+                }
+            } catch (error) {
+                showAlert('下载模板时发生错误: ' + error.message, 'danger');
+            }
+        }
+
+        /**
+         * 导入Excel文件
+         */
+        function importExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/api/import', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showAlert('文件导入成功', 'success');
+                    // 这里可以根据导入的数据填充表单
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('导入文件时发生错误: ' + error.message, 'danger');
+            });
+        }
+
+        /**
+         * 显示提示消息
+         */
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

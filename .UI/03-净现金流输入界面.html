@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收益分配测算系统 - 净现金流输入</title>
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #1890ff;
+            --primary-light: #40a9ff;
+            --primary-dark: #096dd9;
+            
+            /* 辅助色 */
+            --secondary-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --info-color: #13c2c2;
+            
+            /* 文字颜色 */
+            --text-primary: #262626;
+            --text-secondary: #595959;
+            --text-disabled: #bfbfbf;
+            --text-inverse: #ffffff;
+            
+            /* 背景颜色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            
+            /* 边框颜色 */
+            --border-primary: #d9d9d9;
+            --border-secondary: #f0f0f0;
+            --border-focus: #40a9ff;
+            
+            /* 间距 */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* 圆角和阴影 */
+            --border-radius-sm: 2px;
+            --border-radius-md: 4px;
+            --border-radius-lg: 8px;
+            --border-radius-xl: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--border-secondary);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* 选项卡 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-secondary);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .tab {
+            padding: var(--spacing-md) var(--spacing-lg);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 文件上传区域 */
+        .upload-area {
+            border: 2px dashed var(--border-primary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xxl);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(24, 144, 255, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: var(--text-disabled);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .upload-hint {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .upload-button {
+            display: inline-block;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+            border-radius: var(--border-radius-md);
+            text-decoration: none;
+            margin-top: var(--spacing-md);
+            transition: background-color 0.3s ease;
+        }
+        
+        .upload-button:hover {
+            background-color: var(--primary-light);
+        }
+        
+        /* 表格样式 */
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-secondary);
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-primary);
+        }
+        
+        .table th {
+            background-color: var(--bg-tertiary);
+            padding: var(--spacing-md);
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-secondary);
+            border-right: 1px solid var(--border-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table th:last-child {
+            border-right: none;
+        }
+        
+        .table td {
+            padding: var(--spacing-sm);
+            border-bottom: 1px solid var(--border-secondary);
+            border-right: 1px solid var(--border-secondary);
+            text-align: center;
+        }
+        
+        .table td:last-child {
+            border-right: none;
+        }
+        
+        .table tr:hover {
+            background-color: var(--bg-secondary);
+        }
+        
+        .table input {
+            width: 100%;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            text-align: right;
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+        
+        .table input:focus {
+            border-color: var(--border-focus);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        
+        .table input.error {
+            border-color: var(--error-color);
+        }
+        
+        /* 年份列固定 */
+        .table th:first-child,
+        .table td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: var(--bg-primary);
+            z-index: 5;
+            font-weight: 600;
+        }
+        
+        .table th:first-child {
+            z-index: 15;
+            background-color: var(--bg-tertiary);
+        }
+        
+        /* 统计信息 */
+        .summary-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .summary-item {
+            background-color: var(--bg-secondary);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            text-align: center;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .summary-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-primary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* 操作按钮区域 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            align-items: center;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--spacing-md);
+            }
+            
+            .card {
+                padding: var(--spacing-lg);
+            }
+            
+            .action-bar {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .toolbar {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 净现金流输入表单 -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">净现金流输入</h2>
+                <p class="card-description">根据投资期限输入各年度的净现金流数据，支持手工输入和Excel文件导入</p>
+            </div>
+            
+            <!-- 选项卡 -->
+            <div class="tabs">
+                <div class="tab active" data-tab="manual">手工输入</div>
+                <div class="tab" data-tab="upload">Excel导入</div>
+            </div>
+            
+            <!-- 手工输入选项卡 -->
+            <div class="tab-content active" id="manual">
+                <div class="toolbar">
+                    <button class="btn btn-secondary" onclick="generateTable()">生成表格</button>
+                    <button class="btn btn-secondary" onclick="clearAll()" id="clear-data">清空数据</button>
+                    <button class="btn btn-secondary" onclick="downloadTemplate()">下载模板</button>
+                    <button class="btn btn-secondary" id="import-data">导入数据</button>
+                    <span style="color: var(--text-secondary); font-size: 14px;">投资期限：<span id="periodDisplay">5</span>年</span>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table" id="cashFlowTable">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>净现金流 (万元)</th>
+                                <th>累计现金流 (万元)</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" id="cash-flow-table-body">
+                            <!-- 动态生成表格行 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="summary-info">
+                    <div class="summary-item">
+                        <div class="summary-label">现金流入总额</div>
+                        <div class="summary-value" id="totalInflow">0.00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">现金流出总额</div>
+                        <div class="summary-value" id="totalOutflow">0.00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">净现金流总额</div>
+                        <div class="summary-value" id="totalNet">0.00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">数据完整性</div>
+                        <div class="summary-value" id="completeness">0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Excel导入选项卡 -->
+            <div class="tab-content" id="upload">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">点击选择Excel文件或拖拽文件到此处</div>
+                    <div class="upload-hint">支持.xlsx和.xls格式，文件大小不超过10MB</div>
+                    <a href="#" class="upload-button" onclick="event.stopPropagation(); downloadTemplate();">下载Excel模板</a>
+                </div>
+                
+                <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+                
+                <!-- 文件信息显示 -->
+                <div id="fileInfo" style="display: none;">
+                    <div style="background-color: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius-md); margin-bottom: var(--spacing-lg);">
+                        <h4 style="margin-bottom: var(--spacing-sm);">文件信息</h4>
+                        <p><strong>文件名：</strong><span id="fileName"></span></p>
+                        <p><strong>文件大小：</strong><span id="fileSize"></span></p>
+                        <p><strong>上传时间：</strong><span id="uploadTime"></span></p>
+                    </div>
+                    
+                    <!-- 数据预览 -->
+                    <div id="dataPreview">
+                        <h4 style="margin-bottom: var(--spacing-md);">数据预览</h4>
+                        <div class="table-container">
+                            <table class="table" id="previewTable">
+                                <thead>
+                                    <tr>
+                                        <th>参数名称</th>
+                                        <th>导入值</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewBody">
+                                    <!-- 动态生成预览数据 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="action-bar">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">上一步：基本参数</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" style="margin-right: var(--spacing-md);" id="save-draft">保存草稿</button>
+                    <button type="button" class="btn btn-primary" id="nextBtn" disabled>下一步：分配模式设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let investmentPeriod = 5; // 默认5年
+        let cashFlowData = {};
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从sessionStorage获取投资期限
+            const basicParams = sessionStorage.getItem('basicParams');
+            if (basicParams) {
+                const data = JSON.parse(basicParams);
+                investmentPeriod = parseInt(data.investmentPeriod) || 5;
+                document.getElementById('periodDisplay').textContent = investmentPeriod;
+            }
+            
+            // 生成表格
+            generateTable();
+            
+            // 绑定选项卡事件
+            bindTabEvents();
+            
+            // 绑定文件上传事件
+            bindFileEvents();
+        });
+        
+        // 选项卡切换
+        function bindTabEvents() {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    // 移除所有active状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+                    
+                    // 添加active状态
+                    this.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+        
+        // 生成现金流表格
+        function generateTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            // 第0年（投资年）
+            const row0 = createTableRow(0, -investmentPeriod * 1000); // 示例：假设每年投资1000万
+            tableBody.appendChild(row0);
+            
+            // 第1年到第N年
+            for (let i = 1; i <= investmentPeriod; i++) {
+                const row = createTableRow(i, 0);
+                tableBody.appendChild(row);
+            }
+            
+            updateSummary();
+        }
+        
+        // 创建表格行
+        function createTableRow(year, defaultValue = 0) {
+            const row = document.createElement('tr');
+            
+            // 年份列
+            const yearCell = document.createElement('td');
+            yearCell.textContent = `第${year}年`;
+            row.appendChild(yearCell);
+            
+            // 净现金流输入列
+            const cashFlowCell = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = '0.01';
+            input.value = defaultValue;
+            input.dataset.year = year;
+            input.addEventListener('input', function() {
+                updateCumulativeCashFlow();
+                updateSummary();
+                checkFormValidity();
+            });
+            cashFlowCell.appendChild(input);
+            row.appendChild(cashFlowCell);
+            
+            // 累计现金流列
+            const cumulativeCell = document.createElement('td');
+            cumulativeCell.className = 'cumulative-cell';
+            cumulativeCell.textContent = formatNumber(defaultValue);
+            row.appendChild(cumulativeCell);
+            
+            // 操作列
+            const actionCell = document.createElement('td');
+            if (year > 0) { // 第0年不能删除
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '删除';
+                deleteBtn.className = 'btn btn-secondary';
+                deleteBtn.style.padding = '4px 8px';
+                deleteBtn.style.fontSize = '12px';
+                deleteBtn.onclick = () => deleteRow(year);
+                actionCell.appendChild(deleteBtn);
+            }
+            row.appendChild(actionCell);
+            
+            return row;
+        }
+        
+        // 更新累计现金流
+        function updateCumulativeCashFlow() {
+            const inputs = document.querySelectorAll('#cashFlowTable input');
+            let cumulative = 0;
+            
+            inputs.forEach((input, index) => {
+                const value = parseFloat(input.value) || 0;
+                cumulative += value;
+                
+                const cumulativeCell = input.closest('tr').querySelector('.cumulative-cell');
+                cumulativeCell.textContent = formatNumber(cumulative);
+                
+                // 根据累计现金流设置颜色
+                if (cumulative > 0) {
+                    cumulativeCell.style.color = 'var(--secondary-color)';
+                } else if (cumulative < 0) {
+                    cumulativeCell.style.color = 'var(--error-color)';
+                } else {
+                    cumulativeCell.style.color = 'var(--text-primary)';
+                }
+            });
+        }
+        
+        // 更新统计信息
+        function updateSummary() {
+            const inputs = document.querySelectorAll('#cashFlowTable input');
+            let totalInflow = 0;
+            let totalOutflow = 0;
+            let filledCount = 0;
+            
+            inputs.forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                if (value > 0) {
+                    totalInflow += value;
+                }
+                if (value < 0) {
+                    totalOutflow += Math.abs(value);
+                }
+                if (input.value.trim() !== '') {
+                    filledCount++;
+                }
+            });
+            
+            const totalNet = totalInflow - totalOutflow;
+            const completeness = Math.round((filledCount / inputs.length) * 100);
+            
+            document.getElementById('totalInflow').textContent = formatNumber(totalInflow);
+            document.getElementById('totalOutflow').textContent = formatNumber(totalOutflow);
+            document.getElementById('totalNet').textContent = formatNumber(totalNet);
+            document.getElementById('completeness').textContent = completeness + '%';
+            
+            // 设置净现金流颜色
+            const netElement = document.getElementById('totalNet');
+            if (totalNet > 0) {
+                netElement.style.color = 'var(--secondary-color)';
+            } else if (totalNet < 0) {
+                netElement.style.color = 'var(--error-color)';
+            } else {
+                netElement.style.color = 'var(--text-primary)';
+            }
+        }
+        
+        // 检查表单有效性
+        function checkFormValidity() {
+            const inputs = document.querySelectorAll('#cashFlowTable input');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (input.value.trim() === '') {
+                    isValid = false;
+                }
+            });
+            
+            document.getElementById('nextBtn').disabled = !isValid;
+        }
+        
+        // 删除行
+        function deleteRow(year) {
+            if (confirm(`确定要删除第${year}年的数据吗？`)) {
+                const row = document.querySelector(`input[data-year="${year}"]`).closest('tr');
+                row.remove();
+                updateCumulativeCashFlow();
+                updateSummary();
+                checkFormValidity();
+            }
+        }
+        
+        // 清空所有数据
+        function clearAll() {
+            if (confirm('确定要清空所有现金流数据吗？')) {
+                const inputs = document.querySelectorAll('#cashFlowTable input');
+                inputs.forEach(input => {
+                    if (input.dataset.year !== '0') {
+                        input.value = '';
+                    }
+                });
+                updateCumulativeCashFlow();
+                updateSummary();
+                checkFormValidity();
+            }
+        }
+        
+        // 下载Excel模板
+        function downloadTemplate() {
+            alert('Excel模板下载功能将在实际开发中实现');
+        }
+        
+        // 文件上传相关事件
+        function bindFileEvents() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.querySelector('.upload-area');
+            
+            // 文件选择
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // 拖拽上传
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+        }
+        
+        // 处理文件选择
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+        
+        // 处理文件
+        function handleFile(file) {
+            // 验证文件类型
+            const allowedTypes = ['.xlsx', '.xls'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedTypes.includes(fileExtension)) {
+                alert('请选择Excel文件（.xlsx或.xls格式）');
+                return;
+            }
+            
+            // 验证文件大小（10MB）
+            if (file.size > 10 * 1024 * 1024) {
+                alert('文件大小不能超过10MB');
+                return;
+            }
+            
+            // 显示文件信息
+            showFileInfo(file);
+            
+            // 模拟文件解析（实际开发中需要使用SheetJS等库）
+            setTimeout(() => {
+                simulateFileProcessing();
+            }, 1000);
+        }
+        
+        // 显示文件信息
+        function showFileInfo(file) {
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('uploadTime').textContent = new Date().toLocaleString();
+        }
+        
+        // 模拟文件处理
+        function simulateFileProcessing() {
+            const previewBody = document.getElementById('previewBody');
+            previewBody.innerHTML = '';
+            
+            // 模拟解析的数据
+            const mockData = [
+                { name: '投资标的', value: '某科技项目', status: '✓' },
+                { name: '投资金额', value: '10000万元', status: '✓' },
+                { name: '投资期限', value: '5年', status: '✓' },
+                { name: '门槛收益率', value: '8%', status: '✓' },
+                { name: '管理人Carry', value: '20%', status: '✓' },
+                { name: '第0年现金流', value: '-10000万元', status: '✓' },
+                { name: '第1年现金流', value: '1000万元', status: '✓' },
+                { name: '第2年现金流', value: '2000万元', status: '✓' },
+                { name: '第3年现金流', value: '3000万元', status: '✓' },
+                { name: '第4年现金流', value: '4000万元', status: '✓' },
+                { name: '第5年现金流', value: '5000万元', status: '✓' }
+            ];
+            
+            mockData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.value}</td>
+                    <td style="color: var(--secondary-color);">${item.status}</td>
+                `;
+                previewBody.appendChild(row);
+            });
+            
+            // 启用下一步按钮
+            document.getElementById('nextBtn').disabled = false;
+        }
+        
+        // 格式化数字
+        function formatNumber(num) {
+            return new Intl.NumberFormat('zh-CN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 页面加载时恢复数据
+        window.addEventListener('load', () => {
+            updateCumulativeCashFlow();
+            updateSummary();
+            checkFormValidity();
+        });
+        
+        // 绑定额外的事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 导入数据按钮
+            document.getElementById('import-data').addEventListener('click', function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.csv,.xlsx,.json';
+                input.onchange = handleFileImport;
+                input.click();
+            });
+            
+            // 保存草稿按钮
+            document.getElementById('save-draft').addEventListener('click', function() {
+                saveCashFlowData();
+                alert('现金流数据已保存');
+            });
+        });
+        
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data;
+                    if (file.name.endsWith('.json')) {
+                        data = JSON.parse(e.target.result);
+                    } else if (file.name.endsWith('.csv')) {
+                        data = parseCSV(e.target.result);
+                    } else {
+                        throw new Error('不支持的文件格式');
+                    }
+                    
+                    importCashFlowData(data);
+                    alert('数据导入成功');
+                } catch (error) {
+                    alert('文件导入失败: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length >= 2 && values[1].trim()) {
+                    data.push({
+                        year: i,
+                        netCashFlow: parseFloat(values[1].trim())
+                    });
+                }
+            }
+            
+            return data;
+        }
+        
+        function importCashFlowData(data) {
+            const inputs = document.querySelectorAll('#tableBody input');
+            
+            data.forEach((item, index) => {
+                if (index < inputs.length) {
+                    inputs[index].value = item.netCashFlow || '';
+                }
+            });
+            
+            updateCumulativeCashFlow();
+            updateSummary();
+            checkFormValidity();
+        }
+        
+        function saveCashFlowData() {
+            const inputs = document.querySelectorAll('#tableBody input');
+            const cashFlows = Array.from(inputs).map((input, index) => ({
+                year: index,
+                netCashFlow: parseFloat(input.value) || 0
+            }));
+            
+            const savedData = localStorage.getItem('fund-calculation-data');
+            let data = {};
+            if (savedData) {
+                data = JSON.parse(savedData);
+            }
+            
+            data.cashFlows = cashFlows;
+            data.timestamp = new Date().toISOString();
+            
+            localStorage.setItem('fund-calculation-data', JSON.stringify(data));
+        }
+    </script>
+</body>
+</html>

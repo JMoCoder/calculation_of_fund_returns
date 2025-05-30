@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收益分配测算系统 - 系统设置</title>
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #1890ff;
+            --primary-light: #40a9ff;
+            --primary-dark: #096dd9;
+            
+            /* 辅助色 */
+            --secondary-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --info-color: #13c2c2;
+            
+            /* 文字颜色 */
+            --text-primary: #262626;
+            --text-secondary: #595959;
+            --text-disabled: #bfbfbf;
+            --text-inverse: #ffffff;
+            
+            /* 背景颜色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            
+            /* 边框颜色 */
+            --border-primary: #d9d9d9;
+            --border-secondary: #f0f0f0;
+            --border-focus: #40a9ff;
+            
+            /* 间距 */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* 圆角和阴影 */
+            --border-radius-sm: 2px;
+            --border-radius-md: 4px;
+            --border-radius-lg: 8px;
+            --border-radius-xl: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--border-secondary);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* 设置项布局 */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        .settings-section {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-lg);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .section-icon {
+            font-size: 18px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md) 0;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-info {
+            flex: 1;
+        }
+        
+        .setting-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .setting-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        .setting-control {
+            margin-left: var(--spacing-md);
+        }
+        
+        /* 表单控件样式 */
+        .form-input {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-md);
+            font-size: 14px;
+            width: 200px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus {
+            border-color: var(--border-focus);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        
+        .form-select {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-md);
+            font-size: 14px;
+            width: 200px;
+            background-color: var(--bg-primary);
+            cursor: pointer;
+        }
+        
+        .form-select:focus {
+            border-color: var(--border-focus);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        
+        /* 开关样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-primary);
+            transition: 0.3s;
+            border-radius: 22px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-primary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--error-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-danger:hover {
+            background-color: #ff7875;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        /* 标签样式 */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .tag-success {
+            background-color: #f6ffed;
+            color: var(--secondary-color);
+            border: 1px solid #b7eb8f;
+        }
+        
+        .tag-warning {
+            background-color: #fffbe6;
+            color: var(--warning-color);
+            border: 1px solid #ffe58f;
+        }
+        
+        .tag-error {
+            background-color: #fff2f0;
+            color: var(--error-color);
+            border: 1px solid #ffccc7;
+        }
+        
+        /* 数据表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-md);
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-sm) var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .data-table th {
+            background-color: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .data-table td {
+            color: var(--text-secondary);
+        }
+        
+        /* 进度条 */
+        .progress {
+            width: 100%;
+            height: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+        
+        /* 全宽设置项 */
+        .setting-full-width {
+            grid-column: 1 / -1;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--spacing-md);
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                padding: var(--spacing-lg);
+            }
+            
+            .settings-section {
+                padding: var(--spacing-md);
+            }
+            
+            .form-input,
+            .form-select {
+                width: 100%;
+                max-width: 200px;
+            }
+            
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-md);
+            }
+            
+            .setting-control {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题 -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h1 class="card-title">系统设置</h1>
+                    <p class="card-description">配置系统参数、用户偏好和安全设置</p>
+                </div>
+                <div>
+                    <button class="btn btn-secondary">重置默认</button>
+                    <button class="btn btn-primary" style="margin-left: var(--spacing-md);">保存设置</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 设置项网格 -->
+        <div class="settings-grid">
+            <!-- 计算参数设置 -->
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    计算参数设置
+                </h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">默认计算精度</div>
+                        <div class="setting-description">设置财务计算的小数位数精度</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="calculationPrecision">
+                            <option value="2">2位小数</option>
+                            <option value="4" selected>4位小数</option>
+                            <option value="6">6位小数</option>
+                            <option value="8">8位小数</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">IRR计算方法</div>
+                        <div class="setting-description">选择内部收益率的计算算法</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="irrMethod">
+                            <option value="newton" selected>牛顿法</option>
+                            <option value="bisection">二分法</option>
+                            <option value="secant">割线法</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">最大迭代次数</div>
+                        <div class="setting-description">IRR计算的最大迭代次数限制</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="number" class="form-input" id="maxIterations" value="1000" min="100" max="10000">
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">收敛精度</div>
+                        <div class="setting-description">IRR计算的收敛精度阈值</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="text" class="form-input" id="convergenceThreshold" value="1e-6">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 界面显示设置 -->
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎨</span>
+                    界面显示设置
+                </h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">主题模式</div>
+                        <div class="setting-description">选择界面的主题风格</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="themeMode">
+                            <option value="light" selected>浅色主题</option>
+                            <option value="dark">深色主题</option>
+                            <option value="auto">跟随系统</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">语言设置</div>
+                        <div class="setting-description">选择系统界面语言</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="language">
+                            <option value="zh-CN" selected>简体中文</option>
+                            <option value="zh-TW">繁体中文</option>
+                            <option value="en-US">English</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">数字格式</div>
+                        <div class="setting-description">设置数字的显示格式</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="numberFormat">
+                            <option value="comma" selected>千分位逗号</option>
+                            <option value="space">千分位空格</option>
+                            <option value="none">无分隔符</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">货币符号</div>
+                        <div class="setting-description">设置默认的货币显示符号</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="currencySymbol">
+                            <option value="CNY" selected>¥ (人民币)</option>
+                            <option value="USD">$ (美元)</option>
+                            <option value="EUR">€ (欧元)</option>
+                            <option value="HKD">HK$ (港币)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 数据管理设置 -->
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">💾</span>
+                    数据管理设置
+                </h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">自动保存</div>
+                        <div class="setting-description">启用数据的自动保存功能</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="switch">
+                            <input type="checkbox" id="autoSave" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">保存间隔</div>
+                        <div class="setting-description">自动保存的时间间隔（分钟）</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="number" class="form-input" id="saveInterval" value="5" min="1" max="60">
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">历史记录保留</div>
+                        <div class="setting-description">计算历史记录的保留天数</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="historyRetention">
+                            <option value="7">7天</option>
+                            <option value="30" selected>30天</option>
+                            <option value="90">90天</option>
+                            <option value="365">1年</option>
+                            <option value="-1">永久保留</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">数据备份</div>
+                        <div class="setting-description">启用定期数据备份功能</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="switch">
+                            <input type="checkbox" id="dataBackup" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 安全设置 -->
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🔒</span>
+                    安全设置
+                </h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">会话超时</div>
+                        <div class="setting-description">用户会话的超时时间（分钟）</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="sessionTimeout">
+                            <option value="15">15分钟</option>
+                            <option value="30" selected>30分钟</option>
+                            <option value="60">1小时</option>
+                            <option value="120">2小时</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">操作日志</div>
+                        <div class="setting-description">记录用户的操作日志</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="switch">
+                            <input type="checkbox" id="operationLog" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">数据加密</div>
+                        <div class="setting-description">启用敏感数据的加密存储</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="switch">
+                            <input type="checkbox" id="dataEncryption" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">访问控制</div>
+                        <div class="setting-description">启用基于角色的访问控制</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="switch">
+                            <input type="checkbox" id="accessControl" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 导入导出设置 -->
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">📤</span>
+                    导入导出设置
+                </h2>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">默认导出格式</div>
+                        <div class="setting-description">设置报告的默认导出格式</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="exportFormat">
+                            <option value="excel" selected>Excel (.xlsx)</option>
+                            <option value="pdf">PDF (.pdf)</option>
+                            <option value="csv">CSV (.csv)</option>
+                            <option value="json">JSON (.json)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Excel模板</div>
+                        <div class="setting-description">选择Excel导出的模板样式</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="excelTemplate">
+                            <option value="standard" selected>标准模板</option>
+                            <option value="detailed">详细模板</option>
+                            <option value="summary">汇总模板</option>
+                            <option value="custom">自定义模板</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">图表导出质量</div>
+                        <div class="setting-description">设置图表导出的图像质量</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select" id="chartQuality">
+                            <option value="low">低质量</option>
+                            <option value="medium" selected>中等质量</option>
+                            <option value="high">高质量</option>
+                            <option value="ultra">超高质量</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">包含敏感数据</div>
+                        <div class="setting-description">导出时是否包含敏感数据</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="switch">
+                            <input type="checkbox" id="includeSensitiveData">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+        <!-- 操作按钮 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-secondary);">
+            <button type="button" class="btn btn-secondary">返回主页</button>
+            <div>
+                <button type="button" class="btn btn-secondary" style="margin-right: var(--spacing-md);">重置设置</button>
+                <button type="button" class="btn btn-primary" id="saveSettings">保存所有设置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            bindEvents();
+        });
+        
+        // 绑定事件
+        function bindEvents() {
+            // 保存设置按钮
+            document.getElementById('saveSettings').addEventListener('click', saveSettings);
+            
+            // 重置设置按钮
+            document.querySelectorAll('.btn-secondary').forEach(btn => {
+                if (btn.textContent.includes('重置')) {
+                    btn.addEventListener('click', resetSettings);
+                }
+            });
+            
+            // 实时保存开关状态
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (document.getElementById('autoSave').checked) {
+                        autoSaveSettings();
+                    }
+                });
+            });
+            
+            // 实时保存选择框状态
+            document.querySelectorAll('select, input[type="number"], input[type="text"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    if (document.getElementById('autoSave').checked) {
+                        autoSaveSettings();
+                    }
+                });
+            });
+            
+            // 自动保存开关控制
+            document.getElementById('autoSave').addEventListener('change', function() {
+                const saveInterval = document.getElementById('saveInterval');
+                saveInterval.disabled = !this.checked;
+                
+                if (this.checked) {
+                    startAutoSave();
+                } else {
+                    stopAutoSave();
+                }
+            });
+        }
+        
+        // 加载设置
+        function loadSettings() {
+            // 从localStorage或服务器加载设置
+            const settings = JSON.parse(localStorage.getItem('systemSettings') || '{}');
+            
+            // 应用设置到界面
+            Object.keys(settings).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = settings[key];
+                    } else {
+                        element.value = settings[key];
+                    }
+                }
+            });
+            
+            console.log('设置已加载:', settings);
+        }
+        
+        // 保存设置
+        function saveSettings() {
+            const settings = {};
+            
+            // 收集所有设置项
+            document.querySelectorAll('input, select').forEach(element => {
+                if (element.id) {
+                    if (element.type === 'checkbox') {
+                        settings[element.id] = element.checked;
+                    } else {
+                        settings[element.id] = element.value;
+                    }
+                }
+            });
+            
+            // 保存到localStorage
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            
+            // 显示保存成功提示
+            showNotification('设置保存成功！', 'success');
+            
+            console.log('设置已保存:', settings);
+        }
+        
+        // 重置设置
+        function resetSettings() {
+            if (confirm('确定要重置所有设置为默认值吗？此操作不可撤销。')) {
+                // 清除localStorage
+                localStorage.removeItem('systemSettings');
+                
+                // 重新加载页面或重置表单
+                location.reload();
+            }
+        }
+        
+        // 自动保存
+        let autoSaveTimer;
+        
+        function startAutoSave() {
+            const interval = parseInt(document.getElementById('saveInterval').value) * 60000; // 转换为毫秒
+            
+            autoSaveTimer = setInterval(() => {
+                autoSaveSettings();
+            }, interval);
+        }
+        
+        function stopAutoSave() {
+            if (autoSaveTimer) {
+                clearInterval(autoSaveTimer);
+                autoSaveTimer = null;
+            }
+        }
+        
+        function autoSaveSettings() {
+            saveSettings();
+            showNotification('设置已自动保存', 'info');
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 4px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                transition: all 0.3s ease;
+            `;
+            
+            // 根据类型设置颜色
+            switch (type) {
+                case 'success':
+                    notification.style.backgroundColor = '#52c41a';
+                    break;
+                case 'error':
+                    notification.style.backgroundColor = '#ff4d4f';
+                    break;
+                case 'warning':
+                    notification.style.backgroundColor = '#faad14';
+                    break;
+                default:
+                    notification.style.backgroundColor = '#1890ff';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // 系统操作
+        document.addEventListener('click', function(e) {
+            const text = e.target.textContent;
+            
+            switch (text) {
+                case '检查更新':
+                    checkForUpdates();
+                    break;
+                case '清理缓存':
+                    clearCache();
+                    break;
+                case '立即备份':
+                    performBackup();
+                    break;
+                case '重启系统':
+                    restartSystem();
+                    break;
+            }
+        });
+        
+        function checkForUpdates() {
+            showNotification('正在检查更新...', 'info');
+            // 模拟检查更新
+            setTimeout(() => {
+                showNotification('当前已是最新版本', 'success');
+            }, 2000);
+        }
+        
+        function clearCache() {
+            if (confirm('确定要清理系统缓存吗？')) {
+                showNotification('正在清理缓存...', 'info');
+                setTimeout(() => {
+                    showNotification('缓存清理完成', 'success');
+                }, 1500);
+            }
+        }
+        
+        function performBackup() {
+            showNotification('正在执行数据备份...', 'info');
+            setTimeout(() => {
+                showNotification('数据备份完成', 'success');
+            }, 3000);
+        }
+        
+        function restartSystem() {
+            if (confirm('确定要重启系统吗？重启期间服务将暂时不可用。')) {
+                showNotification('系统将在5秒后重启...', 'warning');
+                setTimeout(() => {
+                    showNotification('系统重启中...', 'info');
+                }, 5000);
+            }
+        }
+        
+        // 初始化自动保存
+        if (document.getElementById('autoSave').checked) {
+            startAutoSave();
+        }
+    </script>
+</body>
+</html>
