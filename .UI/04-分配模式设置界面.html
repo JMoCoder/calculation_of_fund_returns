@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收益分配测算系统 - 分配模式设置</title>
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #1890ff;
+            --primary-light: #40a9ff;
+            --primary-dark: #096dd9;
+            
+            /* 辅助色 */
+            --secondary-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --info-color: #13c2c2;
+            
+            /* 文字颜色 */
+            --text-primary: #262626;
+            --text-secondary: #595959;
+            --text-disabled: #bfbfbf;
+            --text-inverse: #ffffff;
+            
+            /* 背景颜色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            
+            /* 边框颜色 */
+            --border-primary: #d9d9d9;
+            --border-secondary: #f0f0f0;
+            --border-focus: #40a9ff;
+            
+            /* 间距 */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* 圆角和阴影 */
+            --border-radius-sm: 2px;
+            --border-radius-md: 4px;
+            --border-radius-lg: 8px;
+            --border-radius-xl: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--border-secondary);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* 模式选择卡片 */
+        .mode-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .mode-card {
+            border: 2px solid var(--border-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .mode-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .mode-card.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(24, 144, 255, 0.05);
+        }
+        
+        .mode-card.selected::before {
+            content: '✓';
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .mode-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+        
+        .mode-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: var(--spacing-md);
+            line-height: 1.5;
+        }
+        
+        .mode-features {
+            list-style: none;
+        }
+        
+        .mode-features li {
+            padding: var(--spacing-xs) 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .mode-features li::before {
+            content: '•';
+            color: var(--primary-color);
+            margin-right: var(--spacing-sm);
+        }
+        
+        /* 配置面板 */
+        .config-panel {
+            display: none;
+            margin-top: var(--spacing-xl);
+        }
+        
+        .config-panel.active {
+            display: block;
+        }
+        
+        .config-section {
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .config-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+        
+        /* 表单样式 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-md);
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus {
+            border-color: var(--border-focus);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        
+        .form-input.error {
+            border-color: var(--error-color);
+        }
+        
+        .form-help {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .form-error {
+            font-size: 12px;
+            color: var(--error-color);
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* 单选按钮组 */
+        .radio-group {
+            display: flex;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .radio-item input[type="radio"] {
+            margin-right: var(--spacing-sm);
+        }
+        
+        /* 分配顺序配置 */
+        .allocation-order {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-md);
+        }
+        
+        .order-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-md);
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-md);
+            margin-bottom: var(--spacing-sm);
+            border: 1px solid var(--border-secondary);
+        }
+        
+        .order-number {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: var(--spacing-md);
+        }
+        
+        .order-content {
+            flex: 1;
+        }
+        
+        .order-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .order-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* 预览面板 */
+        .preview-panel {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .preview-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+        
+        .preview-item {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+        
+        .preview-label {
+            color: var(--text-secondary);
+        }
+        
+        .preview-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-primary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* 操作按钮区域 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--spacing-md);
+            }
+            
+            .card {
+                padding: var(--spacing-lg);
+            }
+            
+            .mode-selection {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-bar {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .radio-group {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 分配模式设置表单 -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">分配模式设置</h2>
+                <p class="card-description">选择收益分配模式并配置相关参数，系统将根据设置进行收益分配计算</p>
+            </div>
+            
+            <!-- 模式选择 -->
+            <div class="mode-selection">
+                <div class="mode-card" data-mode="flat" onclick="selectMode('flat')">
+                    <div class="mode-title">平层结构模式</div>
+                    <div class="mode-description">适用于简单的投资结构，投资人按比例分配收益</div>
+                    <ul class="mode-features">
+                        <li>优先还本：优先返还投资本金</li>
+                        <li>期间分配：按期间收益进行分配</li>
+                        <li>计算简单，适合单一投资人结构</li>
+                    </ul>
+                </div>
+                
+                <div class="mode-card" data-mode="structured" onclick="selectMode('structured')">
+                    <div class="mode-title">结构化模式</div>
+                    <div class="mode-description">适用于复杂的投资结构，支持优先级和劣后级分配</div>
+                    <ul class="mode-features">
+                        <li>优先劣后：支持优先级和劣后级分配</li>
+                        <li>包含夹层：支持夹层投资分配</li>
+                        <li>息息本本：利息和本金分别分配</li>
+                        <li>适合多层级投资结构</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 平层结构配置 -->
+            <div class="config-panel" id="flatConfig">
+                <div class="config-section">
+                    <h3 class="config-title">分配方式设置</h3>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="flatMethod" value="priority_return" checked>
+                            <span>优先还本</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="flatMethod" value="period_distribution">
+                            <span>期间分配</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="config-section">
+                    <h3 class="config-title">分配参数</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">投资人出资比例 (%)</label>
+                            <input type="number" class="form-input" id="investorRatio" value="80" min="0" max="100" step="0.01">
+                            <div class="form-help">投资人在总投资中的出资比例</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">管理人出资比例 (%)</label>
+                            <input type="number" class="form-input" id="managerRatio" value="20" min="0" max="100" step="0.01">
+                            <div class="form-help">管理人在总投资中的出资比例</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分配顺序 -->
+                <div class="config-section">
+                    <h3 class="config-title">分配顺序</h3>
+                    <div class="allocation-order" id="flatOrder">
+                        <!-- 动态生成分配顺序 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 结构化模式配置 -->
+            <div class="config-panel" id="structuredConfig">
+                <div class="config-section">
+                    <h3 class="config-title">分配方式设置</h3>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="structuredMethod" value="priority_subordinate" checked>
+                            <span>优先劣后</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="structuredMethod" value="include_mezzanine">
+                            <span>包含夹层</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="structuredMethod" value="interest_principal">
+                            <span>息息本本</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="config-section">
+                    <h3 class="config-title">投资人层级配置</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">优先级出资比例 (%)</label>
+                            <input type="number" class="form-input" id="priorityRatio" value="70" min="0" max="100" step="0.01">
+                            <div class="form-help">优先级投资人出资比例</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">优先级预期收益率 (%)</label>
+                            <input type="number" class="form-input" id="priorityReturn" value="8" min="0" max="50" step="0.01">
+                            <div class="form-help">优先级投资人的预期年化收益率</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">劣后级出资比例 (%)</label>
+                            <input type="number" class="form-input" id="subordinateRatio" value="20" min="0" max="100" step="0.01">
+                            <div class="form-help">劣后级投资人出资比例</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">管理人出资比例 (%)</label>
+                            <input type="number" class="form-input" id="managerRatioStructured" value="10" min="0" max="100" step="0.01">
+                            <div class="form-help">管理人出资比例</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 夹层配置（仅在包含夹层时显示） -->
+                <div class="config-section" id="mezzanineConfig" style="display: none;">
+                    <h3 class="config-title">夹层投资配置</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">夹层出资比例 (%)</label>
+                            <input type="number" class="form-input" id="mezzanineRatio" value="15" min="0" max="100" step="0.01">
+                            <div class="form-help">夹层投资人出资比例</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">夹层预期收益率 (%)</label>
+                            <input type="number" class="form-input" id="mezzanineReturn" value="12" min="0" max="50" step="0.01">
+                            <div class="form-help">夹层投资人的预期年化收益率</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分配顺序 -->
+                <div class="config-section">
+                    <h3 class="config-title">分配顺序</h3>
+                    <div class="allocation-order" id="structuredOrder">
+                        <!-- 动态生成分配顺序 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 配置预览 -->
+            <div class="preview-panel">
+                <h3 class="preview-title">配置预览</h3>
+                <div id="configPreview">
+                    <!-- 动态生成配置预览 -->
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="action-bar">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">返回上一步</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" style="margin-right: var(--spacing-md);" id="save-config">保存配置</button>
+                    <button type="button" class="btn btn-primary" id="calculate-btn">开始计算</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let selectedMode = 'flat';
+        let currentConfig = {};
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            selectMode('flat');
+            bindEvents();
+            updatePreview();
+        });
+        
+        // 绑定事件
+        function bindEvents() {
+            // 监听表单输入变化
+            const inputs = document.querySelectorAll('.form-input');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    validateInput(this);
+                    updateRatios();
+                    updatePreview();
+                });
+            });
+            
+            // 监听分配方式变化
+            const radios = document.querySelectorAll('input[type="radio"]');
+            radios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateAllocationOrder();
+                    updatePreview();
+                    
+                    // 特殊处理夹层配置显示
+                    if (this.name === 'structuredMethod') {
+                        const mezzanineConfig = document.getElementById('mezzanineConfig');
+                        if (this.value === 'include_mezzanine') {
+                            mezzanineConfig.style.display = 'block';
+                        } else {
+                            mezzanineConfig.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 选择分配模式
+        function selectMode(mode) {
+            selectedMode = mode;
+            
+            // 更新卡片选中状态
+            const cards = document.querySelectorAll('.mode-card');
+            cards.forEach(card => {
+                card.classList.remove('selected');
+                if (card.dataset.mode === mode) {
+                    card.classList.add('selected');
+                }
+            });
+            
+            // 显示对应的配置面板
+            const panels = document.querySelectorAll('.config-panel');
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            if (mode === 'flat') {
+                document.getElementById('flatConfig').classList.add('active');
+            } else {
+                document.getElementById('structuredConfig').classList.add('active');
+            }
+            
+            updateAllocationOrder();
+            updatePreview();
+        }
+        
+        // 验证输入
+        function validateInput(input) {
+            const value = parseFloat(input.value);
+            const min = parseFloat(input.min);
+            const max = parseFloat(input.max);
+            
+            if (isNaN(value) || value < min || value > max) {
+                input.classList.add('error');
+                return false;
+            } else {
+                input.classList.remove('error');
+                return true;
+            }
+        }
+        
+        // 更新比例（确保总和为100%）
+        function updateRatios() {
+            if (selectedMode === 'flat') {
+                const investorRatio = document.getElementById('investorRatio');
+                const managerRatio = document.getElementById('managerRatio');
+                
+                const total = parseFloat(investorRatio.value) + parseFloat(managerRatio.value);
+                if (Math.abs(total - 100) > 0.01) {
+                    // 显示警告但不自动调整
+                    investorRatio.style.borderColor = 'var(--warning-color)';
+                    managerRatio.style.borderColor = 'var(--warning-color)';
+                } else {
+                    investorRatio.style.borderColor = '';
+                    managerRatio.style.borderColor = '';
+                }
+            } else {
+                const priorityRatio = document.getElementById('priorityRatio');
+                const subordinateRatio = document.getElementById('subordinateRatio');
+                const managerRatio = document.getElementById('managerRatioStructured');
+                const mezzanineRatio = document.getElementById('mezzanineRatio');
+                
+                let total = parseFloat(priorityRatio.value) + parseFloat(subordinateRatio.value) + parseFloat(managerRatio.value);
+                
+                const includeMezzanine = document.querySelector('input[name="structuredMethod"]:checked').value === 'include_mezzanine';
+                if (includeMezzanine) {
+                    total += parseFloat(mezzanineRatio.value);
+                }
+                
+                if (Math.abs(total - 100) > 0.01) {
+                    [priorityRatio, subordinateRatio, managerRatio, mezzanineRatio].forEach(input => {
+                        if (input) input.style.borderColor = 'var(--warning-color)';
+                    });
+                } else {
+                    [priorityRatio, subordinateRatio, managerRatio, mezzanineRatio].forEach(input => {
+                        if (input) input.style.borderColor = '';
+                    });
+                }
+            }
+        }
+        
+        // 更新分配顺序
+        function updateAllocationOrder() {
+            let orderContainer, orderData;
+            
+            if (selectedMode === 'flat') {
+                orderContainer = document.getElementById('flatOrder');
+                const method = document.querySelector('input[name="flatMethod"]:checked').value;
+                
+                if (method === 'priority_return') {
+                    orderData = [
+                        { title: '还本', description: '优先返还投资人的投资本金' },
+                        { title: '门槛收益', description: '支付投资人的门槛收益' },
+                        { title: 'Carry分配', description: '管理人按约定比例获得超额收益分成' }
+                    ];
+                } else {
+                    orderData = [
+                        { title: '期间收益', description: '按期间收益率分配当期收益给投资人' },
+                        { title: '还本', description: '返还投资人的投资本金' },
+                        { title: '剩余门槛收益', description: '支付剩余的门槛收益给投资人' },
+                        { title: 'Carry分配', description: '管理人按约定比例获得超额收益分成' }
+                    ];
+                }
+            } else {
+                orderContainer = document.getElementById('structuredOrder');
+                const method = document.querySelector('input[name="structuredMethod"]:checked').value;
+                
+                if (method === 'priority_subordinate') {
+                    orderData = [
+                        { title: '返还优先级本金', description: '优先返还优先级投资人本金' },
+                        { title: '支付优先级收益', description: '支付优先级投资人预期收益' },
+                        { title: '返还劣后级本金', description: '返还劣后级投资人本金' },
+                        { title: '返还管理人本金', description: '返还管理人投资本金' },
+                        { title: '分配超额收益', description: '劣后级和管理人按约定比例分配超额收益' }
+                    ];
+                } else if (method === 'include_mezzanine') {
+                    orderData = [
+                        { title: '返还优先级本金', description: '优先返还优先级投资人本金' },
+                        { title: '支付优先级收益', description: '支付优先级投资人预期收益' },
+                        { title: '返还夹层本金', description: '返还夹层投资人本金' },
+                        { title: '支付夹层收益', description: '支付夹层投资人预期收益' },
+                        { title: '返还劣后级本金', description: '返还劣后级投资人本金' },
+                        { title: '返还管理人本金', description: '返还管理人投资本金' },
+                        { title: '分配超额收益', description: '劣后级和管理人按约定比例分配超额收益' }
+                    ];
+                } else {
+                    orderData = [
+                        { title: '支付优先级利息', description: '按期支付优先级投资人利息' },
+                        { title: '支付夹层利息', description: '按期支付夹层投资人利息（如有）' },
+                        { title: '返还优先级本金', description: '到期返还优先级投资人本金' },
+                        { title: '返还夹层本金', description: '到期返还夹层投资人本金（如有）' },
+                        { title: '返还劣后级本金', description: '返还劣后级投资人本金' },
+                        { title: '返还管理人本金', description: '返还管理人投资本金' },
+                        { title: '分配超额收益', description: '劣后级和管理人按约定比例分配超额收益' }
+                    ];
+                }
+            }
+            
+            // 生成分配顺序HTML
+            orderContainer.innerHTML = orderData.map((item, index) => `
+                <div class="order-item">
+                    <div class="order-number">${index + 1}</div>
+                    <div class="order-content">
+                        <div class="order-title">${item.title}</div>
+                        <div class="order-description">${item.description}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 更新配置预览
+        function updatePreview() {
+            const previewContainer = document.getElementById('configPreview');
+            let previewData = [];
+            
+            previewData.push({
+                label: '分配模式',
+                value: selectedMode === 'flat' ? '平层结构模式' : '结构化模式'
+            });
+            
+            if (selectedMode === 'flat') {
+                const method = document.querySelector('input[name="flatMethod"]:checked').value;
+                const methodText = method === 'priority_return' ? '优先还本' : '期间分配';
+                
+                previewData.push(
+                    { label: '分配方式', value: methodText },
+                    { label: '投资人出资比例', value: document.getElementById('investorRatio').value + '%' },
+                    { label: '管理人出资比例', value: document.getElementById('managerRatio').value + '%' }
+                );
+            } else {
+                const method = document.querySelector('input[name="structuredMethod"]:checked').value;
+                let methodText = '';
+                switch (method) {
+                    case 'priority_subordinate': methodText = '优先劣后'; break;
+                    case 'include_mezzanine': methodText = '包含夹层'; break;
+                    case 'interest_principal': methodText = '息息本本'; break;
+                }
+                
+                previewData.push(
+                    { label: '分配方式', value: methodText },
+                    { label: '优先级出资比例', value: document.getElementById('priorityRatio').value + '%' },
+                    { label: '优先级预期收益率', value: document.getElementById('priorityReturn').value + '%' },
+                    { label: '劣后级出资比例', value: document.getElementById('subordinateRatio').value + '%' },
+                    { label: '管理人出资比例', value: document.getElementById('managerRatioStructured').value + '%' }
+                );
+                
+                if (method === 'include_mezzanine') {
+                    previewData.push(
+                        { label: '夹层出资比例', value: document.getElementById('mezzanineRatio').value + '%' },
+                        { label: '夹层预期收益率', value: document.getElementById('mezzanineReturn').value + '%' }
+                    );
+                }
+            }
+            
+            // 生成预览HTML
+            previewContainer.innerHTML = previewData.map(item => `
+                <div class="preview-item">
+                    <span class="preview-label">${item.label}</span>
+                    <span class="preview-value">${item.value}</span>
+                </div>
+            `).join('');
+        }
+        
+        // 保存配置到sessionStorage
+        function saveConfig() {
+            const config = {
+                mode: selectedMode,
+                timestamp: new Date().toISOString()
+            };
+            
+            if (selectedMode === 'flat') {
+                config.method = document.querySelector('input[name="flatMethod"]:checked').value;
+                config.investorRatio = parseFloat(document.getElementById('investorRatio').value);
+                config.managerRatio = parseFloat(document.getElementById('managerRatio').value);
+            } else {
+                config.method = document.querySelector('input[name="structuredMethod"]:checked').value;
+                config.priorityRatio = parseFloat(document.getElementById('priorityRatio').value);
+                config.priorityReturn = parseFloat(document.getElementById('priorityReturn').value);
+                config.subordinateRatio = parseFloat(document.getElementById('subordinateRatio').value);
+                config.managerRatio = parseFloat(document.getElementById('managerRatioStructured').value);
+                
+                if (config.method === 'include_mezzanine') {
+                    config.mezzanineRatio = parseFloat(document.getElementById('mezzanineRatio').value);
+                    config.mezzanineReturn = parseFloat(document.getElementById('mezzanineReturn').value);
+                }
+            }
+            
+            sessionStorage.setItem('allocationConfig', JSON.stringify(config));
+            return config;
+        }
+        
+        // 保存配置按钮事件
+        document.getElementById('save-config').addEventListener('click', function() {
+            const config = saveConfig();
+            alert('配置已保存');
+        });
+        
+        // 开始计算按钮点击事件
+        document.getElementById('calculate-btn').addEventListener('click', function() {
+            const config = saveConfig();
+            alert('配置已保存，即将开始计算...');
+            // 这里可以跳转到计算结果页面
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收益分配测算系统 - 计算结果</title>
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #1890ff;
+            --primary-light: #40a9ff;
+            --primary-dark: #096dd9;
+            
+            /* 辅助色 */
+            --secondary-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --info-color: #13c2c2;
+            
+            /* 文字颜色 */
+            --text-primary: #262626;
+            --text-secondary: #595959;
+            --text-disabled: #bfbfbf;
+            --text-inverse: #ffffff;
+            
+            /* 背景颜色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            
+            /* 边框颜色 */
+            --border-primary: #d9d9d9;
+            --border-secondary: #f0f0f0;
+            --border-focus: #40a9ff;
+            
+            /* 间距 */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* 圆角和阴影 */
+            --border-radius-sm: 2px;
+            --border-radius-md: 4px;
+            --border-radius-lg: 8px;
+            --border-radius-xl: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--border-secondary);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+        
+        /* 核心指标卡片 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: var(--text-inverse);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: rotate(45deg);
+        }
+        
+        .metric-card.success {
+            background: linear-gradient(135deg, var(--secondary-color), #73d13d);
+        }
+        
+        .metric-card.warning {
+            background: linear-gradient(135deg, var(--warning-color), #ffc53d);
+        }
+        
+        .metric-card.info {
+            background: linear-gradient(135deg, var(--info-color), #36cfc9);
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: var(--spacing-sm);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+            position: relative;
+            z-index: 1;
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+        
+        .metric-change {
+            font-size: 12px;
+            opacity: 0.8;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 选项卡 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-secondary);
+            margin-bottom: var(--spacing-lg);
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: var(--spacing-md) var(--spacing-lg);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 表格样式 */
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-secondary);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-primary);
+            font-size: 14px;
+        }
+        
+        .table th {
+            background-color: var(--bg-tertiary);
+            padding: var(--spacing-md);
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-secondary);
+            border-right: 1px solid var(--border-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table th:last-child {
+            border-right: none;
+        }
+        
+        .table td {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-bottom: 1px solid var(--border-secondary);
+            border-right: 1px solid var(--border-secondary);
+            text-align: right;
+        }
+        
+        .table td:first-child {
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .table td:last-child {
+            border-right: none;
+        }
+        
+        .table tr:hover {
+            background-color: var(--bg-secondary);
+        }
+        
+        .table .positive {
+            color: var(--secondary-color);
+        }
+        
+        .table .negative {
+            color: var(--error-color);
+        }
+        
+        .table .highlight {
+            background-color: rgba(24, 144, 255, 0.1);
+            font-weight: 600;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            height: 400px;
+            margin-bottom: var(--spacing-lg);
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-primary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-success:hover {
+            background-color: #73d13d;
+        }
+        
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        
+        .toolbar-left {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        .toolbar-right {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        /* 状态标签 */
+        .status-badge {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge.success {
+            background-color: rgba(82, 196, 26, 0.1);
+            color: var(--secondary-color);
+        }
+        
+        .status-badge.warning {
+            background-color: rgba(250, 173, 20, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .status-badge.info {
+            background-color: rgba(24, 144, 255, 0.1);
+            color: var(--primary-color);
+        }
+        
+        /* 汇总信息 */
+        .summary-section {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+        
+        .summary-item {
+            text-align: center;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .summary-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+        
+        /* 操作按钮区域 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--spacing-md);
+            }
+            
+            .card {
+                padding: var(--spacing-lg);
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .toolbar-left,
+            .toolbar-right {
+                justify-content: center;
+            }
+            
+            .action-bar {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 核心指标概览 -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">总投资金额</div>
+                <div class="metric-value">10,000.00</div>
+                <div class="metric-change">万元</div>
+            </div>
+            <div class="metric-card success">
+                <div class="metric-label">总收益金额</div>
+                <div class="metric-value">15,000.00</div>
+                <div class="metric-change">万元 (+50.00%)</div>
+            </div>
+            <div class="metric-card info">
+                <div class="metric-label">年化收益率</div>
+                <div class="metric-value">8.45%</div>
+                <div class="metric-change">超过门槛收益率 0.45%</div>
+            </div>
+            <div class="metric-card warning">
+                <div class="metric-label">投资回收期</div>
+                <div class="metric-value">3.2</div>
+                <div class="metric-change">年</div>
+            </div>
+        </div>
+        
+        <!-- 详细结果 -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">收益分配详细结果</h2>
+                <div class="card-actions">
+                    <span class="status-badge success">计算完成</span>
+                    <button class="btn btn-secondary" id="recalculate-btn" onclick="history.back()">重新计算</button>
+                    <button class="btn btn-success" id="export-btn">导出报告</button>
+                </div>
+            </div>
+            
+            <!-- 工具栏 -->
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <span style="color: var(--text-secondary); font-size: 14px;">计算时间：2024-01-15 14:30:25</span>
+                    <span style="color: var(--text-secondary); font-size: 14px;">|</span>
+                    <span style="color: var(--text-secondary); font-size: 14px;">分配模式：结构化模式</span>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-secondary">打印</button>
+                    <button class="btn btn-secondary">分享</button>
+                </div>
+            </div>
+            
+            <!-- 选项卡 -->
+            <div class="tabs">
+                <div class="tab active" data-tab="allocation">分配明细</div>
+                <div class="tab" data-tab="cashflow">现金流分析</div>
+                <div class="tab" data-tab="returns">收益分析</div>
+                <div class="tab" data-tab="sensitivity">敏感性分析</div>
+            </div>
+            
+            <!-- 分配明细选项卡 -->
+            <div class="tab-content active" id="allocation">
+                <div class="summary-section">
+                    <h4 style="margin-bottom: var(--spacing-md); color: var(--text-primary);">分配汇总</h4>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-label">优先级投资人</div>
+                            <div class="summary-value">7,560.00万元</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">劣后级投资人</div>
+                            <div class="summary-value">2,240.00万元</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">管理人</div>
+                            <div class="summary-value">1,200.00万元</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">管理人Carry</div>
+                            <div class="summary-value">4,000.00万元</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>可分配金额<br>(万元)</th>
+                                <th>优先级本金<br>(万元)</th>
+                                <th>优先级收益<br>(万元)</th>
+                                <th>劣后级本金<br>(万元)</th>
+                                <th>管理人本金<br>(万元)</th>
+                                <th>超额收益<br>(万元)</th>
+                                <th>管理人Carry<br>(万元)</th>
+                                <th>剩余分配<br>(万元)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>第1年</td>
+                                <td>1,000.00</td>
+                                <td>800.00</td>
+                                <td>200.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                            </tr>
+                            <tr>
+                                <td>第2年</td>
+                                <td>2,000.00</td>
+                                <td>1,600.00</td>
+                                <td>400.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                            </tr>
+                            <tr>
+                                <td>第3年</td>
+                                <td>3,000.00</td>
+                                <td>2,400.00</td>
+                                <td>600.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                            </tr>
+                            <tr>
+                                <td>第4年</td>
+                                <td>4,000.00</td>
+                                <td>2,800.00</td>
+                                <td>560.00</td>
+                                <td>400.00</td>
+                                <td>100.00</td>
+                                <td>140.00</td>
+                                <td>28.00</td>
+                                <td class="positive">112.00</td>
+                            </tr>
+                            <tr class="highlight">
+                                <td>第5年</td>
+                                <td>5,000.00</td>
+                                <td>0.00</td>
+                                <td>0.00</td>
+                                <td>1,600.00</td>
+                                <td>1,000.00</td>
+                                <td>2,400.00</td>
+                                <td class="positive">480.00</td>
+                                <td class="positive">1,920.00</td>
+                            </tr>
+                            <tr class="highlight">
+                                <td><strong>合计</strong></td>
+                                <td><strong>15,000.00</strong></td>
+                                <td><strong>7,600.00</strong></td>
+                                <td><strong>1,760.00</strong></td>
+                                <td><strong>2,000.00</strong></td>
+                                <td><strong>1,100.00</strong></td>
+                                <td><strong>2,540.00</strong></td>
+                                <td><strong>508.00</strong></td>
+                                <td><strong>2,032.00</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 现金流分析选项卡 -->
+            <div class="tab-content" id="cashflow">
+                <div class="chart-container">
+                    <div style="text-align: center;">
+                        <h3 style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">现金流分析图表</h3>
+                        <p style="color: var(--text-disabled);">图表将在实际开发中使用ECharts或Chart.js实现</p>
+                        <p style="color: var(--text-disabled); margin-top: var(--spacing-sm);">包含：累计现金流、年度现金流、投资回收分析等</p>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>投入现金流<br>(万元)</th>
+                                <th>流入现金流<br>(万元)</th>
+                                <th>净现金流<br>(万元)</th>
+                                <th>累计现金流<br>(万元)</th>
+                                <th>现金流折现值<br>(万元)</th>
+                                <th>累计折现值<br>(万元)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>第0年</td>
+                                <td class="negative">-10,000.00</td>
+                                <td>0.00</td>
+                                <td class="negative">-10,000.00</td>
+                                <td class="negative">-10,000.00</td>
+                                <td class="negative">-10,000.00</td>
+                                <td class="negative">-10,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>第1年</td>
+                                <td>0.00</td>
+                                <td class="positive">1,000.00</td>
+                                <td class="positive">1,000.00</td>
+                                <td class="negative">-9,000.00</td>
+                                <td class="positive">925.93</td>
+                                <td class="negative">-9,074.07</td>
+                            </tr>
+                            <tr>
+                                <td>第2年</td>
+                                <td>0.00</td>
+                                <td class="positive">2,000.00</td>
+                                <td class="positive">2,000.00</td>
+                                <td class="negative">-7,000.00</td>
+                                <td class="positive">1,714.68</td>
+                                <td class="negative">-7,359.39</td>
+                            </tr>
+                            <tr>
+                                <td>第3年</td>
+                                <td>0.00</td>
+                                <td class="positive">3,000.00</td>
+                                <td class="positive">3,000.00</td>
+                                <td class="negative">-4,000.00</td>
+                                <td class="positive">2,381.50</td>
+                                <td class="negative">-4,977.89</td>
+                            </tr>
+                            <tr>
+                                <td>第4年</td>
+                                <td>0.00</td>
+                                <td class="positive">4,000.00</td>
+                                <td class="positive">4,000.00</td>
+                                <td>0.00</td>
+                                <td class="positive">2,940.09</td>
+                                <td class="negative">-2,037.80</td>
+                            </tr>
+                            <tr>
+                                <td>第5年</td>
+                                <td>0.00</td>
+                                <td class="positive">5,000.00</td>
+                                <td class="positive">5,000.00</td>
+                                <td class="positive">5,000.00</td>
+                                <td class="positive">3,402.92</td>
+                                <td class="positive">1,365.12</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 收益分析选项卡 -->
+            <div class="tab-content" id="returns">
+                <div class="chart-container">
+                    <div style="text-align: center;">
+                        <h3 style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">收益分析图表</h3>
+                        <p style="color: var(--text-disabled);">图表将在实际开发中使用ECharts或Chart.js实现</p>
+                        <p style="color: var(--text-disabled); margin-top: var(--spacing-sm);">包含：收益率分析、投资人收益对比、风险收益分析等</p>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h4 style="margin-bottom: var(--spacing-md); color: var(--text-primary);">收益率分析</h4>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-label">项目IRR</div>
+                            <div class="summary-value">8.45%</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">优先级IRR</div>
+                            <div class="summary-value">8.00%</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">劣后级IRR</div>
+                            <div class="summary-value">12.50%</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">管理人IRR</div>
+                            <div class="summary-value">25.80%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 敏感性分析选项卡 -->
+            <div class="tab-content" id="sensitivity">
+                <div class="chart-container">
+                    <div style="text-align: center;">
+                        <h3 style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">敏感性分析图表</h3>
+                        <p style="color: var(--text-disabled);">图表将在实际开发中使用ECharts或Chart.js实现</p>
+                        <p style="color: var(--text-disabled); margin-top: var(--spacing-sm);">包含：收益率敏感性、现金流敏感性、参数影响分析等</p>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>参数变化</th>
+                                <th>-20%</th>
+                                <th>-10%</th>
+                                <th>基准值</th>
+                                <th>+10%</th>
+                                <th>+20%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>门槛收益率</td>
+                                <td class="positive">10.25%</td>
+                                <td class="positive">9.35%</td>
+                                <td>8.45%</td>
+                                <td>7.55%</td>
+                                <td>6.65%</td>
+                            </tr>
+                            <tr>
+                                <td>管理人Carry</td>
+                                <td>9.20%</td>
+                                <td>8.82%</td>
+                                <td>8.45%</td>
+                                <td>8.08%</td>
+                                <td>7.70%</td>
+                            </tr>
+                            <tr>
+                                <td>投资期限</td>
+                                <td>6.80%</td>
+                                <td>7.62%</td>
+                                <td>8.45%</td>
+                                <td class="positive">9.28%</td>
+                                <td class="positive">10.10%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="action-bar">
+            <button type="button" class="btn btn-secondary">返回修改参数</button>
+            <div>
+                <button type="button" class="btn btn-secondary" style="margin-right: var(--spacing-md);">保存结果</button>
+                <button type="button" class="btn btn-primary">生成报告</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入JavaScript文件 -->
+    <script src="js/api-client.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            bindTabEvents();
+            animateMetrics();
+            loadCalculationResults();
+            bindResultEvents();
+            initializeCharts();
+        });
+        
+        function bindResultEvents() {
+            // 导出按钮事件
+            const exportBtn = document.getElementById('export-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', handleExport);
+            }
+        }
+        
+        function loadCalculationResults() {
+            // 从全局状态或本地存储加载计算结果
+            if (typeof AppState !== 'undefined' && AppState.calculationResults) {
+                displayResults(AppState.calculationResults);
+            } else {
+                // 尝试从URL参数或本地存储加载
+                const savedData = localStorage.getItem('fund-calculation-results');
+                if (savedData) {
+                    try {
+                        const results = JSON.parse(savedData);
+                        displayResults(results);
+                    } catch (error) {
+                        console.error('加载计算结果失败:', error);
+                        showNoResultsMessage();
+                    }
+                } else {
+                    showNoResultsMessage();
+                }
+            }
+        }
+        
+        function displayResults(results) {
+            try {
+                console.log('显示计算结果:', results);
+                // 这里可以根据实际结果更新页面内容
+            } catch (error) {
+                console.error('显示结果失败:', error);
+                if (typeof ErrorHandler !== 'undefined') {
+                    ErrorHandler.showError('结果显示失败: ' + error.message);
+                }
+            }
+        }
+        
+        function showNoResultsMessage() {
+            console.log('暂无计算结果');
+        }
+        
+        function initializeCharts() {
+            console.log('初始化图表...');
+        }
+        
+        // 导出功能
+        async function handleExport() {
+            try {
+                let results = null;
+                if (typeof AppState !== 'undefined' && AppState.calculationResults) {
+                    results = AppState.calculationResults;
+                } else {
+                    const savedData = localStorage.getItem('fund-calculation-results');
+                    if (savedData) {
+                        results = JSON.parse(savedData);
+                    }
+                }
+                
+                if (!results) {
+                    throw new Error('没有可导出的计算结果');
+                }
+                
+                // 创建下载链接
+                const dataStr = JSON.stringify(results, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `收益分配计算结果_${new Date().toISOString().slice(0, 10)}.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                
+                alert('导出成功！');
+                
+            } catch (error) {
+                console.error('导出失败:', error);
+                alert('导出失败: ' + error.message);
+            }
+        }
+        
+        // 选项卡切换
+        function bindTabEvents() {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    // 移除所有active状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+                    
+                    // 添加active状态
+                    this.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+        
+        // 指标卡片动画
+        function animateMetrics() {
+            const metricValues = document.querySelectorAll('.metric-value');
+            
+            metricValues.forEach((element, index) => {
+                const finalValue = element.textContent;
+                element.textContent = '0';
+                
+                setTimeout(() => {
+                    animateNumber(element, 0, parseFloat(finalValue.replace(/,/g, '')), 1000, finalValue.includes('%'));
+                }, index * 200);
+            });
+        }
+        
+        // 数字动画
+        function animateNumber(element, start, end, duration, isPercentage = false) {
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const current = start + (end - start) * easeOutCubic(progress);
+                
+                if (isPercentage) {
+                    element.textContent = current.toFixed(2) + '%';
+                } else {
+                    element.textContent = formatNumber(current);
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+        
+        // 缓动函数
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+        
+        // 格式化数字
+        function formatNumber(num) {
+            return new Intl.NumberFormat('zh-CN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+        
+        // 导出功能
+        function exportReport() {
+            alert('报告导出功能将在实际开发中实现，支持PDF、Excel等格式');
+        }
+        
+        // 打印功能
+        function printReport() {
+            window.print();
+        }
+        
+        // 分享功能
+        function shareReport() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '基金收益分配测算报告',
+                    text: '查看详细的收益分配测算结果',
+                    url: window.location.href
+                });
+            } else {
+                // 复制链接到剪贴板
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('链接已复制到剪贴板');
+                });
+            }
+        }
+        
+        // 绑定按钮事件
+        document.addEventListener('click', function(e) {
+            if (e.target.textContent === '导出报告' || e.target.textContent === '生成报告') {
+                exportReport();
+            } else if (e.target.textContent === '打印') {
+                printReport();
+            } else if (e.target.textContent === '分享') {
+                shareReport();
+            }
+        });
+    </script>
+</body>
+</html>

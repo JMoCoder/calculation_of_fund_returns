@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收益分配测算系统 - 图表可视化</title>
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #1890ff;
+            --primary-light: #40a9ff;
+            --primary-dark: #096dd9;
+            
+            /* 辅助色 */
+            --secondary-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --info-color: #13c2c2;
+            
+            /* 图表色彩 */
+            --chart-color-1: #1890ff;
+            --chart-color-2: #52c41a;
+            --chart-color-3: #faad14;
+            --chart-color-4: #ff4d4f;
+            --chart-color-5: #722ed1;
+            --chart-color-6: #13c2c2;
+            --chart-color-7: #eb2f96;
+            --chart-color-8: #fa8c16;
+            
+            /* 文字颜色 */
+            --text-primary: #262626;
+            --text-secondary: #595959;
+            --text-disabled: #bfbfbf;
+            --text-inverse: #ffffff;
+            
+            /* 背景颜色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            
+            /* 边框颜色 */
+            --border-primary: #d9d9d9;
+            --border-secondary: #f0f0f0;
+            --border-focus: #40a9ff;
+            
+            /* 间距 */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* 圆角和阴影 */
+            --border-radius-sm: 2px;
+            --border-radius-md: 4px;
+            --border-radius-lg: 8px;
+            --border-radius-xl: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--border-secondary);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+        
+        /* 图表网格布局 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .chart-card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-lg);
+            position: relative;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        .chart-container {
+            height: 350px;
+            position: relative;
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-md);
+            background-color: var(--bg-primary);
+        }
+        
+        /* 模拟图表样式 */
+        .mock-chart {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--text-secondary);
+            background: linear-gradient(45deg, transparent 25%, rgba(24, 144, 255, 0.05) 25%, rgba(24, 144, 255, 0.05) 50%, transparent 50%, transparent 75%, rgba(24, 144, 255, 0.05) 75%);
+            background-size: 20px 20px;
+        }
+        
+        .mock-chart-icon {
+            font-size: 48px;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.6;
+        }
+        
+        .mock-chart-text {
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        /* 图表控制面板 */
+        .chart-controls {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .control-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .control-select {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-md);
+            background-color: var(--bg-primary);
+            font-size: 14px;
+        }
+        
+        .control-select:focus {
+            border-color: var(--border-focus);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-primary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-icon {
+            padding: 6px;
+            border-radius: var(--border-radius-sm);
+            background-color: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-icon:hover {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        /* 图例样式 */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .legend-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* 全屏模式 */
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-primary);
+            z-index: 1000;
+            padding: var(--spacing-lg);
+        }
+        
+        .fullscreen .chart-container {
+            height: calc(100vh - 200px);
+        }
+        
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        
+        .toolbar-left {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        .toolbar-right {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        /* 选项卡 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-secondary);
+            margin-bottom: var(--spacing-lg);
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: var(--spacing-md) var(--spacing-lg);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--spacing-md);
+            }
+            
+            .card {
+                padding: var(--spacing-lg);
+            }
+            
+            .chart-card {
+                padding: var(--spacing-md);
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .toolbar-left,
+            .toolbar-right {
+                justify-content: center;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题和工具栏 -->
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">图表可视化分析</h1>
+                <div class="card-actions">
+                    <button class="btn btn-secondary" id="back-to-results" onclick="history.back()">返回结果</button>
+                    <button class="btn btn-primary" id="export-charts">导出图表</button>
+                </div>
+            </div>
+            
+            <!-- 图表控制面板 -->
+            <div class="chart-controls">
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label class="control-label">图表类型</label>
+                        <select class="control-select" id="chartType">
+                            <option value="all">全部图表</option>
+                            <option value="line">折线图</option>
+                            <option value="bar">柱状图</option>
+                            <option value="pie">饼图</option>
+                            <option value="area">面积图</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">时间范围</label>
+                        <select class="control-select" id="timeRange">
+                            <option value="all">全部年份</option>
+                            <option value="1-3">第1-3年</option>
+                            <option value="4-5">第4-5年</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">数据维度</label>
+                        <select class="control-select" id="dataDimension">
+                            <option value="amount">金额</option>
+                            <option value="ratio">比例</option>
+                            <option value="rate">收益率</option>
+                            <option value="cumulative">累计值</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">对比分析</label>
+                        <select class="control-select" id="comparison">
+                            <option value="none">无对比</option>
+                            <option value="scenario">情景对比</option>
+                            <option value="sensitivity">敏感性分析</option>
+                            <option value="benchmark">基准对比</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 选项卡 -->
+        <div class="tabs">
+            <div class="tab active" data-tab="overview">概览分析</div>
+            <div class="tab" data-tab="cashflow">现金流分析</div>
+            <div class="tab" data-tab="allocation">分配分析</div>
+            <div class="tab" data-tab="returns">收益分析</div>
+            <div class="tab" data-tab="risk">风险分析</div>
+        </div>
+        
+        <!-- 概览分析选项卡 -->
+        <div class="tab-content active" id="overview">
+            <div class="charts-grid">
+                <!-- 投资收益概览 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">投资收益概览</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">📊</div>
+                            <div class="mock-chart-text">
+                                <strong>投资收益概览图</strong><br>
+                                显示总投资、总收益、净收益等关键指标<br>
+                                使用柱状图展示各项数据对比
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">总投资</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">总收益</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-3);"></div>
+                            <span class="legend-text">净收益</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 收益率趋势 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">收益率趋势分析</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">📈</div>
+                            <div class="mock-chart-text">
+                                <strong>收益率趋势图</strong><br>
+                                显示各年度收益率变化趋势<br>
+                                使用折线图展示时间序列数据
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">年化收益率</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-4);"></div>
+                            <span class="legend-text">门槛收益率</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 现金流分析选项卡 -->
+        <div class="tab-content" id="cashflow">
+            <div class="charts-grid">
+                <!-- 现金流瀑布图 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">现金流瀑布图</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">🌊</div>
+                            <div class="mock-chart-text">
+                                <strong>现金流瀑布图</strong><br>
+                                显示各年度现金流入流出情况<br>
+                                清晰展示现金流的累计变化过程
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">现金流入</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-4);"></div>
+                            <span class="legend-text">现金流出</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">累计现金流</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 累计现金流趋势 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">累计现金流趋势</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">📊</div>
+                            <div class="mock-chart-text">
+                                <strong>累计现金流趋势图</strong><br>
+                                显示投资回收期和盈亏平衡点<br>
+                                使用面积图展示累计效应
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">累计现金流</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-4);"></div>
+                            <span class="legend-text">盈亏平衡线</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 分配分析选项卡 -->
+        <div class="tab-content" id="allocation">
+            <div class="charts-grid">
+                <!-- 收益分配饼图 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">收益分配结构</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">🥧</div>
+                            <div class="mock-chart-text">
+                                <strong>收益分配饼图</strong><br>
+                                显示各投资人的收益分配比例<br>
+                                直观展示收益分配结构
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">优先级投资人</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">劣后级投资人</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-3);"></div>
+                            <span class="legend-text">管理人</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-4);"></div>
+                            <span class="legend-text">管理人Carry</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分配顺序流程图 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">分配顺序流程</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">🔄</div>
+                            <div class="mock-chart-text">
+                                <strong>分配顺序流程图</strong><br>
+                                显示收益分配的先后顺序<br>
+                                使用桑基图展示资金流向
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">本金返还</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">预期收益</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-3);"></div>
+                            <span class="legend-text">超额收益</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 收益分析选项卡 -->
+        <div class="tab-content" id="returns">
+            <div class="charts-grid">
+                <!-- IRR对比分析 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">IRR对比分析</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">📊</div>
+                            <div class="mock-chart-text">
+                                <strong>IRR对比柱状图</strong><br>
+                                对比各投资人的内部收益率<br>
+                                展示不同层级的收益差异
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">优先级IRR</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">劣后级IRR</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-3);"></div>
+                            <span class="legend-text">管理人IRR</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-4);"></div>
+                            <span class="legend-text">门槛收益率</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 收益倍数分析 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">收益倍数分析</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">📈</div>
+                            <div class="mock-chart-text">
+                                <strong>收益倍数雷达图</strong><br>
+                                多维度展示投资收益表现<br>
+                                包括MOIC、IRR、回收期等指标
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">MOIC</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">IRR</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-3);"></div>
+                            <span class="legend-text">回收期</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 风险分析选项卡 -->
+        <div class="tab-content" id="risk">
+            <div class="charts-grid">
+                <!-- 敏感性分析 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">敏感性分析</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">🎯</div>
+                            <div class="mock-chart-text">
+                                <strong>敏感性分析图</strong><br>
+                                分析关键参数变化对收益的影响<br>
+                                使用龙卷风图展示敏感性排序
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">门槛收益率</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">管理人Carry</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-3);"></div>
+                            <span class="legend-text">投资期限</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 情景分析 -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">情景分析</h3>
+                        <div class="chart-actions">
+                            <button class="btn-icon" title="全屏" onclick="toggleFullscreen(this)">
+                                <span>⛶</span>
+                            </button>
+                            <button class="btn-icon" title="下载" onclick="downloadChart(this)">
+                                <span>⬇</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="mock-chart">
+                            <div class="mock-chart-icon">🎭</div>
+                            <div class="mock-chart-text">
+                                <strong>情景分析对比图</strong><br>
+                                对比乐观、基准、悲观三种情景<br>
+                                使用分组柱状图展示差异
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-2);"></div>
+                            <span class="legend-text">乐观情景</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-1);"></div>
+                            <span class="legend-text">基准情景</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--chart-color-4);"></div>
+                            <span class="legend-text">悲观情景</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-secondary);">
+            <button type="button" class="btn btn-secondary">返回结果页面</button>
+            <div>
+                <button type="button" class="btn btn-secondary" style="margin-right: var(--spacing-md);">保存图表</button>
+                <button type="button" class="btn btn-primary">导出分析报告</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入JavaScript文件 -->
+    <script src="js/api-client.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            bindTabEvents();
+            bindControlEvents();
+            // 加载计算结果
+            loadCalculationResults();
+            // 绑定事件监听器
+            bindChartEvents();
+            // 初始化所有图表
+            initializeAllCharts();
+        });
+        
+        function bindChartEvents() {
+            // 导出图表按钮事件
+            const exportBtn = document.getElementById('export-charts');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', handleChartExport);
+            }
+            
+            // 图表类型切换事件
+            document.querySelectorAll('.chart-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchChartType(this.dataset.chart);
+                });
+            });
+        }
+        
+        function loadCalculationResults() {
+            // 从全局状态或本地存储加载计算结果
+            if (typeof AppState !== 'undefined' && AppState && AppState.calculationResults) {
+                generateCharts(AppState.calculationResults);
+            } else {
+                // 尝试从本地存储加载
+                const savedData = localStorage.getItem('fund-calculation-results');
+                if (savedData) {
+                    try {
+                        const results = JSON.parse(savedData);
+                        generateCharts(results);
+                    } catch (error) {
+                        console.error('加载计算结果失败:', error);
+                        showNoChartsMessage();
+                    }
+                } else {
+                    showNoChartsMessage();
+                }
+            }
+        }
+        
+        function generateCharts(results) {
+            try {
+                // 生成收益分配饼图
+                generateAllocationPieChart(results);
+                
+                // 生成现金流趋势图
+                generateCashFlowTrendChart(results);
+                
+                // 生成累计收益图
+                generateCumulativeReturnChart(results);
+                
+                // 生成投资回收期图
+                generatePaybackPeriodChart(results);
+                
+                console.log('图表生成完成');
+                
+            } catch (error) {
+                console.error('图表生成失败:', error);
+                if (typeof ErrorHandler !== 'undefined') {
+                    ErrorHandler.showError('图表生成失败: ' + error.message);
+                }
+            }
+        }
+        
+        function generateAllocationPieChart(results) {
+            // 收益分配饼图
+            const chartContainer = document.getElementById('allocation-pie-chart');
+            if (!chartContainer) return;
+            
+            // 模拟数据 - 实际应从results中提取
+            const data = [
+                { name: '优先级投资人', value: 5000000, color: '#4CAF50' },
+                { name: '劣后级投资人', value: 3000000, color: '#2196F3' },
+                { name: '管理人', value: 1000000, color: '#FF9800' },
+                { name: '管理人Carry', value: 500000, color: '#9C27B0' }
+            ];
+            
+            generateSimplePieChart(chartContainer, data, '收益分配结构');
+        }
+        
+        function generateCashFlowTrendChart(results) {
+            // 现金流趋势图
+            const chartContainer = document.getElementById('cash-flow-trend-chart');
+            if (!chartContainer) return;
+            
+            // 模拟数据 - 实际应从results中提取
+            const data = {
+                labels: ['第1年', '第2年', '第3年', '第4年', '第5年'],
+                datasets: [{
+                    label: '现金流入',
+                    data: [0, 1000000, 2000000, 3500000, 5000000],
+                    borderColor: '#4CAF50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)'
+                }, {
+                    label: '现金流出',
+                    data: [-10000000, 0, 0, 0, 0],
+                    borderColor: '#F44336',
+                    backgroundColor: 'rgba(244, 67, 54, 0.1)'
+                }]
+            };
+            
+            generateSimpleLineChart(chartContainer, data, '现金流趋势');
+        }
+        
+        function generateCumulativeReturnChart(results) {
+            // 累计收益图
+            const chartContainer = document.getElementById('cumulative-return-chart');
+            if (!chartContainer) return;
+            
+            // 模拟数据
+            const data = {
+                labels: ['第1年', '第2年', '第3年', '第4年', '第5年'],
+                datasets: [{
+                    label: '累计收益率',
+                    data: [-100, -80, -20, 15, 35],
+                    borderColor: '#2196F3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    fill: true
+                }]
+            };
+            
+            generateSimpleLineChart(chartContainer, data, '累计收益率变化');
+        }
+        
+        function generatePaybackPeriodChart(results) {
+            // 投资回收期图
+            const chartContainer = document.getElementById('payback-period-chart');
+            if (!chartContainer) return;
+            
+            // 模拟数据
+            const data = [
+                { name: '已回收', value: 60, color: '#4CAF50' },
+                { name: '未回收', value: 40, color: '#E0E0E0' }
+            ];
+            
+            generateSimplePieChart(chartContainer, data, '投资回收进度');
+        }
+        
+        function generateSimplePieChart(container, data, title) {
+            // 简单的SVG饼图实现
+            const width = 400;
+            const height = 300;
+            const radius = Math.min(width, height) / 2 - 40;
+            
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            
+            let svg = `<svg width="${width}" height="${height}" style="margin: 20px auto; display: block;">`;
+            svg += `<text x="${width/2}" y="20" text-anchor="middle" font-size="16" font-weight="bold">${title}</text>`;
+            
+            let currentAngle = 0;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            data.forEach((item, index) => {
+                const angle = (item.value / total) * 2 * Math.PI;
+                const x1 = centerX + radius * Math.cos(currentAngle);
+                const y1 = centerY + radius * Math.sin(currentAngle);
+                const x2 = centerX + radius * Math.cos(currentAngle + angle);
+                const y2 = centerY + radius * Math.sin(currentAngle + angle);
+                
+                const largeArcFlag = angle > Math.PI ? 1 : 0;
+                
+                const pathData = [
+                    `M ${centerX} ${centerY}`,
+                    `L ${x1} ${y1}`,
+                    `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                    'Z'
+                ].join(' ');
+                
+                svg += `<path d="${pathData}" fill="${item.color}" stroke="white" stroke-width="2"/>`;
+                
+                // 添加标签
+                const labelAngle = currentAngle + angle / 2;
+                const labelX = centerX + (radius * 0.7) * Math.cos(labelAngle);
+                const labelY = centerY + (radius * 0.7) * Math.sin(labelAngle);
+                
+                svg += `<text x="${labelX}" y="${labelY}" text-anchor="middle" font-size="12" fill="white">`;
+                svg += `${item.name}</text>`;
+                
+                currentAngle += angle;
+            });
+            
+            svg += '</svg>';
+            
+            // 添加图例
+            let legend = '<div style="display: flex; justify-content: center; flex-wrap: wrap; margin-top: 10px;">';
+            data.forEach(item => {
+                legend += `<div style="display: flex; align-items: center; margin: 5px 10px;">`;
+                legend += `<div style="width: 16px; height: 16px; background-color: ${item.color}; margin-right: 5px;"></div>`;
+                legend += `<span style="font-size: 14px;">${item.name}: ${formatNumber(item.value)}</span>`;
+                legend += '</div>';
+            });
+            legend += '</div>';
+            
+            container.innerHTML = svg + legend;
+        }
+        
+        function generateSimpleLineChart(container, data, title) {
+            // 简单的SVG折线图实现
+            const width = 500;
+            const height = 300;
+            const padding = 60;
+            
+            let svg = `<svg width="${width}" height="${height}" style="margin: 20px auto; display: block;">`;
+            svg += `<text x="${width/2}" y="20" text-anchor="middle" font-size="16" font-weight="bold">${title}</text>`;
+            
+            // 绘制坐标轴
+            svg += `<line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#ccc" stroke-width="1"/>`;
+            svg += `<line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="#ccc" stroke-width="1"/>`;
+            
+            // 绘制数据线
+            data.datasets.forEach((dataset, datasetIndex) => {
+                const points = dataset.data.map((value, index) => {
+                    const x = padding + (index / (dataset.data.length - 1)) * (width - 2 * padding);
+                    const maxValue = Math.max(...dataset.data);
+                    const minValue = Math.min(...dataset.data);
+                    const range = maxValue - minValue || 1;
+                    const y = height - padding - ((value - minValue) / range) * (height - 2 * padding);
+                    return `${x},${y}`;
+                });
+                
+                svg += `<polyline points="${points.join(' ')}" fill="none" stroke="${dataset.borderColor}" stroke-width="2"/>`;
+                
+                // 绘制数据点
+                dataset.data.forEach((value, index) => {
+                    const x = padding + (index / (dataset.data.length - 1)) * (width - 2 * padding);
+                    const maxValue = Math.max(...dataset.data);
+                    const minValue = Math.min(...dataset.data);
+                    const range = maxValue - minValue || 1;
+                    const y = height - padding - ((value - minValue) / range) * (height - 2 * padding);
+                    
+                    svg += `<circle cx="${x}" cy="${y}" r="4" fill="${dataset.borderColor}"/>`;
+                });
+            });
+            
+            // 添加X轴标签
+            data.labels.forEach((label, index) => {
+                const x = padding + (index / (data.labels.length - 1)) * (width - 2 * padding);
+                svg += `<text x="${x}" y="${height - padding + 20}" text-anchor="middle" font-size="12">${label}</text>`;
+            });
+            
+            svg += '</svg>';
+            
+            // 添加图例
+            let legend = '<div style="display: flex; justify-content: center; flex-wrap: wrap; margin-top: 10px;">';
+            data.datasets.forEach(dataset => {
+                legend += `<div style="display: flex; align-items: center; margin: 5px 10px;">`;
+                legend += `<div style="width: 16px; height: 3px; background-color: ${dataset.borderColor}; margin-right: 5px;"></div>`;
+                legend += `<span style="font-size: 14px;">${dataset.label}</span>`;
+                legend += '</div>';
+            });
+            legend += '</div>';
+            
+            container.innerHTML = svg + legend;
+        }
+        
+        function initializeAllCharts() {
+            console.log('初始化所有图表...');
+        }
+        
+        function switchChartType(chartType) {
+            // 切换图表类型
+            console.log('切换图表类型:', chartType);
+        }
+        
+        function showNoChartsMessage() {
+            const container = document.querySelector('.container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h1>暂无图表数据</h1>
+                            <p>请先完成计算以生成图表</p>
+                        </div>
+                        <div class="action-bar">
+                            <button class="btn btn-primary" onclick="window.location.href='../index.html'">返回首页</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 导出图表功能
+        async function handleChartExport() {
+            try {
+                // 创建一个包含所有图表的HTML
+                const chartsGrid = document.querySelector('.charts-grid');
+                const chartsHtml = chartsGrid ? chartsGrid.innerHTML : '';
+                
+                const exportHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>收益分配图表报告</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .chart-container { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+                            .chart-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>收益分配图表报告</h1>
+                        <p>生成时间: ${new Date().toLocaleString('zh-CN')}</p>
+                        ${chartsHtml}
+                    </body>
+                    </html>
+                `;
+                
+                const dataBlob = new Blob([exportHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `收益分配图表报告_${new Date().toISOString().slice(0, 10)}.html`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                
+                alert('图表导出成功！');
+                
+            } catch (error) {
+                console.error('图表导出失败:', error);
+                alert('图表导出失败: ' + error.message);
+            }
+        }
+        
+        // 格式化函数
+        function formatNumber(value, decimals = 0) {
+            if (typeof value !== 'number' || isNaN(value)) {
+                return '0';
+            }
+            return value.toLocaleString('zh-CN', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+        
+        // 选项卡切换
+        function bindTabEvents() {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    // 移除所有active状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+                    
+                    // 添加active状态
+                    this.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+        
+        // 绑定控制面板事件
+        function bindControlEvents() {
+            const controls = document.querySelectorAll('.control-select');
+            
+            controls.forEach(control => {
+                control.addEventListener('change', function() {
+                    updateCharts();
+                });
+            });
+        }
+        
+        // 更新图表
+        function updateCharts() {
+            const chartType = document.getElementById('chartType').value;
+            const timeRange = document.getElementById('timeRange').value;
+            const dataDimension = document.getElementById('dataDimension').value;
+            const comparison = document.getElementById('comparison').value;
+            
+            console.log('更新图表配置:', {
+                chartType,
+                timeRange,
+                dataDimension,
+                comparison
+            });
+            
+            // 这里可以调用图表库的更新方法
+            // 例如：updateECharts(config);
+        }
+        
+        // 全屏切换
+        function toggleFullscreen(button) {
+            const chartCard = button.closest('.chart-card');
+            
+            if (chartCard.classList.contains('fullscreen')) {
+                chartCard.classList.remove('fullscreen');
+                document.body.style.overflow = '';
+                button.innerHTML = '<span>⛶</span>';
+            } else {
+                chartCard.classList.add('fullscreen');
+                document.body.style.overflow = 'hidden';
+                button.innerHTML = '<span>✕</span>';
+            }
+        }
+        
+        // 下载图表
+        function downloadChart(button) {
+            const chartCard = button.closest('.chart-card');
+            const chartTitle = chartCard.querySelector('.chart-title').textContent;
+            
+            alert(`下载图表: ${chartTitle}\n实际开发中将支持PNG、SVG、PDF等格式`);
+        }
+        
+        // 导出所有图表
+        function exportAllCharts() {
+            alert('导出所有图表功能将在实际开发中实现\n支持批量导出为PDF报告');
+        }
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // ESC键退出全屏
+            if (e.key === 'Escape') {
+                const fullscreenChart = document.querySelector('.chart-card.fullscreen');
+                if (fullscreenChart) {
+                    fullscreenChart.classList.remove('fullscreen');
+                    document.body.style.overflow = '';
+                    const button = fullscreenChart.querySelector('.btn-icon');
+                    if (button) {
+                        button.innerHTML = '<span>⛶</span>';
+                    }
+                }
+            }
+        });
+        
+        // 绑定按钮事件
+        document.addEventListener('click', function(e) {
+            if (e.target.textContent === '导出图表' || e.target.textContent === '导出分析报告') {
+                exportAllCharts();
+            }
+        });
+    </script>
+</body>
+</html>

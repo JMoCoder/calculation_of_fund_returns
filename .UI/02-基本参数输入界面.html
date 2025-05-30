@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收益分配测算系统 - 基本参数输入</title>
+    <style>
+        :root {
+            /* 主色调 */
+            --primary-color: #1890ff;
+            --primary-light: #40a9ff;
+            --primary-dark: #096dd9;
+            
+            /* 辅助色 */
+            --secondary-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --info-color: #13c2c2;
+            
+            /* 文字颜色 */
+            --text-primary: #262626;
+            --text-secondary: #595959;
+            --text-disabled: #bfbfbf;
+            --text-inverse: #ffffff;
+            
+            /* 背景颜色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            
+            /* 边框颜色 */
+            --border-primary: #d9d9d9;
+            --border-secondary: #f0f0f0;
+            --border-focus: #40a9ff;
+            
+            /* 间距 */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* 圆角和阴影 */
+            --border-radius-sm: 2px;
+            --border-radius-md: 4px;
+            --border-radius-lg: 8px;
+            --border-radius-xl: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--border-secondary);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+        
+        .label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .label.required::after {
+            content: ' *';
+            color: var(--error-color);
+        }
+        
+        .input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-md);
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: var(--bg-primary);
+        }
+        
+        .input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+            outline: none;
+        }
+        
+        .input.error {
+            border-color: var(--error-color);
+        }
+        
+        .input:disabled {
+            background-color: var(--bg-tertiary);
+            color: var(--text-disabled);
+            cursor: not-allowed;
+        }
+        
+        /* 输入组（带单位） */
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-group .input {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+        }
+        
+        .input-addon {
+            padding: 12px 16px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-left: none;
+            border-top-right-radius: var(--border-radius-md);
+            border-bottom-right-radius: var(--border-radius-md);
+            color: var(--text-secondary);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        /* 帮助文本 */
+        .help-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .error-text {
+            font-size: 12px;
+            color: var(--error-color);
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* 验证状态 */
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+        }
+        
+        .field-wrapper {
+            position: relative;
+        }
+        
+        .field-wrapper.success .validation-icon {
+            color: var(--secondary-color);
+        }
+        
+        .field-wrapper.error .validation-icon {
+            color: var(--error-color);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-primary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* 操作按钮区域 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        /* 提示信息 */
+        .info-box {
+            background-color: rgba(19, 194, 194, 0.1);
+            border: 1px solid var(--info-color);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .info-box-title {
+            font-weight: 600;
+            color: var(--info-color);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .info-box-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: var(--spacing-md);
+            }
+            
+            .card {
+                padding: var(--spacing-lg);
+            }
+            
+            .action-bar {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- API连接状态 -->
+        <div class="status-bar">
+            <span id="api-status" class="status-disconnected">检查后端连接中...</span>
+        </div>
+        
+        <!-- 消息容器 -->
+        <div id="error-container" style="display: none;"></div>
+        <div id="success-container" style="display: none;"></div>
+        
+        <!-- 信息提示 -->
+        <div class="info-box">
+            <div class="info-box-title">📋 填写说明</div>
+            <div class="info-box-content">
+                请准确填写投资项目的基本参数。所有标注红色星号(*)的字段为必填项，系统将实时验证输入数据的有效性。
+            </div>
+        </div>
+        
+        <!-- 基本参数表单 -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">基本参数输入</h2>
+                <p class="card-description">请填写投资项目的基本信息，这些参数将用于后续的收益分配计算</p>
+            </div>
+            
+            <form id="basicParamsForm">
+                <!-- 投资标的 -->
+                <div class="form-group">
+                    <div class="form-row single">
+                        <div class="field-wrapper">
+                            <label class="label required" for="investmentTarget">投资标的</label>
+                            <input 
+                                type="text" 
+                                id="investmentTarget" 
+                                class="input" 
+                                placeholder="请输入投资标的名称"
+                                maxlength="100"
+                                required
+                            >
+                            <span class="validation-icon" style="display: none;">✓</span>
+                            <div class="help-text">投资标的名称，长度1-100个字符</div>
+                            <div class="error-text" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 投资金额和期限 -->
+                <div class="form-group">
+                    <div class="form-row">
+                        <div class="field-wrapper">
+                            <label class="label required" for="investmentAmount">拟投资金额</label>
+                            <div class="input-group">
+                                <input 
+                                    type="number" 
+                                    id="investmentAmount" 
+                                    class="input" 
+                                    placeholder="请输入投资金额"
+                                    min="1"
+                                    max="999999"
+                                    step="0.01"
+                                    required
+                                >
+                                <span class="input-addon">万元</span>
+                            </div>
+                            <div class="help-text">投资金额范围：1-999,999万元，支持小数点后2位</div>
+                            <div class="error-text" style="display: none;"></div>
+                        </div>
+                        
+                        <div class="field-wrapper">
+                            <label class="label required" for="investmentPeriod">投资期限</label>
+                            <div class="input-group">
+                                <input 
+                                    type="number" 
+                                    id="investmentPeriod" 
+                                    class="input" 
+                                    placeholder="请输入投资期限"
+                                    min="1"
+                                    max="30"
+                                    step="1"
+                                    required
+                                >
+                                <span class="input-addon">年</span>
+                            </div>
+                            <div class="help-text">投资期限范围：1-30年，整数</div>
+                            <div class="error-text" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 门槛收益率和管理人Carry -->
+                <div class="form-group">
+                    <div class="form-row">
+                        <div class="field-wrapper">
+                            <label class="label required" for="thresholdReturn">门槛收益率</label>
+                            <div class="input-group">
+                                <input 
+                                    type="number" 
+                                    id="thresholdReturn" 
+                                    class="input" 
+                                    placeholder="请输入门槛收益率"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    required
+                                >
+                                <span class="input-addon">%</span>
+                            </div>
+                            <div class="help-text">门槛收益率范围：0-100%，支持小数点后2位</div>
+                            <div class="error-text" style="display: none;"></div>
+                        </div>
+                        
+                        <div class="field-wrapper">
+                            <label class="label required" for="managementCarry">管理人Carry</label>
+                            <div class="input-group">
+                                <input 
+                                    type="number" 
+                                    id="managementCarry" 
+                                    class="input" 
+                                    placeholder="请输入管理人Carry"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    required
+                                >
+                                <span class="input-addon">%</span>
+                            </div>
+                            <div class="help-text">管理人Carry范围：0-100%，支持小数点后2位</div>
+                            <div class="error-text" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="action-bar">
+                    <button type="button" class="btn btn-secondary" id="reset-btn">重置</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" style="margin-right: var(--spacing-md);">保存草稿</button>
+                        <button type="submit" class="btn btn-primary" id="nextBtn" disabled>下一步：净现金流输入</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 引入JavaScript文件 -->
+    <script src="js/api-client.js"></script>
+    <script src="js/main.js"></script>
+    
+    <style>
+        /* 状态栏样式 */
+        .status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            z-index: 1000;
+            font-size: 14px;
+        }
+        
+        .status-connected {
+            color: #10b981;
+        }
+        
+        .status-disconnected {
+            color: #ef4444;
+        }
+        
+        /* 消息样式 */
+        .alert {
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+        }
+        
+        .alert-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .alert-message {
+            font-size: 14px;
+        }
+        
+        .alert-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        
+        .alert-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 加载状态样式 */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 调整容器顶部间距 */
+        .container {
+            margin-top: 60px;
+        }
+    </style>
+
+    <script>
+        // 表单验证逻辑
+        const form = document.getElementById('basicParamsForm');
+        const nextBtn = document.getElementById('nextBtn');
+        const inputs = form.querySelectorAll('input[required]');
+        
+        // 验证规则
+        const validationRules = {
+            investmentTarget: {
+                required: true,
+                minLength: 1,
+                maxLength: 100,
+                message: '投资标的名称长度必须在1-100个字符之间'
+            },
+            investmentAmount: {
+                required: true,
+                min: 1,
+                max: 999999,
+                decimal: 2,
+                message: '投资金额必须在1-999,999万元之间，最多保留2位小数'
+            },
+            investmentPeriod: {
+                required: true,
+                min: 1,
+                max: 30,
+                integer: true,
+                message: '投资期限必须在1-30年之间，且为整数'
+            },
+            thresholdReturn: {
+                required: true,
+                min: 0,
+                max: 100,
+                decimal: 2,
+                message: '门槛收益率必须在0-100%之间，最多保留2位小数'
+            },
+            managementCarry: {
+                required: true,
+                min: 0,
+                max: 100,
+                decimal: 2,
+                message: '管理人Carry必须在0-100%之间，最多保留2位小数'
+            }
+        };
+        
+        // 验证单个字段
+        function validateField(input) {
+            const fieldName = input.id;
+            const rule = validationRules[fieldName];
+            const value = input.value.trim();
+            const wrapper = input.closest('.field-wrapper');
+            const errorText = wrapper.querySelector('.error-text');
+            const validationIcon = wrapper.querySelector('.validation-icon');
+            
+            // 清除之前的状态
+            input.classList.remove('error');
+            wrapper.classList.remove('error', 'success');
+            errorText.style.display = 'none';
+            validationIcon.style.display = 'none';
+            
+            if (!value && rule.required) {
+                showError(input, wrapper, errorText, '此字段为必填项');
+                return false;
+            }
+            
+            if (value) {
+                // 长度验证
+                if (rule.minLength && value.length < rule.minLength) {
+                    showError(input, wrapper, errorText, rule.message);
+                    return false;
+                }
+                
+                if (rule.maxLength && value.length > rule.maxLength) {
+                    showError(input, wrapper, errorText, rule.message);
+                    return false;
+                }
+                
+                // 数值验证
+                if (input.type === 'number') {
+                    const numValue = parseFloat(value);
+                    
+                    if (isNaN(numValue)) {
+                        showError(input, wrapper, errorText, '请输入有效的数字');
+                        return false;
+                    }
+                    
+                    if (rule.min !== undefined && numValue < rule.min) {
+                        showError(input, wrapper, errorText, rule.message);
+                        return false;
+                    }
+                    
+                    if (rule.max !== undefined && numValue > rule.max) {
+                        showError(input, wrapper, errorText, rule.message);
+                        return false;
+                    }
+                    
+                    // 整数验证
+                    if (rule.integer && !Number.isInteger(numValue)) {
+                        showError(input, wrapper, errorText, rule.message);
+                        return false;
+                    }
+                    
+                    // 小数位验证
+                    if (rule.decimal) {
+                        const decimalPlaces = (value.split('.')[1] || '').length;
+                        if (decimalPlaces > rule.decimal) {
+                            showError(input, wrapper, errorText, rule.message);
+                            return false;
+                        }
+                    }
+                }
+            }
+            
+            // 验证通过
+            if (value) {
+                showSuccess(wrapper, validationIcon);
+            }
+            return true;
+        }
+        
+        function showError(input, wrapper, errorText, message) {
+            input.classList.add('error');
+            wrapper.classList.add('error');
+            errorText.textContent = message;
+            errorText.style.display = 'block';
+        }
+        
+        function showSuccess(wrapper, validationIcon) {
+            wrapper.classList.add('success');
+            validationIcon.style.display = 'block';
+        }
+        
+        // 检查表单是否完整有效
+        function checkFormValidity() {
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isValid = false;
+                }
+            });
+            
+            nextBtn.disabled = !isValid;
+            return isValid;
+        }
+        
+        // 绑定事件
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                validateField(input);
+                checkFormValidity();
+            });
+            
+            input.addEventListener('input', () => {
+                // 实时验证，但不显示错误信息
+                setTimeout(() => {
+                    checkFormValidity();
+                }, 100);
+            });
+        });
+        
+        // 表单提交
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (checkFormValidity()) {
+                // 保存数据到sessionStorage
+                const formData = {
+                    investmentTarget: document.getElementById('investmentTarget').value,
+                    investmentAmount: document.getElementById('investmentAmount').value,
+                    investmentPeriod: document.getElementById('investmentPeriod').value,
+                    thresholdReturn: document.getElementById('thresholdReturn').value,
+                    managementCarry: document.getElementById('managementCarry').value
+                };
+                
+                sessionStorage.setItem('basicParams', JSON.stringify(formData));
+                
+                // 跳转到下一步
+                alert('基本参数保存成功！即将跳转到净现金流输入页面。');
+                // window.location.href = '03-净现金流输入界面.html';
+            }
+        });
+        
+        // 页面加载时恢复数据
+        window.addEventListener('load', () => {
+            const savedData = sessionStorage.getItem('basicParams');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                Object.keys(data).forEach(key => {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        input.value = data[key];
+                        validateField(input);
+                    }
+                });
+                checkFormValidity();
+            }
+        });
+    </script>
+</body>
+</html>
