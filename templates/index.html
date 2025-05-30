@@ -1118,7 +1118,21 @@
                 if (result.success) {
                     showAlert('基本参数设置成功', 'success');
                     markStepCompleted(0);
-                    generateCashFlowInputs();
+                    
+                    // 只有在没有现金流输入框或者投资期限发生变化时才重新生成
+                    const existingInputs = document.querySelectorAll('#cashFlowInputs input[id^="cashFlow"]');
+                    const currentPeriod = existingInputs.length;
+                    const newPeriod = basicParams.investment_period;
+                    
+                    console.log(`当前现金流输入框数量: ${currentPeriod}, 新的投资期限: ${newPeriod}`);
+                    
+                    if (currentPeriod === 0 || currentPeriod !== newPeriod) {
+                        console.log('需要重新生成现金流输入框');
+                        generateCashFlowInputs();
+                    } else {
+                        console.log('保持现有现金流输入框，避免数据丢失');
+                    }
+                    
                     showTab('cash-flows');
                 } else {
                     showAlert(result.message, 'error');
