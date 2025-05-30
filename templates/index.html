@@ -68,6 +68,102 @@
             line-height: 1.6;
         }
         
+        /* 初始页面加载遮罩 */
+        .page-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        
+        .page-loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .page-loading-content {
+            text-align: center;
+            color: var(--text-inverse);
+            max-width: 400px;
+            padding: var(--spacing-xl);
+        }
+        
+        .page-loading-logo {
+            font-size: 48px;
+            margin-bottom: var(--spacing-lg);
+            animation: pulse 2s infinite;
+        }
+        
+        .page-loading-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .page-loading-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .page-loading-progress {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .page-loading-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.6);
+            animation: loadingDots 1.5s infinite;
+        }
+        
+        .page-loading-dot:nth-child(1) { animation-delay: 0s; }
+        .page-loading-dot:nth-child(2) { animation-delay: 0.3s; }
+        .page-loading-dot:nth-child(3) { animation-delay: 0.6s; }
+        
+        .page-loading-tip {
+            font-size: 14px;
+            opacity: 0.8;
+            font-style: italic;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        @keyframes loadingDots {
+            0%, 80%, 100% {
+                background-color: rgba(255, 255, 255, 0.6);
+                transform: scale(1);
+            }
+            40% {
+                background-color: rgba(255, 255, 255, 1);
+                transform: scale(1.3);
+            }
+        }
+        
+        /* 页面内容初始隐藏 */
+        .main-app {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .main-app.loaded {
+            opacity: 1;
+        }
+        
         /* 头部导航 */
         .header {
             background-color: var(--bg-primary);
@@ -701,320 +797,340 @@
     </style>
 </head>
 <body>
-    <!-- 头部导航 -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
+    <!-- 初始页面加载遮罩 -->
+    <div class="page-loading-overlay" id="pageLoadingOverlay">
+        <div class="page-loading-content">
+            <div class="page-loading-logo">
                 <i class="fas fa-calculator"></i>
-                收益分配测算系统
             </div>
-            <div class="header-actions">
-                <button class="btn btn-secondary" onclick="downloadTemplate()">
-                    <i class="fas fa-download"></i>
-                    下载模板
-                </button>
+            <div class="page-loading-title">收益分配测算系统</div>
+            <div class="page-loading-subtitle">正在加载，请稍候...</div>
+            <div class="page-loading-progress">
+                <div class="page-loading-dot"></div>
+                <div class="page-loading-dot"></div>
+                <div class="page-loading-dot"></div>
             </div>
+            <div class="page-loading-tip">请确保网络连接稳定，不要关闭浏览器或应用程序</div>
         </div>
-    </header>
+    </div>
 
-    <div class="container">
-        <div class="main-content">
-            <!-- 侧边栏 -->
-            <aside class="sidebar">
-                <div class="sidebar-title">
-                    <i class="fas fa-list-ol"></i>
-                    计算步骤
+    <!-- 主应用内容 -->
+    <div class="main-app" id="mainApp">
+        <!-- 头部导航 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-calculator"></i>
+                    收益分配测算系统
                 </div>
-                <ul class="step-list">
-                    <li class="step-item active" onclick="showTab('basic-params')">
-                        <span class="step-number">1</span>
-                        <span>基本参数</span>
-                    </li>
-                    <li class="step-item" onclick="showTab('cash-flows')">
-                        <span class="step-number">2</span>
-                        <span>净现金流</span>
-                    </li>
-                    <li class="step-item" onclick="showTab('distribution-mode')">
-                        <span class="step-number">3</span>
-                        <span>分配模式</span>
-                    </li>
-                    <li class="step-item" onclick="showTab('results')">
-                        <span class="step-number">4</span>
-                        <span>计算结果</span>
-                    </li>
-                    <li class="step-item" onclick="showTab('visualization')">
-                        <span class="step-number">5</span>
-                        <span>图表分析</span>
-                    </li>
-                </ul>
-            </aside>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="downloadTemplate()">
+                        <i class="fas fa-download"></i>
+                        下载模板
+                    </button>
+                </div>
+            </div>
+        </header>
 
-            <!-- 主内容区域 -->
-            <main>
-                <!-- 步骤1: 基本参数 -->
-                <section id="basic-params" class="content-area active">
-                    <div class="content-header">
-                        <h2 class="content-title">
-                            <i class="fas fa-cog"></i>
-                            基本投资参数
-                        </h2>
-                        <p class="content-subtitle">请填写投资项目的基本信息和参数设置</p>
+        <div class="container">
+            <div class="main-content">
+                <!-- 侧边栏 -->
+                <aside class="sidebar">
+                    <div class="sidebar-title">
+                        <i class="fas fa-list-ol"></i>
+                        计算步骤
                     </div>
+                    <ul class="step-list">
+                        <li class="step-item active" onclick="showTab('basic-params')">
+                            <span class="step-number">1</span>
+                            <span>基本参数</span>
+                        </li>
+                        <li class="step-item" onclick="showTab('cash-flows')">
+                            <span class="step-number">2</span>
+                            <span>净现金流</span>
+                        </li>
+                        <li class="step-item" onclick="showTab('distribution-mode')">
+                            <span class="step-number">3</span>
+                            <span>分配模式</span>
+                        </li>
+                        <li class="step-item" onclick="showTab('results')">
+                            <span class="step-number">4</span>
+                            <span>计算结果</span>
+                        </li>
+                        <li class="step-item" onclick="showTab('visualization')">
+                            <span class="step-number">5</span>
+                            <span>图表分析</span>
+                        </li>
+                    </ul>
+                </aside>
 
-                    <div class="info-box">
-                        <div class="info-box-title">
-                            <i class="fas fa-info-circle"></i>
-                            操作提示
+                <!-- 主内容区域 -->
+                <main>
+                    <!-- 步骤1: 基本参数 -->
+                    <section id="basic-params" class="content-area active">
+                        <div class="content-header">
+                            <h2 class="content-title">
+                                <i class="fas fa-cog"></i>
+                                基本投资参数
+                            </h2>
+                            <p class="content-subtitle">请填写投资项目的基本信息和参数设置</p>
                         </div>
-                        <div class="info-box-content">
-                            所有标注 * 的字段为必填项，请确保数据准确无误。投资期限决定了现金流输入的年数。
-                        </div>
-                    </div>
 
-                    <form id="basicParamsForm">
-                        <div class="form-group">
-                            <div class="form-row">
-                                <div class="field-wrapper">
-                                    <label class="label required" for="investmentTarget">投资标的</label>
-                                    <input type="text" class="input" id="investmentTarget" placeholder="请输入投资标的名称">
-                                    <div class="help-text">例如：某科技公司股权投资项目</div>
-                                </div>
-                                <div class="field-wrapper">
-                                    <label class="label required" for="investmentAmount">拟投资金额</label>
-                                    <div class="input-group">
-                                        <input type="number" class="input" id="investmentAmount" placeholder="请输入金额" min="1" step="0.01">
-                                        <span class="input-addon">万元</span>
-                                    </div>
-                                </div>
+                        <div class="info-box">
+                            <div class="info-box-title">
+                                <i class="fas fa-info-circle"></i>
+                                操作提示
+                            </div>
+                            <div class="info-box-content">
+                                所有标注 * 的字段为必填项，请确保数据准确无误。投资期限决定了现金流输入的年数。
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <div class="form-row triple">
-                                <div class="field-wrapper">
-                                    <label class="label required" for="investmentPeriod">投资期限</label>
-                                    <div class="input-group">
-                                        <input type="number" class="input" id="investmentPeriod" placeholder="年限" min="1" max="30" step="1">
-                                        <span class="input-addon">年</span>
+                        <form id="basicParamsForm">
+                            <div class="form-group">
+                                <div class="form-row">
+                                    <div class="field-wrapper">
+                                        <label class="label required" for="investmentTarget">投资标的</label>
+                                        <input type="text" class="input" id="investmentTarget" placeholder="请输入投资标的名称">
+                                        <div class="help-text">例如：某科技公司股权投资项目</div>
                                     </div>
-                                    <div class="help-text">设置投资项目的预期持有期限</div>
+                                    <div class="field-wrapper">
+                                        <label class="label required" for="investmentAmount">拟投资金额</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="investmentAmount" placeholder="请输入金额" min="1" step="0.01">
+                                            <span class="input-addon">万元</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="field-wrapper">
-                                    <label class="label required" for="hurdleRate">门槛收益率</label>
-                                    <div class="input-group">
-                                        <input type="number" class="input" id="hurdleRate" placeholder="收益率" min="0" max="100" step="0.1">
-                                        <span class="input-addon">%</span>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="form-row triple">
+                                    <div class="field-wrapper">
+                                        <label class="label required" for="investmentPeriod">投资期限</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="investmentPeriod" placeholder="年限" min="1" max="30" step="1">
+                                            <span class="input-addon">年</span>
+                                        </div>
+                                        <div class="help-text">设置投资项目的预期持有期限</div>
                                     </div>
-                                    <div class="help-text">投资者要求的最低年化收益率</div>
+                                    <div class="field-wrapper">
+                                        <label class="label required" for="hurdleRate">门槛收益率</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="hurdleRate" placeholder="收益率" min="0" max="100" step="0.1">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                        <div class="help-text">投资者要求的最低年化收益率</div>
+                                    </div>
+                                    <div class="field-wrapper">
+                                        <label class="label required" for="managementCarry">管理人Carry</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="managementCarry" placeholder="比例" min="0" max="100" step="0.1">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                        <div class="help-text">管理人超额收益分配比例</div>
+                                    </div>
                                 </div>
-                                <div class="field-wrapper">
-                                    <label class="label required" for="managementCarry">管理人Carry</label>
-                                    <div class="input-group">
-                                        <input type="number" class="input" id="managementCarry" placeholder="比例" min="0" max="100" step="0.1">
-                                        <span class="input-addon">%</span>
+                            </div>
+
+                            <div class="action-bar">
+                                <div>
+                                    <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;" onchange="importExcel()">
+                                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
+                                        <i class="fas fa-upload"></i>
+                                        导入Excel
+                                    </button>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="saveBasicParams()">
+                                    下一步
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- 步骤2: 净现金流 -->
+                    <section id="cash-flows" class="content-area">
+                        <div class="content-header">
+                            <h2 class="content-title">
+                                <i class="fas fa-chart-line"></i>
+                                净现金流输入
+                            </h2>
+                            <p class="content-subtitle">请输入各年度的预期净现金流金额</p>
+                        </div>
+
+                        <div id="cashFlowInputs">
+                            <p class="help-text">请先完成基本参数设置</p>
+                        </div>
+
+                        <div class="action-bar">
+                            <button type="button" class="btn btn-secondary" onclick="showTab('basic-params')">
+                                <i class="fas fa-arrow-left"></i>
+                                上一步
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="saveCashFlows()">
+                                下一步
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- 步骤3: 分配模式 -->
+                    <section id="distribution-mode" class="content-area">
+                        <div class="content-header">
+                            <h2 class="content-title">
+                                <i class="fas fa-sliders-h"></i>
+                                分配模式设置
+                            </h2>
+                            <p class="content-subtitle">选择适合的收益分配计算模式</p>
+                        </div>
+
+                        <div class="mode-grid">
+                            <div class="mode-card">
+                                <div class="mode-header">
+                                    <i class="fas fa-layer-group"></i>
+                                    <span class="mode-title">平层结构</span>
+                                </div>
+                                
+                                <div class="mode-option" onclick="selectMode(this, 'flat_priority_repayment')">
+                                    <div class="radio-wrapper">
+                                        <input type="radio" name="distributionMode" id="flatPriorityRepayment" value="flat_priority_repayment">
+                                        <div>
+                                            <div class="radio-label">优先还本模式</div>
+                                            <div class="radio-description">净现金流优先偿还本金，本金还完后再分配门槛收益和超额收益</div>
+                                        </div>
                                     </div>
-                                    <div class="help-text">管理人超额收益分配比例</div>
+                                </div>
+
+                                <div class="mode-option" onclick="selectMode(this, 'flat_periodic_distribution')">
+                                    <div class="radio-wrapper">
+                                        <input type="radio" name="distributionMode" id="flatPeriodicDistribution" value="flat_periodic_distribution">
+                                        <div>
+                                            <div class="radio-label">期间分配模式</div>
+                                            <div class="radio-description">优先分配期间收益，然后偿还本金和分配剩余超额收益</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="periodicRateInput" style="display: none;">
+                                    <div class="field-wrapper">
+                                        <label class="label" for="periodicRate">期间收益率</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="periodicRate" placeholder="收益率" min="0" max="100" step="0.1">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mode-card">
+                                <div class="mode-header">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span class="mode-title">结构化</span>
+                                </div>
+                                
+                                <div class="mode-option" onclick="selectMode(this, 'structured_senior_subordinate')">
+                                    <div class="radio-wrapper">
+                                        <input type="radio" name="distributionMode" id="structuredSeniorSubordinate" value="structured_senior_subordinate">
+                                        <div>
+                                            <div class="radio-label">优先劣后模式</div>
+                                            <div class="radio-description">优先级投资者优先获得本息回报，劣后级承担主要风险</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="seniorRatioInput" style="display: none;">
+                                    <div class="field-wrapper">
+                                        <label class="label" for="seniorRatio">优先级投资比例</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="seniorRatio" placeholder="比例" min="1" max="99" step="1">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" style="margin-top: var(--spacing-md);">
+                                        <div class="help-text">优先级金额: <span id="seniorAmount">0.00</span> 万元</div>
+                                        <div class="help-text">劣后级金额: <span id="subordinateAmount">0.00</span> 万元</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="action-bar">
-                            <div>
-                                <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;" onchange="importExcel()">
-                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
-                                    <i class="fas fa-upload"></i>
-                                    导入Excel
+                            <button type="button" class="btn btn-secondary" onclick="showTab('cash-flows')">
+                                <i class="fas fa-arrow-left"></i>
+                                上一步
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="calculate()">
+                                <i class="fas fa-calculator"></i>
+                                开始计算
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- 步骤4: 计算结果 -->
+                    <section id="results" class="content-area">
+                        <div class="content-header">
+                            <h2 class="content-title">
+                                <i class="fas fa-chart-bar"></i>
+                                计算结果
+                            </h2>
+                            <p class="content-subtitle">查看详细的收益分配计算结果</p>
+                        </div>
+
+                        <div id="calculationResults">
+                            <p class="help-text">请完成前面的步骤并执行计算</p>
+                        </div>
+
+                        <div class="action-bar">
+                            <button type="button" class="btn btn-secondary" onclick="showTab('distribution-mode')">
+                                <i class="fas fa-arrow-left"></i>
+                                上一步
+                            </button>
+                            <div style="display: flex; gap: var(--spacing-sm);">
+                                <button type="button" class="btn btn-success" onclick="exportResults()" id="exportBtn" disabled>
+                                    <i class="fas fa-download"></i>
+                                    导出Excel
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="showTab('visualization')" id="visualizeBtn" disabled>
+                                    查看图表
+                                    <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="saveBasicParams()">
-                                下一步
-                                <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </section>
+
+                    <!-- 步骤5: 图表分析 -->
+                    <section id="visualization" class="content-area">
+                        <div class="content-header">
+                            <h2 class="content-title">
+                                <i class="fas fa-chart-pie"></i>
+                                可视化分析
+                            </h2>
+                            <p class="content-subtitle">通过图表直观了解收益分配情况</p>
+                        </div>
+
+                        <div id="chartContainer">
+                            <p class="help-text">请先完成计算步骤</p>
+                        </div>
+
+                        <div class="action-bar">
+                            <button type="button" class="btn btn-secondary" onclick="showTab('results')">
+                                <i class="fas fa-arrow-left"></i>
+                                返回结果
                             </button>
+                            <div></div>
                         </div>
-                    </form>
-                </section>
-
-                <!-- 步骤2: 净现金流 -->
-                <section id="cash-flows" class="content-area">
-                    <div class="content-header">
-                        <h2 class="content-title">
-                            <i class="fas fa-chart-line"></i>
-                            净现金流输入
-                        </h2>
-                        <p class="content-subtitle">请输入各年度的预期净现金流金额</p>
-                    </div>
-
-                    <div id="cashFlowInputs">
-                        <p class="help-text">请先完成基本参数设置</p>
-                    </div>
-
-                    <div class="action-bar">
-                        <button type="button" class="btn btn-secondary" onclick="showTab('basic-params')">
-                            <i class="fas fa-arrow-left"></i>
-                            上一步
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="saveCashFlows()">
-                            下一步
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </section>
-
-                <!-- 步骤3: 分配模式 -->
-                <section id="distribution-mode" class="content-area">
-                    <div class="content-header">
-                        <h2 class="content-title">
-                            <i class="fas fa-sliders-h"></i>
-                            分配模式设置
-                        </h2>
-                        <p class="content-subtitle">选择适合的收益分配计算模式</p>
-                    </div>
-
-                    <div class="mode-grid">
-                        <div class="mode-card">
-                            <div class="mode-header">
-                                <i class="fas fa-layer-group"></i>
-                                <span class="mode-title">平层结构</span>
-                            </div>
-                            
-                            <div class="mode-option" onclick="selectMode(this, 'flat_priority_repayment')">
-                                <div class="radio-wrapper">
-                                    <input type="radio" name="distributionMode" id="flatPriorityRepayment" value="flat_priority_repayment">
-                                    <div>
-                                        <div class="radio-label">优先还本模式</div>
-                                        <div class="radio-description">净现金流优先偿还本金，本金还完后再分配门槛收益和超额收益</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mode-option" onclick="selectMode(this, 'flat_periodic_distribution')">
-                                <div class="radio-wrapper">
-                                    <input type="radio" name="distributionMode" id="flatPeriodicDistribution" value="flat_periodic_distribution">
-                                    <div>
-                                        <div class="radio-label">期间分配模式</div>
-                                        <div class="radio-description">优先分配期间收益，然后偿还本金和分配剩余超额收益</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="periodicRateInput" style="display: none;">
-                                <div class="field-wrapper">
-                                    <label class="label" for="periodicRate">期间收益率</label>
-                                    <div class="input-group">
-                                        <input type="number" class="input" id="periodicRate" placeholder="收益率" min="0" max="100" step="0.1">
-                                        <span class="input-addon">%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mode-card">
-                            <div class="mode-header">
-                                <i class="fas fa-chart-bar"></i>
-                                <span class="mode-title">结构化</span>
-                            </div>
-                            
-                            <div class="mode-option" onclick="selectMode(this, 'structured_senior_subordinate')">
-                                <div class="radio-wrapper">
-                                    <input type="radio" name="distributionMode" id="structuredSeniorSubordinate" value="structured_senior_subordinate">
-                                    <div>
-                                        <div class="radio-label">优先劣后模式</div>
-                                        <div class="radio-description">优先级投资者优先获得本息回报，劣后级承担主要风险</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="seniorRatioInput" style="display: none;">
-                                <div class="field-wrapper">
-                                    <label class="label" for="seniorRatio">优先级投资比例</label>
-                                    <div class="input-group">
-                                        <input type="number" class="input" id="seniorRatio" placeholder="比例" min="1" max="99" step="1">
-                                        <span class="input-addon">%</span>
-                                    </div>
-                                </div>
-                                <div class="form-row" style="margin-top: var(--spacing-md);">
-                                    <div class="help-text">优先级金额: <span id="seniorAmount">0.00</span> 万元</div>
-                                    <div class="help-text">劣后级金额: <span id="subordinateAmount">0.00</span> 万元</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="action-bar">
-                        <button type="button" class="btn btn-secondary" onclick="showTab('cash-flows')">
-                            <i class="fas fa-arrow-left"></i>
-                            上一步
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="calculate()">
-                            <i class="fas fa-calculator"></i>
-                            开始计算
-                        </button>
-                    </div>
-                </section>
-
-                <!-- 步骤4: 计算结果 -->
-                <section id="results" class="content-area">
-                    <div class="content-header">
-                        <h2 class="content-title">
-                            <i class="fas fa-chart-bar"></i>
-                            计算结果
-                        </h2>
-                        <p class="content-subtitle">查看详细的收益分配计算结果</p>
-                    </div>
-
-                    <div id="calculationResults">
-                        <p class="help-text">请完成前面的步骤并执行计算</p>
-                    </div>
-
-                    <div class="action-bar">
-                        <button type="button" class="btn btn-secondary" onclick="showTab('distribution-mode')">
-                            <i class="fas fa-arrow-left"></i>
-                            上一步
-                        </button>
-                        <div style="display: flex; gap: var(--spacing-sm);">
-                            <button type="button" class="btn btn-success" onclick="exportResults()" id="exportBtn" disabled>
-                                <i class="fas fa-download"></i>
-                                导出Excel
-                            </button>
-                            <button type="button" class="btn btn-primary" onclick="showTab('visualization')" id="visualizeBtn" disabled>
-                                查看图表
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 步骤5: 图表分析 -->
-                <section id="visualization" class="content-area">
-                    <div class="content-header">
-                        <h2 class="content-title">
-                            <i class="fas fa-chart-pie"></i>
-                            可视化分析
-                        </h2>
-                        <p class="content-subtitle">通过图表直观了解收益分配情况</p>
-                    </div>
-
-                    <div id="chartContainer">
-                        <p class="help-text">请先完成计算步骤</p>
-                    </div>
-
-                    <div class="action-bar">
-                        <button type="button" class="btn btn-secondary" onclick="showTab('results')">
-                            <i class="fas fa-arrow-left"></i>
-                            返回结果
-                        </button>
-                        <div></div>
-                    </div>
-                </section>
-            </main>
+                    </section>
+                </main>
+            </div>
         </div>
-    </div>
 
-    <!-- 加载提示 -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <p>正在计算中，请稍候...</p>
+        <!-- 加载提示 -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>正在计算中，请稍候...</p>
+            </div>
         </div>
     </div>
 
@@ -1023,6 +1139,146 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
+        /**
+         * 页面加载控制相关功能
+         * 在页面完全加载前禁用所有交互，防止用户进行无效操作
+         */
+        
+        // 禁用所有页面交互
+        function disablePageInteraction() {
+            // 禁用所有输入框
+            document.querySelectorAll('input, textarea, select').forEach(element => {
+                element.disabled = true;
+                element.style.pointerEvents = 'none';
+            });
+            
+            // 禁用所有按钮和链接
+            document.querySelectorAll('button, a, .btn').forEach(element => {
+                element.disabled = true;
+                element.style.pointerEvents = 'none';
+                element.style.opacity = '0.6';
+            });
+            
+            // 禁用所有可点击元素
+            document.querySelectorAll('.step-item, .mode-option, .mode-card').forEach(element => {
+                element.style.pointerEvents = 'none';
+                element.style.opacity = '0.6';
+            });
+        }
+        
+        // 启用所有页面交互
+        function enablePageInteraction() {
+            // 启用所有输入框
+            document.querySelectorAll('input, textarea, select').forEach(element => {
+                element.disabled = false;
+                element.style.pointerEvents = '';
+            });
+            
+            // 启用所有按钮和链接
+            document.querySelectorAll('button, a, .btn').forEach(element => {
+                element.disabled = false;
+                element.style.pointerEvents = '';
+                element.style.opacity = '';
+            });
+            
+            // 启用所有可点击元素
+            document.querySelectorAll('.step-item, .mode-option, .mode-card').forEach(element => {
+                element.style.pointerEvents = '';
+                element.style.opacity = '';
+            });
+        }
+        
+        // 页面加载状态管理 - 简化版本
+        const PageLoader = {
+            isLoading: true,
+            startTime: Date.now(),
+            maxWaitTime: 3000, // 降低到3秒
+            minWaitTime: 800,  // 最少显示800ms加载画面
+            
+            // 完成页面加载
+            finishLoading() {
+                if (!this.isLoading) return;
+                
+                this.isLoading = false;
+                const totalTime = Date.now() - this.startTime;
+                console.log(`页面加载完成，总耗时: ${totalTime}ms`);
+                
+                // 确保至少显示最小时间的加载画面
+                const remainingTime = Math.max(0, this.minWaitTime - totalTime);
+                
+                setTimeout(() => {
+                    this.showMainApp();
+                }, remainingTime);
+            },
+            
+            // 显示主应用
+            showMainApp() {
+                console.log('开始显示主应用界面');
+                
+                // 隐藏加载遮罩
+                const loadingOverlay = document.getElementById('pageLoadingOverlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                    console.log('加载遮罩已隐藏');
+                } else {
+                    console.warn('未找到加载遮罩元素');
+                }
+                
+                // 显示主应用内容
+                const mainApp = document.getElementById('mainApp');
+                if (mainApp) {
+                    mainApp.classList.add('loaded');
+                    console.log('主应用内容已显示');
+                } else {
+                    console.warn('未找到主应用元素');
+                }
+                
+                // 启用页面交互
+                enablePageInteraction();
+                console.log('页面交互已启用');
+                
+                // 延迟移除DOM元素
+                setTimeout(() => {
+                    if (loadingOverlay && loadingOverlay.parentNode) {
+                        loadingOverlay.style.display = 'none';
+                        console.log('加载遮罩DOM已移除');
+                    }
+                }, 500);
+            }
+        };
+        
+        // 立即执行：禁用页面交互
+        console.log('页面加载开始，禁用交互');
+        disablePageInteraction();
+        
+        // DOM加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 加载完成');
+            
+            // 监听优先级比例变化（延迟执行以确保元素存在）
+            setTimeout(() => {
+                const seniorRatioElement = document.getElementById('seniorRatio');
+                if (seniorRatioElement) {
+                    seniorRatioElement.addEventListener('input', updateStructureAmounts);
+                    console.log('优先级比例监听器已绑定');
+                }
+            }, 100);
+            
+            // 简化检测：DOM加载完成后等待一段时间让CSS和脚本加载
+            setTimeout(() => {
+                console.log('基础资源检测完成，准备进入页面');
+                PageLoader.finishLoading();
+            }, 500);
+        });
+        
+        // 保险机制：最多等待3秒
+        setTimeout(() => {
+            if (PageLoader.isLoading) {
+                console.warn('触发保险机制：强制进入页面');
+                PageLoader.finishLoading();
+            }
+        }, PageLoader.maxWaitTime);
+        
         // 全局变量
         let currentStep = 1;
         let basicParams = {};
@@ -1030,10 +1286,7 @@
         let calculationResults = null;
 
         // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            // 监听优先级比例变化
-            document.getElementById('seniorRatio').addEventListener('input', updateStructureAmounts);
-        });
+        // （已集成到上面的DOMContentLoaded事件中）
 
         /**
          * 显示指定的标签页
