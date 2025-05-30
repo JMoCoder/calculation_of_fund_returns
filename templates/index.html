@@ -473,6 +473,12 @@
             border-top: 1px solid var(--border-secondary);
         }
         
+        .form-actions-left {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+        
         /* 核心指标卡片 */
         .metrics-grid {
             display: grid;
@@ -824,10 +830,7 @@
                     收益分配测算系统
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-secondary" onclick="downloadTemplate()">
-                        <i class="fas fa-download"></i>
-                        下载模板
-                    </button>
+                    <!-- 移除下载模板按钮，改为在基本参数页面提供 -->
                 </div>
             </div>
         </header>
@@ -882,7 +885,11 @@
                                 操作提示
                             </div>
                             <div class="info-box-content">
-                                所有标注 * 的字段为必填项，请确保数据准确无误。投资期限决定了现金流输入的年数。
+                                <p>📋 <strong>操作流程：</strong></p>
+                                <p>1️⃣ 点击"下载模板"获取标准Excel模板文件</p>
+                                <p>2️⃣ 在模板中填写您的项目数据</p>
+                                <p>3️⃣ 点击"导入Excel"上传填好的模板文件</p>
+                                <p>💡 或者您也可以直接在下方表单中手动输入数据</p>
                             </div>
                         </div>
 
@@ -934,7 +941,11 @@
                             </div>
 
                             <div class="action-bar">
-                                <div>
+                                <div class="form-actions-left">
+                                    <button type="button" class="btn btn-secondary" onclick="downloadTemplate()">
+                                        <i class="fas fa-download"></i>
+                                        下载模板
+                                    </button>
                                     <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;" onchange="importExcel()">
                                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
                                         <i class="fas fa-upload"></i>
@@ -1185,6 +1196,49 @@
             document.querySelectorAll('.step-item, .mode-option, .mode-card').forEach(element => {
                 element.style.pointerEvents = '';
                 element.style.opacity = '';
+            });
+        }
+        
+        /**
+         * 禁用界面交互（用于操作过程中）
+         * @param {string} message - 显示的消息
+         */
+        function disableInterface(message = '正在处理，请稍候...') {
+            // 显示加载遮罩
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('show');
+                const loadingText = loadingOverlay.querySelector('p');
+                if (loadingText) {
+                    loadingText.textContent = message;
+                }
+            }
+            
+            // 禁用所有交互元素
+            document.querySelectorAll('input, textarea, select, button, a, .btn').forEach(element => {
+                element.disabled = true;
+                element.style.pointerEvents = 'none';
+            });
+        }
+        
+        /**
+         * 启用界面交互
+         */
+        function enableInterface() {
+            // 隐藏加载遮罩
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('show');
+                const loadingText = loadingOverlay.querySelector('p');
+                if (loadingText) {
+                    loadingText.textContent = '正在计算中，请稍候...';
+                }
+            }
+            
+            // 启用所有交互元素
+            document.querySelectorAll('input, textarea, select, button, a, .btn').forEach(element => {
+                element.disabled = false;
+                element.style.pointerEvents = '';
             });
         }
         
@@ -1768,6 +1822,9 @@
             
             if (!file) return;
             
+            // 显示专业加载提示
+            disableInterface('正在解析Excel文件，请稍候...');
+            
             const formData = new FormData();
             formData.append('file', file);
             
@@ -1777,15 +1834,59 @@
             })
             .then(response => response.json())
             .then(result => {
+                enableInterface();
+                
                 if (result.success) {
-                    showAlert('文件导入成功', 'success');
-                    // 这里可以根据导入的数据填充表单
+                    showAlert('Excel文件导入成功', 'success');
+                    
+                    // 填充基本参数
+                    if (result.data && result.data.basic_params) {
+                        const params = result.data.basic_params;
+                        
+                        // 填充基本参数表单
+                        document.getElementById('investmentTarget').value = params.investment_target || '';
+                        document.getElementById('investmentAmount').value = params.investment_amount || '';
+                        document.getElementById('investmentPeriod').value = params.investment_period || '';
+                        document.getElementById('hurdleRate').value = params.hurdle_rate || '';
+                        document.getElementById('managementCarry').value = params.management_carry || '';
+                        
+                        console.log('基本参数已填充:', params);
+                        
+                        // 保存基本参数到全局变量
+                        basicParams = { ...params };
+                        
+                        // 生成现金流输入框
+                        generateCashFlowInputs();
+                        
+                        // 延迟填充现金流数据，确保输入框已生成
+                        setTimeout(() => {
+                            if (result.data.cash_flows) {
+                                const cashFlows = result.data.cash_flows;
+                                
+                                // 填充现金流数据
+                                for (let i = 0; i < cashFlows.length; i++) {
+                                    const inputElement = document.getElementById(`cashFlow${i + 1}`);
+                                    if (inputElement) {
+                                        inputElement.value = cashFlows[i] || '';
+                                    }
+                                }
+                                
+                                console.log('现金流数据已填充:', cashFlows);
+                                showAlert('数据导入完成，请检查并确认', 'success');
+                            }
+                        }, 200);
+                    }
                 } else {
                     showAlert(result.message, 'error');
                 }
+                
+                // 清空文件输入框
+                fileInput.value = '';
             })
             .catch(error => {
+                enableInterface();
                 showAlert('导入文件时发生错误: ' + error.message, 'error');
+                fileInput.value = '';
             });
         }
 

@@ -643,17 +643,60 @@ def import_excel():
             return jsonify({'success': False, 'message': '文件格式不支持，请上传Excel文件'}), 400
         
         # 读取Excel文件
-        df = pd.read_excel(file)
+        try:
+            # 读取基本参数表
+            basic_df = pd.read_excel(file, sheet_name='基本参数')
+            # 读取现金流表
+            cashflow_df = pd.read_excel(file, sheet_name='净现金流')
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Excel文件格式错误，请使用标准模板：{str(e)}'}), 400
         
-        # 解析数据（根据模板格式）
-        # 这里需要根据具体的Excel模板格式来实现解析逻辑
+        # 解析基本参数
+        basic_params = {}
+        try:
+            for _, row in basic_df.iterrows():
+                param_name = str(row['参数名称']).strip()
+                param_value = row['参数值']
+                
+                if '投资标的' in param_name:
+                    basic_params['investment_target'] = str(param_value).strip()
+                elif '投资金额' in param_name:
+                    basic_params['investment_amount'] = float(param_value)
+                elif '投资期限' in param_name:
+                    basic_params['investment_period'] = int(param_value)
+                elif '门槛收益率' in param_name:
+                    basic_params['hurdle_rate'] = float(param_value)
+                elif 'Carry' in param_name or 'carry' in param_name:
+                    basic_params['management_carry'] = float(param_value)
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'基本参数解析失败：{str(e)}'}), 400
+        
+        # 解析现金流数据
+        cash_flows = []
+        try:
+            for _, row in cashflow_df.iterrows():
+                cash_flow = float(row['净现金流(万元)'])
+                cash_flows.append(cash_flow)
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'现金流数据解析失败：{str(e)}'}), 400
+        
+        # 验证数据完整性
+        required_params = ['investment_target', 'investment_amount', 'investment_period', 'hurdle_rate', 'management_carry']
+        for param in required_params:
+            if param not in basic_params:
+                return jsonify({'success': False, 'message': f'缺少必要参数：{param}'}), 400
+        
+        if len(cash_flows) != basic_params['investment_period']:
+            return jsonify({'success': False, 'message': f'现金流年数({len(cash_flows)})与投资期限({basic_params["investment_period"]})不匹配'}), 400
         
         return jsonify({
             'success': True,
             'message': '文件导入成功',
             'data': {
-                'rows': len(df),
-                'columns': list(df.columns)
+                'basic_params': basic_params,
+                'cash_flows': cash_flows,
+                'rows': len(cashflow_df),
+                'columns': list(cashflow_df.columns)
             }
         })
         
