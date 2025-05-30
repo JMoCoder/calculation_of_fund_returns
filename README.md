@@ -3,6 +3,9 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Flask](https://img.shields.io/badge/Flask-2.3.3-green)
 ![License](https://img.shields.io/badge/License-MIT-orange)
+[![GitHub](https://img.shields.io/badge/GitHub-JMoCoder-black?logo=github)](https://github.com/JMoCoder/calculation_of_fund_returns)
+
+📂 **项目地址**: [https://github.com/JMoCoder/calculation_of_fund_returns](https://github.com/JMoCoder/calculation_of_fund_returns)
 
 ## 📖 项目简介
 
@@ -241,6 +244,26 @@ A: 支持.xlsx和.xls格式的Excel文件。
 3. **端口占用**：确保5000端口未被其他程序占用
 4. **网络连接**：首次安装时需要网络连接下载依赖
 
+### 🐛 问题反馈
+
+如果遇到Bug或有功能建议，欢迎通过以下方式反馈：
+
+- **GitHub Issues**: [https://github.com/JMoCoder/calculation_of_fund_returns/issues](https://github.com/JMoCoder/calculation_of_fund_returns/issues)
+- **项目仓库**: [https://github.com/JMoCoder/calculation_of_fund_returns](https://github.com/JMoCoder/calculation_of_fund_returns)
+
+### 📥 获取最新版本
+
+```bash
+# 克隆项目到本地
+git clone https://github.com/JMoCoder/calculation_of_fund_returns.git
+
+# 进入项目目录
+cd calculation_of_fund_returns
+
+# 运行一键部署
+deploy.bat
+```
+
 ## 📄 许可证
 
 本项目采用MIT许可证，详情请查看LICENSE文件。
@@ -249,6 +272,24 @@ A: 支持.xlsx和.xls格式的Excel文件。
 
 感谢所有为本项目提供支持和建议的用户和开发者。
 
+### 👨‍💻 开发者
+
+- **JMoCoder** - 项目维护者
+  - GitHub: [@JMoCoder](https://github.com/JMoCoder)
+  - Email: jiamo.im@gmail.com
+
+### 🤝 贡献
+
+欢迎提交Pull Request来改进项目！请遵循以下步骤：
+
+1. Fork本项目
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开Pull Request
+
 ---
 
 **收益分配测算系统** - 专业、安全、易用的投资收益计算工具 
+
+⭐ 如果这个项目对您有帮助，请给个Star支持一下！ 

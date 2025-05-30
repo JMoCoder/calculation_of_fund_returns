@@ -2,6 +2,15 @@
 
 ```
 calculation_of_fund_returns/
+├── 📁 .github/                       # GitHub配置目录
+│   ├── 📁 ISSUE_TEMPLATE/            # Issue模板目录
+│   │   ├── bug_report.md             # Bug报告模板
+│   │   └── feature_request.md        # 功能请求模板
+│   ├── 📁 workflows/                 # GitHub Actions工作流
+│   │   └── ci.yml                    # 持续集成配置
+│   ├── CODEOWNERS                    # 代码拥有者配置
+│   └── pull_request_template.md      # Pull Request模板
+│
 ├── 📁 .PRD/                          # 产品需求文档目录
 │   ├── 00-初始需求文档.md             # 项目初始需求
 │   ├── 01-项目概述.md                 # 项目总体概述
@@ -256,3 +265,33 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ---
 
 **注意**：这是一个完整的、生产就绪的金融计算系统，所有组件都经过精心设计和优化，确保稳定性、安全性和易用性。 
+
+### 🐙 GitHub配置文件
+
+#### `.github/ISSUE_TEMPLATE/` - Issue模板
+- **bug_report.md**: Bug报告标准模板
+  - 包含Bug描述、重现步骤、环境信息等字段
+  - 自动分配给@JMoCoder进行处理
+  - 自动添加bug标签
+
+- **feature_request.md**: 功能请求模板
+  - 包含功能描述、使用场景、验收标准等字段
+  - 自动分配给@JMoCoder进行评估
+  - 自动添加enhancement标签
+
+#### `.github/workflows/ci.yml` - 持续集成配置
+- **多Python版本测试**: 支持3.8-3.11版本矩阵测试
+- **代码质量检查**: 使用flake8进行代码风格检查
+- **安全扫描**: 使用safety和bandit进行安全漏洞检测
+- **自动化测试**: 基本功能测试和文件完整性检查
+- **构建验证**: Windows和Linux环境构建测试
+
+#### `.github/CODEOWNERS` - 代码拥有者
+- 设置@JMoCoder为所有文件的默认审查者
+- 对核心文件和目录进行特别指定
+- 确保重要更改需要经过审查
+
+#### `.github/pull_request_template.md` - PR模板
+- 标准化Pull Request格式
+- 包含检查清单和类型分类
+- 要求描述更改内容和测试情况 
