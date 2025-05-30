@@ -5,59 +5,158 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>收益分配测算系统</title>
     
-    <!-- CSS框架和图标 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 外部资源 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- 自定义样式 -->
     <style>
         :root {
+            /* 主色调 */
             --primary-color: #1890ff;
-            --success-color: #52c41a;
+            --primary-light: #40a9ff;
+            --primary-dark: #096dd9;
+            
+            /* 辅助色 */
+            --secondary-color: #52c41a;
             --warning-color: #faad14;
             --error-color: #ff4d4f;
-            --text-color: #262626;
-            --border-color: #d9d9d9;
-            --bg-light: #fafafa;
+            --info-color: #13c2c2;
+            
+            /* 文字颜色 */
+            --text-primary: #262626;
+            --text-secondary: #595959;
+            --text-disabled: #bfbfbf;
+            --text-inverse: #ffffff;
+            
+            /* 背景颜色 */
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            
+            /* 边框颜色 */
+            --border-primary: #d9d9d9;
+            --border-secondary: #f0f0f0;
+            --border-focus: #40a9ff;
+            
+            /* 间距 */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* 圆角和阴影 */
+            --border-radius-sm: 2px;
+            --border-radius-md: 4px;
+            --border-radius-lg: 8px;
+            --border-radius-xl: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
         }
         
-        .main-header {
-            background: linear-gradient(135deg, var(--primary-color), #40a9ff);
-            color: white;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        /* 头部导航 */
+        .header {
+            background-color: var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-md) 0;
+            margin-bottom: var(--spacing-lg);
         }
         
-        .step-sidebar {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 1.5rem;
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .logo i {
+            font-size: 28px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        /* 主要内容区域 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: var(--spacing-lg);
+            min-height: calc(100vh - 200px);
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-lg);
             height: fit-content;
             position: sticky;
-            top: 2rem;
+            top: var(--spacing-lg);
+        }
+        
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .step-list {
+            list-style: none;
         }
         
         .step-item {
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 6px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            border-radius: var(--border-radius-md);
             cursor: pointer;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
             display: flex;
             align-items: center;
+            gap: var(--spacing-sm);
         }
         
         .step-item:hover {
-            background-color: #f0f8ff;
+            background-color: var(--bg-secondary);
         }
         
         .step-item.active {
@@ -67,21 +166,20 @@
         }
         
         .step-item.completed {
-            color: var(--success-color);
+            color: var(--secondary-color);
         }
         
         .step-number {
             width: 24px;
             height: 24px;
-            background-color: var(--border-color);
-            color: white;
+            background-color: var(--border-primary);
+            color: var(--text-inverse);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 12px;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
+            font-weight: 600;
         }
         
         .step-item.active .step-number {
@@ -89,359 +187,838 @@
         }
         
         .step-item.completed .step-number {
-            background-color: var(--success-color);
+            background-color: var(--secondary-color);
         }
         
+        .step-item.completed .step-number i {
+            font-size: 12px;
+        }
+        
+        /* 内容区域 */
         .content-area {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 2rem;
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+            display: none;
         }
         
-        .form-floating label {
-            color: #666;
+        .content-area.active {
+            display: block;
+        }
+        
+        .content-header {
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .content-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .content-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row.triple {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        
+        .field-wrapper {
+            position: relative;
+        }
+        
+        .label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .label.required::after {
+            content: ' *';
+            color: var(--error-color);
+        }
+        
+        .input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-md);
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: var(--bg-primary);
+        }
+        
+        .input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+            outline: none;
+        }
+        
+        .input.error {
+            border-color: var(--error-color);
+        }
+        
+        /* 输入组（带单位） */
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-group .input {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+        }
+        
+        .input-addon {
+            padding: 12px 16px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-left: none;
+            border-top-right-radius: var(--border-radius-md);
+            border-bottom-right-radius: var(--border-radius-md);
+            color: var(--text-secondary);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        /* 帮助文本 */
+        .help-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .error-text {
+            font-size: 12px;
+            color: var(--error-color);
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 14px;
         }
         
         .btn-primary {
             background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            color: var(--text-inverse);
         }
         
         .btn-primary:hover {
-            background-color: #096dd9;
-            border-color: #096dd9;
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
         }
         
-        .table th {
-            background-color: #f8f9fa;
-            border-top: none;
-            color: #495057;
-            font-weight: 600;
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border-primary);
+            color: var(--text-primary);
         }
         
-        .alert {
-            border: none;
-            border-radius: 6px;
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
         }
         
-        .cash-flow-input {
-            margin-bottom: 0.75rem;
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: var(--text-inverse);
         }
         
-        .calculation-results {
-            margin-top: 2rem;
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* 操作按钮区域 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        /* 核心指标卡片 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
         }
         
         .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
-            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: var(--text-inverse);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
             text-align: center;
-            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
         }
         
-        .metric-value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: rotate(45deg);
+        }
+        
+        .metric-card.success {
+            background: linear-gradient(135deg, var(--secondary-color), #73d13d);
         }
         
         .metric-label {
-            font-size: 0.9rem;
+            font-size: 14px;
             opacity: 0.9;
+            margin-bottom: var(--spacing-sm);
+            position: relative;
+            z-index: 1;
         }
         
-        .tab-content {
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+            position: relative;
+            z-index: 1;
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+        
+        /* 分配模式卡片 */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        .mode-card {
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            transition: all 0.3s ease;
+        }
+        
+        .mode-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .mode-card.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(24, 144, 255, 0.05);
+        }
+        
+        .mode-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .mode-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .mode-option {
+            margin-bottom: var(--spacing-md);
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-option:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .mode-option.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(24, 144, 255, 0.05);
+        }
+        
+        .radio-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+        
+        .radio-label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .radio-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* 表格样式 */
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-secondary);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-primary);
+            font-size: 14px;
+        }
+        
+        .table th {
+            background-color: var(--bg-tertiary);
+            padding: var(--spacing-md);
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-secondary);
+            border-right: 1px solid var(--border-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table th:last-child {
+            border-right: none;
+        }
+        
+        .table td {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-bottom: 1px solid var(--border-secondary);
+            border-right: 1px solid var(--border-secondary);
+            text-align: right;
+        }
+        
+        .table td:first-child {
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .table td:last-child {
+            border-right: none;
+        }
+        
+        .table tr:hover {
+            background-color: var(--bg-secondary);
+        }
+        
+        .table .positive {
+            color: var(--secondary-color);
+        }
+        
+        .table .negative {
+            color: var(--error-color);
+        }
+        
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
             display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
         }
         
-        .tab-content.active {
-            display: block;
+        .loading-overlay.show {
+            display: flex;
         }
         
-        .loading {
-            display: none;
+        .loading-content {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xl);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
         }
         
-        .loading.show {
-            display: inline-block;
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-secondary);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--spacing-md);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 提示信息 */
+        .info-box {
+            background-color: rgba(19, 194, 194, 0.1);
+            border: 1px solid var(--info-color);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .info-box-title {
+            font-weight: 600;
+            color: var(--info-color);
+            margin-bottom: var(--spacing-xs);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        /* 消息提示 */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .alert.success {
+            background-color: #f6ffed;
+            border: 1px solid var(--secondary-color);
+            color: #389e0d;
+        }
+        
+        .alert.error {
+            background-color: #fff2f0;
+            border: 1px solid var(--error-color);
+            color: #cf1322;
+        }
+        
+        .alert.warning {
+            background-color: #fffbe6;
+            border: 1px solid var(--warning-color);
+            color: #d48806;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+                margin-bottom: var(--spacing-lg);
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row.triple {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-bar {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .container {
+                padding: 0 var(--spacing-md);
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 主标题 -->
-    <header class="main-header">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1 class="mb-0">
-                        <i class="fas fa-calculator me-2"></i>
-                        收益分配测算系统
-                    </h1>
-                    <p class="mb-0 mt-2 opacity-75">专业的基金收益分配计算工具</p>
-                </div>
-                <div class="col-md-4 text-end">
-                    <button class="btn btn-light" onclick="downloadTemplate()">
-                        <i class="fas fa-download me-2"></i>下载模板
-                    </button>
-                </div>
+    <!-- 头部导航 -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-calculator"></i>
+                收益分配测算系统
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="downloadTemplate()">
+                    <i class="fas fa-download"></i>
+                    下载模板
+                </button>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <div class="row">
-            <!-- 左侧步骤导航 -->
-            <div class="col-md-3">
-                <div class="step-sidebar">
-                    <h5 class="mb-3">计算步骤</h5>
-                    <div class="step-item active" onclick="showTab('basic-params')">
+        <div class="main-content">
+            <!-- 侧边栏 -->
+            <aside class="sidebar">
+                <div class="sidebar-title">
+                    <i class="fas fa-list-ol"></i>
+                    计算步骤
+                </div>
+                <ul class="step-list">
+                    <li class="step-item active" onclick="showTab('basic-params')">
                         <span class="step-number">1</span>
                         <span>基本参数</span>
-                    </div>
-                    <div class="step-item" onclick="showTab('cash-flows')">
+                    </li>
+                    <li class="step-item" onclick="showTab('cash-flows')">
                         <span class="step-number">2</span>
                         <span>净现金流</span>
-                    </div>
-                    <div class="step-item" onclick="showTab('distribution-mode')">
+                    </li>
+                    <li class="step-item" onclick="showTab('distribution-mode')">
                         <span class="step-number">3</span>
                         <span>分配模式</span>
-                    </div>
-                    <div class="step-item" onclick="showTab('results')">
+                    </li>
+                    <li class="step-item" onclick="showTab('results')">
                         <span class="step-number">4</span>
                         <span>计算结果</span>
-                    </div>
-                    <div class="step-item" onclick="showTab('visualization')">
+                    </li>
+                    <li class="step-item" onclick="showTab('visualization')">
                         <span class="step-number">5</span>
                         <span>图表分析</span>
-                    </div>
-                </div>
-            </div>
+                    </li>
+                </ul>
+            </aside>
 
-            <!-- 右侧内容区域 -->
-            <div class="col-md-9">
+            <!-- 主内容区域 -->
+            <main>
                 <!-- 步骤1: 基本参数 -->
-                <div id="basic-params" class="content-area tab-content active">
-                    <h4 class="mb-4">
-                        <i class="fas fa-cog me-2"></i>基本投资参数
-                    </h4>
-                    
+                <section id="basic-params" class="content-area active">
+                    <div class="content-header">
+                        <h2 class="content-title">
+                            <i class="fas fa-cog"></i>
+                            基本投资参数
+                        </h2>
+                        <p class="content-subtitle">请填写投资项目的基本信息和参数设置</p>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <i class="fas fa-info-circle"></i>
+                            操作提示
+                        </div>
+                        <div class="info-box-content">
+                            所有标注 * 的字段为必填项，请确保数据准确无误。投资期限决定了现金流输入的年数。
+                        </div>
+                    </div>
+
                     <form id="basicParamsForm">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <input type="text" class="form-control" id="investmentTarget" placeholder="投资标的">
-                                    <label for="investmentTarget">投资标的</label>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="field-wrapper">
+                                    <label class="label required" for="investmentTarget">投资标的</label>
+                                    <input type="text" class="input" id="investmentTarget" placeholder="请输入投资标的名称">
+                                    <div class="help-text">例如：某科技公司股权投资项目</div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <input type="number" class="form-control" id="investmentAmount" placeholder="投资金额" min="1" step="0.01">
-                                    <label for="investmentAmount">拟投资金额 (万元)</label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-floating mb-3">
-                                    <input type="number" class="form-control" id="investmentPeriod" placeholder="投资期限" min="1" max="30" step="1">
-                                    <label for="investmentPeriod">投资期限 (年)</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating mb-3">
-                                    <input type="number" class="form-control" id="hurdleRate" placeholder="门槛收益率" min="0" max="100" step="0.1">
-                                    <label for="hurdleRate">门槛收益率 (%)</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating mb-3">
-                                    <input type="number" class="form-control" id="managementCarry" placeholder="管理人Carry" min="0" max="100" step="0.1">
-                                    <label for="managementCarry">管理人Carry (%)</label>
+                                <div class="field-wrapper">
+                                    <label class="label required" for="investmentAmount">拟投资金额</label>
+                                    <div class="input-group">
+                                        <input type="number" class="input" id="investmentAmount" placeholder="请输入金额" min="1" step="0.01">
+                                        <span class="input-addon">万元</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="d-flex justify-content-between">
+
+                        <div class="form-group">
+                            <div class="form-row triple">
+                                <div class="field-wrapper">
+                                    <label class="label required" for="investmentPeriod">投资期限</label>
+                                    <div class="input-group">
+                                        <input type="number" class="input" id="investmentPeriod" placeholder="年限" min="1" max="30" step="1">
+                                        <span class="input-addon">年</span>
+                                    </div>
+                                    <div class="help-text">设置投资项目的预期持有期限</div>
+                                </div>
+                                <div class="field-wrapper">
+                                    <label class="label required" for="hurdleRate">门槛收益率</label>
+                                    <div class="input-group">
+                                        <input type="number" class="input" id="hurdleRate" placeholder="收益率" min="0" max="100" step="0.1">
+                                        <span class="input-addon">%</span>
+                                    </div>
+                                    <div class="help-text">投资者要求的最低年化收益率</div>
+                                </div>
+                                <div class="field-wrapper">
+                                    <label class="label required" for="managementCarry">管理人Carry</label>
+                                    <div class="input-group">
+                                        <input type="number" class="input" id="managementCarry" placeholder="比例" min="0" max="100" step="0.1">
+                                        <span class="input-addon">%</span>
+                                    </div>
+                                    <div class="help-text">管理人超额收益分配比例</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-bar">
                             <div>
                                 <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;" onchange="importExcel()">
-                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('excelFile').click()">
-                                    <i class="fas fa-upload me-2"></i>导入Excel
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
+                                    <i class="fas fa-upload"></i>
+                                    导入Excel
                                 </button>
                             </div>
                             <button type="button" class="btn btn-primary" onclick="saveBasicParams()">
-                                下一步 <i class="fas fa-arrow-right ms-2"></i>
+                                下一步
+                                <i class="fas fa-arrow-right"></i>
                             </button>
                         </div>
                     </form>
-                </div>
+                </section>
 
                 <!-- 步骤2: 净现金流 -->
-                <div id="cash-flows" class="content-area tab-content">
-                    <h4 class="mb-4">
-                        <i class="fas fa-chart-line me-2"></i>净现金流输入
-                    </h4>
-                    
-                    <div id="cashFlowInputs">
-                        <p class="text-muted">请先设置基本参数中的投资期限</p>
+                <section id="cash-flows" class="content-area">
+                    <div class="content-header">
+                        <h2 class="content-title">
+                            <i class="fas fa-chart-line"></i>
+                            净现金流输入
+                        </h2>
+                        <p class="content-subtitle">请输入各年度的预期净现金流金额</p>
                     </div>
-                    
-                    <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('basic-params')">
-                            <i class="fas fa-arrow-left me-2"></i>上一步
+
+                    <div id="cashFlowInputs">
+                        <p class="help-text">请先完成基本参数设置</p>
+                    </div>
+
+                    <div class="action-bar">
+                        <button type="button" class="btn btn-secondary" onclick="showTab('basic-params')">
+                            <i class="fas fa-arrow-left"></i>
+                            上一步
                         </button>
                         <button type="button" class="btn btn-primary" onclick="saveCashFlows()">
-                            下一步 <i class="fas fa-arrow-right ms-2"></i>
+                            下一步
+                            <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
-                </div>
+                </section>
 
                 <!-- 步骤3: 分配模式 -->
-                <div id="distribution-mode" class="content-area tab-content">
-                    <h4 class="mb-4">
-                        <i class="fas fa-sliders-h me-2"></i>分配模式设置
-                    </h4>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header">
-                                    <h5 class="mb-0">平层结构</h5>
+                <section id="distribution-mode" class="content-area">
+                    <div class="content-header">
+                        <h2 class="content-title">
+                            <i class="fas fa-sliders-h"></i>
+                            分配模式设置
+                        </h2>
+                        <p class="content-subtitle">选择适合的收益分配计算模式</p>
+                    </div>
+
+                    <div class="mode-grid">
+                        <div class="mode-card">
+                            <div class="mode-header">
+                                <i class="fas fa-layer-group"></i>
+                                <span class="mode-title">平层结构</span>
+                            </div>
+                            
+                            <div class="mode-option" onclick="selectMode(this, 'flat_priority_repayment')">
+                                <div class="radio-wrapper">
+                                    <input type="radio" name="distributionMode" id="flatPriorityRepayment" value="flat_priority_repayment">
+                                    <div>
+                                        <div class="radio-label">优先还本模式</div>
+                                        <div class="radio-description">净现金流优先偿还本金，本金还完后再分配门槛收益和超额收益</div>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="radio" name="distributionMode" id="flatPriorityRepayment" value="flat_priority_repayment">
-                                        <label class="form-check-label" for="flatPriorityRepayment">
-                                            <strong>优先还本</strong><br>
-                                            <small class="text-muted">净现金流优先还本，本金还完后分配门槛收益和Carry</small>
-                                        </label>
+                            </div>
+
+                            <div class="mode-option" onclick="selectMode(this, 'flat_periodic_distribution')">
+                                <div class="radio-wrapper">
+                                    <input type="radio" name="distributionMode" id="flatPeriodicDistribution" value="flat_periodic_distribution">
+                                    <div>
+                                        <div class="radio-label">期间分配模式</div>
+                                        <div class="radio-description">优先分配期间收益，然后偿还本金和分配剩余超额收益</div>
                                     </div>
-                                    
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="radio" name="distributionMode" id="flatPeriodicDistribution" value="flat_periodic_distribution">
-                                        <label class="form-check-label" for="flatPeriodicDistribution">
-                                            <strong>期间分配</strong><br>
-                                            <small class="text-muted">优先分配期间收益，然后还本和分配剩余收益</small>
-                                        </label>
-                                    </div>
-                                    
-                                    <div id="periodicRateInput" style="display: none;">
-                                        <div class="form-floating">
-                                            <input type="number" class="form-control" id="periodicRate" placeholder="期间收益率" min="0" max="100" step="0.1">
-                                            <label for="periodicRate">期间收益率 (%)</label>
-                                        </div>
+                                </div>
+                            </div>
+
+                            <div id="periodicRateInput" style="display: none;">
+                                <div class="field-wrapper">
+                                    <label class="label" for="periodicRate">期间收益率</label>
+                                    <div class="input-group">
+                                        <input type="number" class="input" id="periodicRate" placeholder="收益率" min="0" max="100" step="0.1">
+                                        <span class="input-addon">%</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header">
-                                    <h5 class="mb-0">结构化</h5>
+
+                        <div class="mode-card">
+                            <div class="mode-header">
+                                <i class="fas fa-chart-bar"></i>
+                                <span class="mode-title">结构化</span>
+                            </div>
+                            
+                            <div class="mode-option" onclick="selectMode(this, 'structured_senior_subordinate')">
+                                <div class="radio-wrapper">
+                                    <input type="radio" name="distributionMode" id="structuredSeniorSubordinate" value="structured_senior_subordinate">
+                                    <div>
+                                        <div class="radio-label">优先劣后模式</div>
+                                        <div class="radio-description">优先级投资者优先获得本息回报，劣后级承担主要风险</div>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="radio" name="distributionMode" id="structuredSeniorSubordinate" value="structured_senior_subordinate">
-                                        <label class="form-check-label" for="structuredSeniorSubordinate">
-                                            <strong>优先劣后</strong><br>
-                                            <small class="text-muted">优先级优先获得本息回报，劣后级承担风险</small>
-                                        </label>
+                            </div>
+
+                            <div id="seniorRatioInput" style="display: none;">
+                                <div class="field-wrapper">
+                                    <label class="label" for="seniorRatio">优先级投资比例</label>
+                                    <div class="input-group">
+                                        <input type="number" class="input" id="seniorRatio" placeholder="比例" min="1" max="99" step="1">
+                                        <span class="input-addon">%</span>
                                     </div>
-                                    
-                                    <div id="seniorRatioInput" style="display: none;">
-                                        <div class="form-floating mb-3">
-                                            <input type="number" class="form-control" id="seniorRatio" placeholder="优先级比例" min="0" max="100" step="1">
-                                            <label for="seniorRatio">优先级比例 (%)</label>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-6">
-                                                <small class="text-muted">优先级金额: <span id="seniorAmount">0</span> 万元</small>
-                                            </div>
-                                            <div class="col-6">
-                                                <small class="text-muted">劣后级金额: <span id="subordinateAmount">0</span> 万元</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-top: var(--spacing-md);">
+                                    <div class="help-text">优先级金额: <span id="seniorAmount">0.00</span> 万元</div>
+                                    <div class="help-text">劣后级金额: <span id="subordinateAmount">0.00</span> 万元</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('cash-flows')">
-                            <i class="fas fa-arrow-left me-2"></i>上一步
+
+                    <div class="action-bar">
+                        <button type="button" class="btn btn-secondary" onclick="showTab('cash-flows')">
+                            <i class="fas fa-arrow-left"></i>
+                            上一步
                         </button>
                         <button type="button" class="btn btn-primary" onclick="calculate()">
-                            开始计算 <i class="fas fa-calculator ms-2"></i>
+                            <i class="fas fa-calculator"></i>
+                            开始计算
                         </button>
                     </div>
-                </div>
+                </section>
 
                 <!-- 步骤4: 计算结果 -->
-                <div id="results" class="content-area tab-content">
-                    <h4 class="mb-4">
-                        <i class="fas fa-chart-bar me-2"></i>计算结果
-                    </h4>
-                    
-                    <div id="calculationResults">
-                        <p class="text-muted">请完成前面的步骤并执行计算</p>
+                <section id="results" class="content-area">
+                    <div class="content-header">
+                        <h2 class="content-title">
+                            <i class="fas fa-chart-bar"></i>
+                            计算结果
+                        </h2>
+                        <p class="content-subtitle">查看详细的收益分配计算结果</p>
                     </div>
-                    
-                    <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('distribution-mode')">
-                            <i class="fas fa-arrow-left me-2"></i>上一步
+
+                    <div id="calculationResults">
+                        <p class="help-text">请完成前面的步骤并执行计算</p>
+                    </div>
+
+                    <div class="action-bar">
+                        <button type="button" class="btn btn-secondary" onclick="showTab('distribution-mode')">
+                            <i class="fas fa-arrow-left"></i>
+                            上一步
                         </button>
-                        <div>
-                            <button type="button" class="btn btn-success me-2" onclick="exportResults()" id="exportBtn" disabled>
-                                <i class="fas fa-download me-2"></i>导出Excel
+                        <div style="display: flex; gap: var(--spacing-sm);">
+                            <button type="button" class="btn btn-success" onclick="exportResults()" id="exportBtn" disabled>
+                                <i class="fas fa-download"></i>
+                                导出Excel
                             </button>
                             <button type="button" class="btn btn-primary" onclick="showTab('visualization')" id="visualizeBtn" disabled>
-                                查看图表 <i class="fas fa-arrow-right ms-2"></i>
+                                查看图表
+                                <i class="fas fa-arrow-right"></i>
                             </button>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- 步骤5: 图表分析 -->
-                <div id="visualization" class="content-area tab-content">
-                    <h4 class="mb-4">
-                        <i class="fas fa-chart-pie me-2"></i>可视化分析
-                    </h4>
-                    
+                <section id="visualization" class="content-area">
+                    <div class="content-header">
+                        <h2 class="content-title">
+                            <i class="fas fa-chart-pie"></i>
+                            可视化分析
+                        </h2>
+                        <p class="content-subtitle">通过图表直观了解收益分配情况</p>
+                    </div>
+
                     <div id="chartContainer">
-                        <p class="text-muted">请先完成计算步骤</p>
+                        <p class="help-text">请先完成计算步骤</p>
                     </div>
-                    
-                    <div class="d-flex justify-content-start mt-4">
-                        <button type="button" class="btn btn-outline-secondary" onclick="showTab('results')">
-                            <i class="fas fa-arrow-left me-2"></i>返回结果
+
+                    <div class="action-bar">
+                        <button type="button" class="btn btn-secondary" onclick="showTab('results')">
+                            <i class="fas fa-arrow-left"></i>
+                            返回结果
                         </button>
+                        <div></div>
                     </div>
-                </div>
-            </div>
+                </section>
+            </main>
         </div>
     </div>
 
-    <!-- 加载提示模态框 -->
-    <div class="modal fade" id="loadingModal" tabindex="-1">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">加载中...</span>
-                    </div>
-                    <p class="mt-3 mb-0">正在计算中，请稍候...</p>
-                </div>
-            </div>
+    <!-- 加载提示 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>正在计算中，请稍候...</p>
         </div>
     </div>
 
-    <!-- JavaScript库 -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -451,17 +1028,9 @@
         let basicParams = {};
         let cashFlows = [];
         let calculationResults = null;
-        let loadingModal;
 
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
-            loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-            
-            // 监听分配模式变化
-            document.querySelectorAll('input[name="distributionMode"]').forEach(radio => {
-                radio.addEventListener('change', handleDistributionModeChange);
-            });
-            
             // 监听优先级比例变化
             document.getElementById('seniorRatio').addEventListener('input', updateStructureAmounts);
         });
@@ -471,9 +1040,9 @@
          * @param {string} tabId - 标签页ID
          */
         function showTab(tabId) {
-            // 隐藏所有标签页
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+            // 隐藏所有内容区域
+            document.querySelectorAll('.content-area').forEach(area => {
+                area.classList.remove('active');
             });
             
             // 移除所有步骤的活动状态
@@ -481,7 +1050,7 @@
                 step.classList.remove('active');
             });
             
-            // 显示目标标签页
+            // 显示目标内容区域
             document.getElementById(tabId).classList.add('active');
             
             // 设置对应步骤为活动状态
@@ -496,11 +1065,8 @@
          * 保存基本参数
          */
         async function saveBasicParams() {
-            const form = document.getElementById('basicParamsForm');
-            const formData = new FormData(form);
-            
             basicParams = {
-                investment_target: document.getElementById('investmentTarget').value,
+                investment_target: document.getElementById('investmentTarget').value.trim(),
                 investment_amount: parseFloat(document.getElementById('investmentAmount').value),
                 investment_period: parseInt(document.getElementById('investmentPeriod').value),
                 hurdle_rate: parseFloat(document.getElementById('hurdleRate').value),
@@ -508,10 +1074,33 @@
             };
             
             // 验证表单
-            if (!basicParams.investment_target || !basicParams.investment_amount || 
-                !basicParams.investment_period || basicParams.hurdle_rate === undefined || 
-                basicParams.management_carry === undefined) {
-                showAlert('请填写所有必需字段', 'warning');
+            if (!basicParams.investment_target) {
+                showAlert('请输入投资标的', 'warning');
+                document.getElementById('investmentTarget').focus();
+                return;
+            }
+            
+            if (!basicParams.investment_amount || basicParams.investment_amount <= 0) {
+                showAlert('请输入有效的投资金额', 'warning');
+                document.getElementById('investmentAmount').focus();
+                return;
+            }
+            
+            if (!basicParams.investment_period || basicParams.investment_period <= 0 || basicParams.investment_period > 30) {
+                showAlert('请输入有效的投资期限(1-30年)', 'warning');
+                document.getElementById('investmentPeriod').focus();
+                return;
+            }
+            
+            if (isNaN(basicParams.hurdle_rate) || basicParams.hurdle_rate < 0 || basicParams.hurdle_rate > 100) {
+                showAlert('请输入有效的门槛收益率(0-100%)', 'warning');
+                document.getElementById('hurdleRate').focus();
+                return;
+            }
+            
+            if (isNaN(basicParams.management_carry) || basicParams.management_carry < 0 || basicParams.management_carry > 100) {
+                showAlert('请输入有效的管理人Carry(0-100%)', 'warning');
+                document.getElementById('managementCarry').focus();
                 return;
             }
             
@@ -528,14 +1117,14 @@
                 
                 if (result.success) {
                     showAlert('基本参数设置成功', 'success');
-                    document.querySelector('.step-item').classList.add('completed');
+                    markStepCompleted(0);
                     generateCashFlowInputs();
                     showTab('cash-flows');
                 } else {
-                    showAlert(result.message, 'danger');
+                    showAlert(result.message, 'error');
                 }
             } catch (error) {
-                showAlert('设置参数时发生错误: ' + error.message, 'danger');
+                showAlert('设置参数时发生错误: ' + error.message, 'error');
             }
         }
 
@@ -546,19 +1135,28 @@
             const container = document.getElementById('cashFlowInputs');
             const period = basicParams.investment_period;
             
-            let html = '<div class="row">';
+            let html = '<div class="form-group">';
+            html += '<div class="form-row">';
+            
             for (let i = 1; i <= period; i++) {
                 html += `
-                    <div class="col-md-6">
-                        <div class="form-floating cash-flow-input">
-                            <input type="number" class="form-control" id="cashFlow${i}" placeholder="第${i}年现金流" min="0" step="0.01">
-                            <label for="cashFlow${i}">第${i}年净现金流 (万元)</label>
+                    <div class="field-wrapper">
+                        <label class="label required" for="cashFlow${i}">第${i}年净现金流</label>
+                        <div class="input-group">
+                            <input type="number" class="input" id="cashFlow${i}" placeholder="请输入金额" min="0" step="0.01">
+                            <span class="input-addon">万元</span>
                         </div>
+                        <div class="help-text">预期第${i}年的净现金流回报</div>
                     </div>
                 `;
+                
+                // 每两个一行
+                if (i % 2 === 0 && i < period) {
+                    html += '</div><div class="form-row">';
+                }
             }
-            html += '</div>';
             
+            html += '</div></div>';
             container.innerHTML = html;
         }
 
@@ -571,10 +1169,17 @@
             for (let i = 1; i <= basicParams.investment_period; i++) {
                 const value = parseFloat(document.getElementById(`cashFlow${i}`).value);
                 if (isNaN(value) || value < 0) {
-                    showAlert(`第${i}年现金流输入无效`, 'warning');
+                    showAlert(`第${i}年现金流输入无效，请输入非负数`, 'warning');
+                    document.getElementById(`cashFlow${i}`).focus();
                     return;
                 }
                 cashFlows.push(value);
+            }
+            
+            // 检查至少有一个正现金流
+            if (cashFlows.every(cf => cf === 0)) {
+                showAlert('请至少输入一个大于0的现金流', 'warning');
+                return;
             }
             
             try {
@@ -590,33 +1195,48 @@
                 
                 if (result.success) {
                     showAlert('现金流数据设置成功', 'success');
-                    document.querySelectorAll('.step-item')[1].classList.add('completed');
+                    markStepCompleted(1);
                     showTab('distribution-mode');
                 } else {
-                    showAlert(result.message, 'danger');
+                    showAlert(result.message, 'error');
                 }
             } catch (error) {
-                showAlert('设置现金流时发生错误: ' + error.message, 'danger');
+                showAlert('设置现金流时发生错误: ' + error.message, 'error');
             }
         }
 
         /**
-         * 处理分配模式变化
+         * 选择分配模式
          */
-        function handleDistributionModeChange() {
-            const selectedMode = document.querySelector('input[name="distributionMode"]:checked').value;
+        function selectMode(element, mode) {
+            // 移除所有选中状态
+            document.querySelectorAll('.mode-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 设置当前选中状态
+            element.classList.add('selected');
+            
+            // 设置radio选中状态
+            document.getElementById(element.querySelector('input').id).checked = true;
             
             // 隐藏所有额外输入
             document.getElementById('periodicRateInput').style.display = 'none';
             document.getElementById('seniorRatioInput').style.display = 'none';
             
             // 根据选择的模式显示相应输入
-            if (selectedMode === 'flat_periodic_distribution') {
+            if (mode === 'flat_periodic_distribution') {
                 document.getElementById('periodicRateInput').style.display = 'block';
-            } else if (selectedMode === 'structured_senior_subordinate') {
+            } else if (mode === 'structured_senior_subordinate') {
                 document.getElementById('seniorRatioInput').style.display = 'block';
                 updateStructureAmounts();
             }
+            
+            // 更新卡片选中状态
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.closest('.mode-card').classList.add('selected');
         }
 
         /**
@@ -650,8 +1270,9 @@
             // 根据模式添加额外参数
             if (selectedMode.value === 'flat_periodic_distribution') {
                 const periodicRate = parseFloat(document.getElementById('periodicRate').value);
-                if (isNaN(periodicRate)) {
-                    showAlert('请输入期间收益率', 'warning');
+                if (isNaN(periodicRate) || periodicRate < 0 || periodicRate > 100) {
+                    showAlert('请输入有效的期间收益率(0-100%)', 'warning');
+                    document.getElementById('periodicRate').focus();
                     return;
                 }
                 calculationData.periodic_rate = periodicRate;
@@ -659,12 +1280,13 @@
                 const seniorRatio = parseFloat(document.getElementById('seniorRatio').value);
                 if (isNaN(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
                     showAlert('请输入有效的优先级比例(1-99%)', 'warning');
+                    document.getElementById('seniorRatio').focus();
                     return;
                 }
                 calculationData.senior_ratio = seniorRatio;
             }
             
-            loadingModal.show();
+            showLoading(true);
             
             try {
                 const response = await fetch('/api/calculate', {
@@ -676,12 +1298,12 @@
                 });
                 
                 const result = await response.json();
-                loadingModal.hide();
+                showLoading(false);
                 
                 if (result.success) {
                     calculationResults = result;
                     showAlert('计算完成', 'success');
-                    document.querySelectorAll('.step-item')[2].classList.add('completed');
+                    markStepCompleted(2);
                     displayResults(result);
                     showTab('results');
                     
@@ -689,11 +1311,11 @@
                     document.getElementById('exportBtn').disabled = false;
                     document.getElementById('visualizeBtn').disabled = false;
                 } else {
-                    showAlert(result.message, 'danger');
+                    showAlert(result.message, 'error');
                 }
             } catch (error) {
-                loadingModal.hide();
-                showAlert('计算时发生错误: ' + error.message, 'danger');
+                showLoading(false);
+                showAlert('计算时发生错误: ' + error.message, 'error');
             }
         }
 
@@ -704,24 +1326,20 @@
             const container = document.getElementById('calculationResults');
             
             let html = `
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="metric-card">
-                            <div class="metric-value">${results.core_metrics.irr}%</div>
-                            <div class="metric-label">内部收益率 (IRR)</div>
-                        </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">内部收益率 (IRR)</div>
+                        <div class="metric-value">${results.core_metrics.irr}%</div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="metric-card">
-                            <div class="metric-value">${results.core_metrics.dpi}</div>
-                            <div class="metric-label">分配倍数 (DPI)</div>
-                        </div>
+                    <div class="metric-card success">
+                        <div class="metric-label">分配倍数 (DPI)</div>
+                        <div class="metric-value">${results.core_metrics.dpi}</div>
                     </div>
                 </div>
                 
-                <h5 class="mb-3">现金流分配详表</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                <h3 style="margin-bottom: var(--spacing-md);">现金流分配详表</h3>
+                <div class="table-container">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>年份</th>
@@ -767,39 +1385,39 @@
             results.cash_flow_table.forEach(row => {
                 html += `<tr>
                     <td>${row.year}</td>
-                    <td>${row.net_cash_flow.toFixed(2)}</td>
-                    <td>${row.cash_flow_distribution_rate.toFixed(2)}</td>
+                    <td>${formatNumber(row.net_cash_flow)}</td>
+                    <td>${formatNumber(row.cash_flow_distribution_rate)}%</td>
                 `;
                 
                 // 根据计算模式添加相应的数据列
                 if (results.calculation_mode === '平层结构-优先还本') {
                     html += `
-                        <td>${row.beginning_principal_balance.toFixed(2)}</td>
-                        <td>${row.principal_repayment.toFixed(2)}</td>
-                        <td>${row.accrued_hurdle_return.toFixed(2)}</td>
-                        <td>${row.distributed_hurdle_return.toFixed(2)}</td>
-                        <td>${row.carry_lp.toFixed(2)}</td>
-                        <td>${row.carry_gp.toFixed(2)}</td>
+                        <td>${formatNumber(row.beginning_principal_balance)}</td>
+                        <td>${formatNumber(row.principal_repayment)}</td>
+                        <td>${formatNumber(row.accrued_hurdle_return)}</td>
+                        <td>${formatNumber(row.distributed_hurdle_return)}</td>
+                        <td class="${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp)}</td>
+                        <td class="${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp)}</td>
                     `;
                 } else if (results.calculation_mode === '平层结构-期间分配') {
                     html += `
-                        <td>${row.beginning_principal_balance.toFixed(2)}</td>
-                        <td>${row.periodic_distribution.toFixed(2)}</td>
-                        <td>${row.accrued_hurdle_return.toFixed(2)}</td>
-                        <td>${row.principal_repayment.toFixed(2)}</td>
-                        <td>${row.distributed_hurdle_return.toFixed(2)}</td>
-                        <td>${row.carry_lp.toFixed(2)}</td>
-                        <td>${row.carry_gp.toFixed(2)}</td>
+                        <td>${formatNumber(row.beginning_principal_balance)}</td>
+                        <td>${formatNumber(row.periodic_distribution)}</td>
+                        <td>${formatNumber(row.accrued_hurdle_return)}</td>
+                        <td>${formatNumber(row.principal_repayment)}</td>
+                        <td>${formatNumber(row.distributed_hurdle_return)}</td>
+                        <td class="${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp)}</td>
+                        <td class="${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp)}</td>
                     `;
                 } else if (results.calculation_mode === '结构化-优先劣后') {
                     html += `
-                        <td>${row.senior_beginning_principal.toFixed(2)}</td>
-                        <td>${row.senior_periodic_return.toFixed(2)}</td>
-                        <td>${row.senior_principal_repayment.toFixed(2)}</td>
-                        <td>${row.subordinate_principal_balance.toFixed(2)}</td>
-                        <td>${row.subordinate_principal_repayment.toFixed(2)}</td>
-                        <td>${row.carry_lp.toFixed(2)}</td>
-                        <td>${row.carry_gp.toFixed(2)}</td>
+                        <td>${formatNumber(row.senior_beginning_principal)}</td>
+                        <td>${formatNumber(row.senior_periodic_return)}</td>
+                        <td>${formatNumber(row.senior_principal_repayment)}</td>
+                        <td>${formatNumber(row.subordinate_principal_balance)}</td>
+                        <td>${formatNumber(row.subordinate_principal_repayment)}</td>
+                        <td class="${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp)}</td>
+                        <td class="${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp)}</td>
                     `;
                 }
                 
@@ -841,10 +1459,10 @@
                     window.URL.revokeObjectURL(url);
                     showAlert('导出成功', 'success');
                 } else {
-                    showAlert('导出失败', 'danger');
+                    showAlert('导出失败', 'error');
                 }
             } catch (error) {
-                showAlert('导出时发生错误: ' + error.message, 'danger');
+                showAlert('导出时发生错误: ' + error.message, 'error');
             }
         }
 
@@ -867,10 +1485,10 @@
                     window.URL.revokeObjectURL(url);
                     showAlert('模板下载成功', 'success');
                 } else {
-                    showAlert('模板下载失败', 'danger');
+                    showAlert('模板下载失败', 'error');
                 }
             } catch (error) {
-                showAlert('下载模板时发生错误: ' + error.message, 'danger');
+                showAlert('下载模板时发生错误: ' + error.message, 'error');
             }
         }
 
@@ -896,12 +1514,46 @@
                     showAlert('文件导入成功', 'success');
                     // 这里可以根据导入的数据填充表单
                 } else {
-                    showAlert(result.message, 'danger');
+                    showAlert(result.message, 'error');
                 }
             })
             .catch(error => {
-                showAlert('导入文件时发生错误: ' + error.message, 'danger');
+                showAlert('导入文件时发生错误: ' + error.message, 'error');
             });
+        }
+
+        /**
+         * 标记步骤为已完成
+         */
+        function markStepCompleted(stepIndex) {
+            const stepItem = document.querySelectorAll('.step-item')[stepIndex];
+            stepItem.classList.add('completed');
+            
+            const stepNumber = stepItem.querySelector('.step-number');
+            stepNumber.innerHTML = '<i class="fas fa-check"></i>';
+        }
+
+        /**
+         * 显示/隐藏加载状态
+         */
+        function showLoading(show) {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (show) {
+                loadingOverlay.classList.add('show');
+            } else {
+                loadingOverlay.classList.remove('show');
+            }
+        }
+
+        /**
+         * 格式化数字显示
+         */
+        function formatNumber(value) {
+            if (typeof value !== 'number') return value;
+            return new Intl.NumberFormat('zh-CN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
         }
 
         /**
@@ -909,11 +1561,17 @@
          */
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.className = `alert ${type}`;
+            
+            const iconMap = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-circle',
+                'warning': 'fas fa-exclamation-triangle'
+            };
+            
             alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <i class="${iconMap[type]}"></i>
+                <span>${message}</span>
             `;
             
             document.body.appendChild(alertDiv);
