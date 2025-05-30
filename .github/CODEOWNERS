@@ -1,0 +1,27 @@
+# 代码拥有者配置
+# 当有人对这些文件或目录提交Pull Request时，会自动请求以下用户进行审查
+
+# 全局代码拥有者
+* @JMoCoder
+
+# 核心应用文件
+app.py @JMoCoder
+requirements.txt @JMoCoder
+
+# 前端模板文件
+templates/ @JMoCoder
+
+# 文档文件
+README.md @JMoCoder
+*.md @JMoCoder
+
+# 部署脚本
+deploy.bat @JMoCoder
+start.bat @JMoCoder
+
+# GitHub配置文件
+.github/ @JMoCoder
+
+# PRD和UI设计文件
+.PRD/ @JMoCoder
+.UI/ @JMoCoder 

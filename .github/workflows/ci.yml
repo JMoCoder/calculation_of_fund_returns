@@ -1,0 +1,176 @@
+name: 持续集成与部署
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: 测试
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, 3.10, 3.11]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: 设置Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 代码风格检查
+      run: |
+        pip install flake8
+        # 停止构建如果有Python语法错误或未定义的名称
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # 将其他错误作为警告处理
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: 基本功能测试
+      run: |
+        python -c "
+        import sys
+        sys.path.append('.')
+        
+        # 测试应用启动
+        from app import app
+        app_context = app.app_context()
+        app_context.push()
+        
+        # 测试基本导入
+        from app import FundCalculator
+        calc = FundCalculator()
+        
+        # 测试基本计算功能
+        params = {
+            'investment_amount': 10000,
+            'investment_period': 5,
+            'hurdle_rate': 0.08,
+            'carry_rate': 0.20
+        }
+        cash_flows = [0, 1000, 2000, 3000, 4000, 5000]
+        
+        # 测试优先还本模式
+        result = calc.calculate_priority_repayment(params, cash_flows)
+        assert 'irr' in result
+        assert 'dpi' in result
+        assert 'distribution_table' in result
+        
+        print('✅ 所有基本功能测试通过')
+        "
+
+  build:
+    name: 构建检查
+    needs: test
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: 设置Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 测试部署脚本
+      run: |
+        # 测试依赖检查
+        python -c "
+        import flask
+        import pandas
+        import numpy
+        import openpyxl
+        print('✅ 所有依赖包检查通过')
+        "
+        
+    - name: 验证文件完整性
+      run: |
+        python -c "
+        import os
+        required_files = [
+            'app.py',
+            'requirements.txt', 
+            'deploy.bat',
+            'start.bat',
+            'README.md',
+            'templates/index.html'
+        ]
+        
+        for file in required_files:
+            if not os.path.exists(file):
+                raise FileNotFoundError(f'缺少必需文件: {file}')
+                
+        print('✅ 所有必需文件检查通过')
+        "
+
+  security:
+    name: 安全检查
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: 设置Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: 安装安全检查工具
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit
+        
+    - name: 依赖安全检查
+      run: |
+        safety check -r requirements.txt
+        
+    - name: 代码安全检查
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        
+    - name: 上传安全报告
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-report
+        path: bandit-report.json
+
+  release-notes:
+    name: 生成发布说明
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, build, security]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        
+    - name: 生成发布说明
+      run: |
+        echo "## 🚀 最新更改" > RELEASE_NOTES.md
+        echo "" >> RELEASE_NOTES.md
+        echo "**构建时间**: $(date)" >> RELEASE_NOTES.md
+        echo "**提交哈希**: ${{ github.sha }}" >> RELEASE_NOTES.md
+        echo "" >> RELEASE_NOTES.md
+        echo "### 📝 更改内容" >> RELEASE_NOTES.md
+        git log --oneline -10 --pretty=format:"- %s (%an)" >> RELEASE_NOTES.md
+        
+    - name: 上传发布说明
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-notes
+        path: RELEASE_NOTES.md 
