@@ -27,12 +27,18 @@ class NumberFormatter {
      * @returns {string} 格式化后的货币字符串
      */
     static formatCurrency(amount, currency = 'CNY') {
-        return new Intl.NumberFormat('zh-CN', {
+        // 安全检查：确保amount是有效数字
+        if (typeof amount !== 'number' || isNaN(amount) || !isFinite(amount)) {
+            return currency === 'CNY' ? '￥0' : '$0';
+        }
+        
+        const formatter = new Intl.NumberFormat('zh-CN', {
             style: 'currency',
             currency: currency,
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+        return formatter.format(amount);
     }
 
     /**
@@ -42,6 +48,10 @@ class NumberFormatter {
      * @returns {string} 格式化后的百分比字符串
      */
     static formatPercentage(value, decimals = 2) {
+        // 安全检查：确保value是有效数字
+        if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+            return '0.' + '0'.repeat(decimals) + '%';
+        }
         return new Intl.NumberFormat('zh-CN', {
             style: 'percent',
             minimumFractionDigits: decimals,
@@ -56,6 +66,10 @@ class NumberFormatter {
      * @returns {string} 格式化后的数字字符串
      */
     static formatNumber(value, decimals = 2) {
+        // 安全检查：确保value是有效数字
+        if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+            return '0.' + '0'.repeat(decimals);
+        }
         return new Intl.NumberFormat('zh-CN', {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals
