@@ -518,6 +518,10 @@ function showAlert(message, type = 'info') {
  * @returns {string} 格式化后的货币字符串
  */
 function formatCurrency(amount) {
+    // 安全检查：确保amount是有效数字
+    if (typeof amount !== 'number' || isNaN(amount) || !isFinite(amount)) {
+        return '￥0.00';
+    }
     return new Intl.NumberFormat('zh-CN', {
         style: 'currency',
         currency: 'CNY',
@@ -531,6 +535,10 @@ function formatCurrency(amount) {
  * @returns {string} 格式化后的百分比字符串
  */
 function formatPercentage(value) {
+    // 安全检查：确保value是有效数字
+    if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+        return '0.00%';
+    }
     return new Intl.NumberFormat('zh-CN', {
         style: 'percent',
         minimumFractionDigits: 2,
@@ -544,6 +552,10 @@ function formatPercentage(value) {
  * @returns {string} 格式化后的数字字符串
  */
 function formatNumber(value) {
+    // 安全检查：确保value是有效数字
+    if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+        return '0.00';
+    }
     return new Intl.NumberFormat('zh-CN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
