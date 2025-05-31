@@ -1623,48 +1623,99 @@
         }
 
         /**
+         * 安全解析数值，防止NaN
+         */
+        function safeParseFloat(value, defaultValue = 0) {
+            if (value === null || value === undefined || value === '') {
+                return defaultValue;
+            }
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? defaultValue : parsed;
+        }
+        
+        function safeParseInt(value, defaultValue = 0) {
+            if (value === null || value === undefined || value === '') {
+                return defaultValue;
+            }
+            const parsed = parseInt(value);
+            return isNaN(parsed) ? defaultValue : parsed;
+        }
+
+        /**
          * 保存基本参数
          */
         async function saveBasicParams() {
+            // 使用安全解析函数，防止NaN
+            const investmentTargetValue = document.getElementById('investmentTarget').value;
+            const investmentAmountValue = document.getElementById('investmentAmount').value;
+            const investmentPeriodValue = document.getElementById('investmentPeriod').value;
+            const hurdleRateValue = document.getElementById('hurdleRate').value;
+            const managementCarryValue = document.getElementById('managementCarry').value;
+            
+            console.log('原始输入值:', {
+                target: investmentTargetValue,
+                amount: investmentAmountValue,
+                period: investmentPeriodValue,
+                hurdle: hurdleRateValue,
+                carry: managementCarryValue
+            });
+            
             basicParams = {
-                investment_target: document.getElementById('investmentTarget').value.trim(),
-                investment_amount: parseFloat(document.getElementById('investmentAmount').value),
-                investment_period: parseInt(document.getElementById('investmentPeriod').value),
-                hurdle_rate: parseFloat(document.getElementById('hurdleRate').value),
-                management_carry: parseFloat(document.getElementById('managementCarry').value)
+                investment_target: (investmentTargetValue || '').trim(),
+                investment_amount: safeParseFloat(investmentAmountValue),
+                investment_period: safeParseInt(investmentPeriodValue),
+                hurdle_rate: safeParseFloat(hurdleRateValue),
+                management_carry: safeParseFloat(managementCarryValue)
             };
             
-            // 验证表单
+            console.log('解析后的参数:', basicParams);
+            
+            // 增强验证逻辑
             if (!basicParams.investment_target) {
                 showAlert('请输入投资标的', 'warning');
                 document.getElementById('investmentTarget').focus();
                 return;
             }
             
-            if (!basicParams.investment_amount || basicParams.investment_amount <= 0) {
-                showAlert('请输入有效的投资金额', 'warning');
+            if (basicParams.investment_amount <= 0) {
+                showAlert('请输入有效的投资金额(大于0)', 'warning');
                 document.getElementById('investmentAmount').focus();
                 return;
             }
             
-            if (!basicParams.investment_period || basicParams.investment_period <= 0 || basicParams.investment_period > 30) {
+            if (basicParams.investment_period <= 0 || basicParams.investment_period > 30) {
                 showAlert('请输入有效的投资期限(1-30年)', 'warning');
                 document.getElementById('investmentPeriod').focus();
                 return;
             }
             
-            if (isNaN(basicParams.hurdle_rate) || basicParams.hurdle_rate < 0 || basicParams.hurdle_rate > 100) {
+            if (basicParams.hurdle_rate < 0 || basicParams.hurdle_rate > 100) {
                 showAlert('请输入有效的门槛收益率(0-100%)', 'warning');
                 document.getElementById('hurdleRate').focus();
                 return;
             }
             
-            if (isNaN(basicParams.management_carry) || basicParams.management_carry < 0 || basicParams.management_carry > 100) {
+            if (basicParams.management_carry < 0 || basicParams.management_carry > 100) {
                 showAlert('请输入有效的管理人Carry(0-100%)', 'warning');
                 document.getElementById('managementCarry').focus();
                 return;
             }
             
+            // 最终的NaN检查
+            const values = [
+                basicParams.investment_amount,
+                basicParams.investment_period,
+                basicParams.hurdle_rate,
+                basicParams.management_carry
+            ];
+            
+            const hasNaN = values.some(v => isNaN(v) || !isFinite(v));
+            if (hasNaN) {
+                console.error('检测到NaN或无限值:', basicParams);
+                showAlert('参数包含无效数值，请检查输入', 'error');
+                return;
+            }
+
             try {
                 const response = await fetch('/api/basic-params', {
                     method: 'POST',
@@ -1699,6 +1750,7 @@
                     showAlert(result.message, 'error');
                 }
             } catch (error) {
+                console.error('保存基本参数出错:', error);
                 showAlert('设置参数时发生错误: ' + error.message, 'error');
             }
         }
@@ -1741,14 +1793,35 @@
         async function saveCashFlows() {
             cashFlows = [];
             
+            console.log('开始收集现金流数据，期限:', basicParams.investment_period);
+            
             for (let i = 1; i <= basicParams.investment_period; i++) {
-                const value = parseFloat(document.getElementById(`cashFlow${i}`).value);
-                if (isNaN(value) || value < 0) {
-                    showAlert(`第${i}年现金流输入无效，请输入非负数`, 'warning');
-                    document.getElementById(`cashFlow${i}`).focus();
+                const inputElement = document.getElementById(`cashFlow${i}`);
+                if (!inputElement) {
+                    console.error(`现金流输入框 cashFlow${i} 不存在`);
+                    showAlert(`第${i}年现金流输入框不存在，请刷新页面重试`, 'error');
+                    return;
+                }
+                
+                const rawValue = inputElement.value;
+                const value = safeParseFloat(rawValue);
+                
+                console.log(`第${i}年现金流: 原始值="${rawValue}", 解析值=${value}`);
+                
+                if (isNaN(value) || !isFinite(value) || value < 0) {
+                    showAlert(`第${i}年现金流输入无效(${rawValue})，请输入有效的非负数`, 'warning');
+                    inputElement.focus();
                     return;
                 }
                 cashFlows.push(value);
+            }
+            
+            console.log('收集到的现金流数据:', cashFlows);
+            
+            // 检查数据长度
+            if (cashFlows.length !== basicParams.investment_period) {
+                showAlert(`现金流数据长度(${cashFlows.length})与投资期限(${basicParams.investment_period})不匹配`, 'error');
+                return;
             }
             
             // 检查至少有一个正现金流
@@ -1757,6 +1830,14 @@
                 return;
             }
             
+            // 最终NaN检查
+            const hasInvalidValue = cashFlows.some(cf => isNaN(cf) || !isFinite(cf));
+            if (hasInvalidValue) {
+                console.error('现金流数据包含无效值:', cashFlows);
+                showAlert('现金流数据包含无效数值，请检查输入', 'error');
+                return;
+            }
+
             try {
                 const response = await fetch('/api/cash-flows', {
                     method: 'POST',
@@ -1773,9 +1854,11 @@
                     markStepCompleted(1);
                     showTab('distribution-mode');
                 } else {
+                    console.error('现金流设置失败:', result.message);
                     showAlert(result.message, 'error');
                 }
             } catch (error) {
+                console.error('设置现金流出错:', error);
                 showAlert('设置现金流时发生错误: ' + error.message, 'error');
             }
         }
@@ -1835,7 +1918,7 @@
          * 验证期间收益率不能超过门槛收益率
          */
         function validatePeriodicRate() {
-            const periodicRate = parseFloat(document.getElementById('periodicRate').value) || 0;
+            const periodicRate = safeParseFloat(document.getElementById('periodicRate').value);
             const hurdleRate = basicParams.hurdle_rate || 0;
             
             if (periodicRate > hurdleRate) {
@@ -1848,7 +1931,7 @@
          * 更新结构化金额显示
          */
         function updateStructureAmounts() {
-            const seniorRatio = parseFloat(document.getElementById('seniorRatio').value) || 0;
+            const seniorRatio = safeParseFloat(document.getElementById('seniorRatio').value);
             const investmentAmount = basicParams.investment_amount || 0;
             const hurdleRate = basicParams.hurdle_rate || 0;
             
@@ -1864,8 +1947,8 @@
          * 更新夹层结构金额显示
          */
         function updateMezzanineAmounts() {
-            const seniorRatio = parseFloat(document.getElementById('mezzanineSeniorRatio').value) || 0;
-            const mezzanineRatio = parseFloat(document.getElementById('mezzanineRatio').value) || 0;
+            const seniorRatio = safeParseFloat(document.getElementById('mezzanineSeniorRatio').value);
+            const mezzanineRatio = safeParseFloat(document.getElementById('mezzanineRatio').value);
             const subordinateRatio = 100 - seniorRatio - mezzanineRatio;
             const investmentAmount = basicParams.investment_amount || 0;
             const hurdleRate = basicParams.hurdle_rate || 0;
@@ -1892,7 +1975,7 @@
          * 更新息息本本金额显示
          */
         function updateInterestPrincipalAmounts() {
-            const seniorRatio = parseFloat(document.getElementById('ipSeniorRatio').value) || 0;
+            const seniorRatio = safeParseFloat(document.getElementById('ipSeniorRatio').value);
             const investmentAmount = basicParams.investment_amount || 0;
             const hurdleRate = basicParams.hurdle_rate || 0;
             
@@ -2017,8 +2100,12 @@
             
             // 根据模式添加额外参数
             if (selectedMode.value === 'flat_periodic_distribution') {
-                const periodicRate = parseFloat(document.getElementById('periodicRate').value);
-                if (isNaN(periodicRate) || periodicRate < 0 || periodicRate > 100) {
+                const periodicRateValue = document.getElementById('periodicRate').value;
+                const periodicRate = safeParseFloat(periodicRateValue);
+                
+                console.log(`期间收益率: 原始值="${periodicRateValue}", 解析值=${periodicRate}`);
+                
+                if (isNaN(periodicRate) || !isFinite(periodicRate) || periodicRate < 0 || periodicRate > 100) {
                     showAlert('请输入有效的期间收益率(0-100%)', 'warning');
                     document.getElementById('periodicRate').focus();
                     return;
@@ -2033,8 +2120,12 @@
                 calculationData.periodic_rate = periodicRate;
                 
             } else if (selectedMode.value === 'structured_senior_subordinate') {
-                const seniorRatio = parseFloat(document.getElementById('seniorRatio').value);
-                if (isNaN(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
+                const seniorRatioValue = document.getElementById('seniorRatio').value;
+                const seniorRatio = safeParseFloat(seniorRatioValue);
+                
+                console.log(`优先级比例: 原始值="${seniorRatioValue}", 解析值=${seniorRatio}`);
+                
+                if (isNaN(seniorRatio) || !isFinite(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
                     showAlert('请输入有效的优先级比例(1-99%)', 'warning');
                     document.getElementById('seniorRatio').focus();
                     return;
@@ -2042,26 +2133,36 @@
                 calculationData.senior_ratio = seniorRatio;
                 
             } else if (selectedMode.value === 'structured_mezzanine') {
-                const seniorRatio = parseFloat(document.getElementById('mezzanineSeniorRatio').value);
-                const mezzanineRatio = parseFloat(document.getElementById('mezzanineRatio').value);
-                const mezzanineRate = parseFloat(document.getElementById('mezzanineRate').value);
+                const seniorRatioValue = document.getElementById('mezzanineSeniorRatio').value;
+                const mezzanineRatioValue = document.getElementById('mezzanineRatio').value;
+                const mezzanineRateValue = document.getElementById('mezzanineRate').value;
+                
+                const seniorRatio = safeParseFloat(seniorRatioValue);
+                const mezzanineRatio = safeParseFloat(mezzanineRatioValue);
+                const mezzanineRate = safeParseFloat(mezzanineRateValue);
+                
+                console.log('夹层参数:', {
+                    seniorRatio: `"${seniorRatioValue}" -> ${seniorRatio}`,
+                    mezzanineRatio: `"${mezzanineRatioValue}" -> ${mezzanineRatio}`,
+                    mezzanineRate: `"${mezzanineRateValue}" -> ${mezzanineRate}`
+                });
                 
                 // 验证优先级比例
-                if (isNaN(seniorRatio) || seniorRatio < 1 || seniorRatio > 97) {
+                if (isNaN(seniorRatio) || !isFinite(seniorRatio) || seniorRatio < 1 || seniorRatio > 97) {
                     showAlert('请输入有效的优先级比例(1-97%)', 'warning');
                     document.getElementById('mezzanineSeniorRatio').focus();
                     return;
                 }
                 
                 // 验证夹层比例
-                if (isNaN(mezzanineRatio) || mezzanineRatio < 1 || mezzanineRatio > 97) {
+                if (isNaN(mezzanineRatio) || !isFinite(mezzanineRatio) || mezzanineRatio < 1 || mezzanineRatio > 97) {
                     showAlert('请输入有效的夹层比例(1-97%)', 'warning');
                     document.getElementById('mezzanineRatio').focus();
                     return;
                 }
                 
                 // 验证夹层收益率
-                if (isNaN(mezzanineRate) || mezzanineRate < 0 || mezzanineRate > 100) {
+                if (isNaN(mezzanineRate) || !isFinite(mezzanineRate) || mezzanineRate < 0 || mezzanineRate > 100) {
                     showAlert('请输入有效的夹层收益率(0-100%)', 'warning');
                     document.getElementById('mezzanineRate').focus();
                     return;
@@ -2079,18 +2180,26 @@
                 calculationData.mezzanine_rate = mezzanineRate;
                 
             } else if (selectedMode.value === 'structured_interest_principal') {
-                const seniorRatio = parseFloat(document.getElementById('ipSeniorRatio').value);
-                const subordinateRate = parseFloat(document.getElementById('subordinateRate').value);
+                const seniorRatioValue = document.getElementById('ipSeniorRatio').value;
+                const subordinateRateValue = document.getElementById('subordinateRate').value;
+                
+                const seniorRatio = safeParseFloat(seniorRatioValue);
+                const subordinateRate = safeParseFloat(subordinateRateValue);
+                
+                console.log('息息本本参数:', {
+                    seniorRatio: `"${seniorRatioValue}" -> ${seniorRatio}`,
+                    subordinateRate: `"${subordinateRateValue}" -> ${subordinateRate}`
+                });
                 
                 // 验证优先级比例
-                if (isNaN(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
+                if (isNaN(seniorRatio) || !isFinite(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
                     showAlert('请输入有效的优先级比例(1-99%)', 'warning');
                     document.getElementById('ipSeniorRatio').focus();
                     return;
                 }
                 
                 // 验证劣后级收益率
-                if (isNaN(subordinateRate) || subordinateRate < 0 || subordinateRate > 100) {
+                if (isNaN(subordinateRate) || !isFinite(subordinateRate) || subordinateRate < 0 || subordinateRate > 100) {
                     showAlert('请输入有效的劣后级收益率(0-100%)', 'warning');
                     document.getElementById('subordinateRate').focus();
                     return;
@@ -2726,18 +2835,40 @@
                             if (result.data.cash_flows) {
                                 const rawCashFlows = result.data.cash_flows;
                                 
-                                // 清理和验证现金流数据
+                                // 使用安全解析函数清理和验证现金流数据
                                 const cleanCashFlows = rawCashFlows.map((cf, index) => {
-                                    const cleanValue = parseFloat(cf);
-                                    if (isNaN(cleanValue)) {
-                                        console.warn(`第${index + 1}年现金流数据无效，设为0: ${cf}`);
+                                    const cleanValue = safeParseFloat(cf);
+                                    
+                                    // 额外的安全检查
+                                    if (isNaN(cleanValue) || !isFinite(cleanValue)) {
+                                        console.warn(`第${index + 1}年现金流数据无效，设为0: ${cf} -> NaN`);
                                         return 0;
                                     }
+                                    
+                                    if (cleanValue < 0) {
+                                        console.warn(`第${index + 1}年现金流为负数，设为0: ${cf} -> ${cleanValue}`);
+                                        return 0;
+                                    }
+                                    
                                     return cleanValue;
                                 });
                                 
                                 console.log('原始现金流数据:', rawCashFlows);
                                 console.log('清理后现金流数据:', cleanCashFlows);
+                                
+                                // 最终验证：确保没有NaN、Infinity或负数
+                                const finalValidation = cleanCashFlows.every(cf => 
+                                    typeof cf === 'number' && 
+                                    isFinite(cf) && 
+                                    !isNaN(cf) && 
+                                    cf >= 0
+                                );
+                                
+                                if (!finalValidation) {
+                                    console.error('现金流数据最终验证失败:', cleanCashFlows);
+                                    showAlert('现金流数据格式错误，请检查Excel文件内容', 'error');
+                                    return;
+                                }
                                 
                                 // 填充现金流数据
                                 for (let i = 0; i < cleanCashFlows.length && i < cleanParams.investment_period; i++) {
