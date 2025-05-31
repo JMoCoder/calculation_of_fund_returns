@@ -901,6 +901,30 @@
                 opacity: 1;
             }
         }
+
+        /* 提示信息框样式 */
+        .info-box {
+            background-color: rgba(19, 194, 194, 0.1);
+            border: 1px solid var(--info-color);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .info-box-title {
+            font-weight: 600;
+            color: var(--info-color);
+            margin-bottom: var(--spacing-xs);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .info-box-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -1715,7 +1739,7 @@
                 showAlert('参数包含无效数值，请检查输入', 'error');
                 return;
             }
-
+            
             try {
                 const response = await fetch('/api/basic-params', {
                     method: 'POST',
@@ -1837,7 +1861,7 @@
                 showAlert('现金流数据包含无效数值，请检查输入', 'error');
                 return;
             }
-
+            
             try {
                 const response = await fetch('/api/cash-flows', {
                     method: 'POST',
@@ -1931,24 +1955,55 @@
          * 更新结构化金额显示
          */
         function updateStructureAmounts() {
-            const seniorRatio = safeParseFloat(document.getElementById('seniorRatio').value);
+            // 安全检查：确保basicParams已设置
+            if (!basicParams || typeof basicParams.investment_amount === 'undefined') {
+                console.warn('basicParams未设置，跳过金额更新');
+                return;
+            }
+            
+            // 安全检查：确保DOM元素存在
+            const seniorRatioElement = document.getElementById('seniorRatio');
+            const seniorAmountElement = document.getElementById('seniorAmount');
+            const subordinateAmountElement = document.getElementById('subordinateAmount');
+            const seniorRateElement = document.getElementById('seniorRate');
+            
+            if (!seniorRatioElement || !seniorAmountElement || !subordinateAmountElement || !seniorRateElement) {
+                console.warn('DOM元素不存在，跳过金额更新');
+                return;
+            }
+            
+            const seniorRatio = safeParseFloat(seniorRatioElement.value);
             const investmentAmount = basicParams.investment_amount || 0;
             const hurdleRate = basicParams.hurdle_rate || 0;
             
             const seniorAmount = investmentAmount * seniorRatio / 100;
             const subordinateAmount = investmentAmount - seniorAmount;
             
-            document.getElementById('seniorAmount').textContent = seniorAmount.toFixed(2);
-            document.getElementById('subordinateAmount').textContent = subordinateAmount.toFixed(2);
-            document.getElementById('seniorRate').textContent = hurdleRate.toFixed(2);
+            seniorAmountElement.textContent = seniorAmount.toFixed(2);
+            subordinateAmountElement.textContent = subordinateAmount.toFixed(2);
+            seniorRateElement.textContent = hurdleRate.toFixed(2);
         }
 
         /**
          * 更新夹层结构金额显示
          */
         function updateMezzanineAmounts() {
-            const seniorRatio = safeParseFloat(document.getElementById('mezzanineSeniorRatio').value);
-            const mezzanineRatio = safeParseFloat(document.getElementById('mezzanineRatio').value);
+            // 安全检查：确保basicParams已设置
+            if (!basicParams || typeof basicParams.investment_amount === 'undefined') {
+                console.warn('basicParams未设置，跳过夹层金额更新');
+                return;
+            }
+            
+            // 安全检查：确保DOM元素存在
+            const seniorRatioElement = document.getElementById('mezzanineSeniorRatio');
+            const mezzanineRatioElement = document.getElementById('mezzanineRatio');
+            if (!seniorRatioElement || !mezzanineRatioElement) {
+                console.warn('夹层DOM元素不存在，跳过金额更新');
+                return;
+            }
+            
+            const seniorRatio = safeParseFloat(seniorRatioElement.value);
+            const mezzanineRatio = safeParseFloat(mezzanineRatioElement.value);
             const subordinateRatio = 100 - seniorRatio - mezzanineRatio;
             const investmentAmount = basicParams.investment_amount || 0;
             const hurdleRate = basicParams.hurdle_rate || 0;
@@ -1964,27 +2019,52 @@
             const mezzanineAmount = investmentAmount * mezzanineRatio / 100;
             const subordinateAmount = investmentAmount * subordinateRatio / 100;
             
-            document.getElementById('mezzanineSeniorAmount').textContent = seniorAmount.toFixed(2);
-            document.getElementById('mezzanineMezzanineAmount').textContent = mezzanineAmount.toFixed(2);
-            document.getElementById('mezzanineSubordinateAmount').textContent = subordinateAmount.toFixed(2);
-            document.getElementById('mezzanineSeniorRate').textContent = hurdleRate.toFixed(2);
-            document.getElementById('mezzanineTotal').textContent = total.toFixed(0);
+            // 安全更新DOM元素
+            const seniorAmountElement = document.getElementById('mezzanineSeniorAmount');
+            const mezzanineAmountElement = document.getElementById('mezzanineMezzanineAmount');
+            const subordinateAmountElement = document.getElementById('mezzanineSubordinateAmount');
+            const seniorRateElement = document.getElementById('mezzanineSeniorRate');
+            const totalElement = document.getElementById('mezzanineTotal');
+            
+            if (seniorAmountElement) seniorAmountElement.textContent = seniorAmount.toFixed(2);
+            if (mezzanineAmountElement) mezzanineAmountElement.textContent = mezzanineAmount.toFixed(2);
+            if (subordinateAmountElement) subordinateAmountElement.textContent = subordinateAmount.toFixed(2);
+            if (seniorRateElement) seniorRateElement.textContent = hurdleRate.toFixed(2);
+            if (totalElement) totalElement.textContent = total.toFixed(0);
         }
 
         /**
          * 更新息息本本金额显示
          */
         function updateInterestPrincipalAmounts() {
-            const seniorRatio = safeParseFloat(document.getElementById('ipSeniorRatio').value);
+            // 安全检查：确保basicParams已设置
+            if (!basicParams || typeof basicParams.investment_amount === 'undefined') {
+                console.warn('basicParams未设置，跳过息息本本金额更新');
+                return;
+            }
+            
+            // 安全检查：确保DOM元素存在
+            const seniorRatioElement = document.getElementById('ipSeniorRatio');
+            if (!seniorRatioElement) {
+                console.warn('息息本本DOM元素不存在，跳过金额更新');
+                return;
+            }
+            
+            const seniorRatio = safeParseFloat(seniorRatioElement.value);
             const investmentAmount = basicParams.investment_amount || 0;
             const hurdleRate = basicParams.hurdle_rate || 0;
             
             const seniorAmount = investmentAmount * seniorRatio / 100;
             const subordinateAmount = investmentAmount - seniorAmount;
             
-            document.getElementById('ipSeniorAmount').textContent = seniorAmount.toFixed(2);
-            document.getElementById('ipSubordinateAmount').textContent = subordinateAmount.toFixed(2);
-            document.getElementById('ipSeniorRate').textContent = hurdleRate.toFixed(2);
+            // 安全更新DOM元素
+            const seniorAmountElement = document.getElementById('ipSeniorAmount');
+            const subordinateAmountElement = document.getElementById('ipSubordinateAmount');
+            const seniorRateElement = document.getElementById('ipSeniorRate');
+            
+            if (seniorAmountElement) seniorAmountElement.textContent = seniorAmount.toFixed(2);
+            if (subordinateAmountElement) subordinateAmountElement.textContent = subordinateAmount.toFixed(2);
+            if (seniorRateElement) seniorRateElement.textContent = hurdleRate.toFixed(2);
         }
 
         /**
@@ -2101,6 +2181,15 @@
             // 根据模式添加额外参数
             if (selectedMode.value === 'flat_periodic_distribution') {
                 const periodicRateValue = document.getElementById('periodicRate').value;
+                console.log(`期间收益率原始值: "${periodicRateValue}"`);
+                
+                // 增强空值检查
+                if (!periodicRateValue || periodicRateValue.trim() === '') {
+                    showAlert('请输入期间收益率', 'warning');
+                    document.getElementById('periodicRate').focus();
+                    return;
+                }
+                
                 const periodicRate = safeParseFloat(periodicRateValue);
                 
                 console.log(`期间收益率: 原始值="${periodicRateValue}", 解析值=${periodicRate}`);
@@ -2121,6 +2210,15 @@
                 
             } else if (selectedMode.value === 'structured_senior_subordinate') {
                 const seniorRatioValue = document.getElementById('seniorRatio').value;
+                console.log(`优先级比例原始值: "${seniorRatioValue}"`);
+                
+                // 增强空值检查
+                if (!seniorRatioValue || seniorRatioValue.trim() === '') {
+                    showAlert('请输入优先级投资比例', 'warning');
+                    document.getElementById('seniorRatio').focus();
+                    return;
+                }
+                
                 const seniorRatio = safeParseFloat(seniorRatioValue);
                 
                 console.log(`优先级比例: 原始值="${seniorRatioValue}", 解析值=${seniorRatio}`);
@@ -2136,6 +2234,31 @@
                 const seniorRatioValue = document.getElementById('mezzanineSeniorRatio').value;
                 const mezzanineRatioValue = document.getElementById('mezzanineRatio').value;
                 const mezzanineRateValue = document.getElementById('mezzanineRate').value;
+                
+                console.log('夹层参数原始值:', {
+                    seniorRatio: `"${seniorRatioValue}"`,
+                    mezzanineRatio: `"${mezzanineRatioValue}"`,
+                    mezzanineRate: `"${mezzanineRateValue}"`
+                });
+                
+                // 增强空值检查
+                if (!seniorRatioValue || seniorRatioValue.trim() === '') {
+                    showAlert('请输入优先级投资比例', 'warning');
+                    document.getElementById('mezzanineSeniorRatio').focus();
+                    return;
+                }
+                
+                if (!mezzanineRatioValue || mezzanineRatioValue.trim() === '') {
+                    showAlert('请输入夹层投资比例', 'warning');
+                    document.getElementById('mezzanineRatio').focus();
+                    return;
+                }
+                
+                if (!mezzanineRateValue || mezzanineRateValue.trim() === '') {
+                    showAlert('请输入夹层收益率', 'warning');
+                    document.getElementById('mezzanineRate').focus();
+                    return;
+                }
                 
                 const seniorRatio = safeParseFloat(seniorRatioValue);
                 const mezzanineRatio = safeParseFloat(mezzanineRatioValue);
@@ -2183,6 +2306,24 @@
                 const seniorRatioValue = document.getElementById('ipSeniorRatio').value;
                 const subordinateRateValue = document.getElementById('subordinateRate').value;
                 
+                console.log('息息本本参数原始值:', {
+                    seniorRatio: `"${seniorRatioValue}"`,
+                    subordinateRate: `"${subordinateRateValue}"`
+                });
+                
+                // 增强空值检查
+                if (!seniorRatioValue || seniorRatioValue.trim() === '') {
+                    showAlert('请输入优先级投资比例', 'warning');
+                    document.getElementById('ipSeniorRatio').focus();
+                    return;
+                }
+                
+                if (!subordinateRateValue || subordinateRateValue.trim() === '') {
+                    showAlert('请输入劣后级收益率', 'warning');
+                    document.getElementById('subordinateRate').focus();
+                    return;
+                }
+                
                 const seniorRatio = safeParseFloat(seniorRatioValue);
                 const subordinateRate = safeParseFloat(subordinateRateValue);
                 
@@ -2210,6 +2351,37 @@
             }
             
             console.log('开始发送计算请求，数据:', calculationData);
+            
+            // 最终数据验证 - 确保没有任何NaN、null、undefined值
+            function validateData(obj, path = '') {
+                for (const [key, value] of Object.entries(obj)) {
+                    const currentPath = path ? `${path}.${key}` : key;
+                    
+                    if (value === null || value === undefined) {
+                        throw new Error(`${currentPath} 包含null或undefined值`);
+                    }
+                    
+                    if (typeof value === 'number') {
+                        if (isNaN(value) || !isFinite(value)) {
+                            throw new Error(`${currentPath} 包含无效数值: ${value}`);
+                        }
+                    }
+                    
+                    if (typeof value === 'object' && value !== null) {
+                        validateData(value, currentPath);
+                    }
+                }
+            }
+            
+            try {
+                validateData(calculationData);
+                console.log('数据验证通过，发送计算请求');
+            } catch (validationError) {
+                console.error('数据验证失败:', validationError.message);
+                showAlert('数据验证失败: ' + validationError.message, 'error');
+                return;
+            }
+            
             showLoading(true);
             
             try {
@@ -2300,9 +2472,9 @@
             <div class="results-title">
                 <i class="fas fa-chart-line"></i>
                 投资收益分析
-            </div>
+                    </div>
             
-            <!-- 核心指标网格 - 统一简约风格 -->
+            <!-- 统一的核心指标网格 - 包含所有8个指标 -->
             <div class="metrics-info-grid">
                 <div class="metric-info-item">
                     <div class="metric-info-label">内部收益率</div>
@@ -2320,10 +2492,6 @@
                     <div class="metric-info-label">静态回本周期</div>
                     <div class="metric-info-value">${results.core_metrics.static_payback_period === '无法回本' ? '无法回本' : formatNumber(results.core_metrics.static_payback_period, 'decimal') + ' 年'}</div>
                 </div>
-            </div>
-            
-            <!-- 项目信息网格 -->
-            <div class="metrics-info-grid">
                 <div class="metric-info-item">
                     <div class="metric-info-label">计算模式</div>
                     <div class="metric-info-value">${results.calculation_mode}</div>
@@ -2340,9 +2508,9 @@
                     <div class="metric-info-label">门槛收益率</div>
                     <div class="metric-info-value">${formatNumber(basicParams.hurdle_rate, 'percent')}%</div>
                 </div>
-            </div>
-        </div>
-        
+                    </div>
+                </div>
+                
         <div class="results-container">
             <div class="content-header">
                 <h2 class="content-title">
@@ -2351,80 +2519,80 @@
                 </h2>
                 <p class="content-subtitle">各年度详细的现金流分配情况（金额单位：万元）</p>
             </div>
-            <div class="table-container">
+                <div class="table-container">
                 <table class="result-table">
-                    <thead>
-                        <tr>
+                        <thead>
+                            <tr>
             `;
             
             // 根据计算模式动态生成表头
             if (results.calculation_mode === '平层结构-优先还本') {
                 html += `
                             <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流<br><small>(万元)</small></th>
-                            <th class="rate-header">分派率<br><small>(%)</small></th>
-                            <th class="amount-header">期初本金余额<br><small>(万元)</small></th>
-                            <th class="amount-header">归还本金<br><small>(万元)</small></th>
-                            <th class="amount-header">计提门槛收益<br><small>(万元)</small></th>
-                            <th class="amount-header">分配门槛收益<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryLP<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryGP<br><small>(万元)</small></th>
+                            <th class="amount-header">净现金流 (万元)</th>
+                            <th class="rate-header">分派率 (%)</th>
+                            <th class="amount-header">期初本金余额 (万元)</th>
+                            <th class="amount-header">归还本金 (万元)</th>
+                            <th class="amount-header">计提门槛收益 (万元)</th>
+                            <th class="amount-header">分配门槛收益 (万元)</th>
+                            <th class="amount-header">CarryLP (万元)</th>
+                            <th class="amount-header">CarryGP (万元)</th>
                 `;
             } else if (results.calculation_mode === '平层结构-期间分配') {
                 html += `
                             <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流<br><small>(万元)</small></th>
-                            <th class="rate-header">分派率<br><small>(%)</small></th>
-                            <th class="amount-header">期初本金余额<br><small>(万元)</small></th>
-                            <th class="amount-header">期间分配<br><small>(万元)</small></th>
-                            <th class="amount-header">计提门槛收益<br><small>(万元)</small></th>
-                            <th class="amount-header">归还本金<br><small>(万元)</small></th>
-                            <th class="amount-header">分配门槛收益<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryLP<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryGP<br><small>(万元)</small></th>
+                            <th class="amount-header">净现金流 (万元)</th>
+                            <th class="rate-header">分派率 (%)</th>
+                            <th class="amount-header">期初本金余额 (万元)</th>
+                            <th class="amount-header">期间分配 (万元)</th>
+                            <th class="amount-header">计提门槛收益 (万元)</th>
+                            <th class="amount-header">归还本金 (万元)</th>
+                            <th class="amount-header">分配门槛收益 (万元)</th>
+                            <th class="amount-header">CarryLP (万元)</th>
+                            <th class="amount-header">CarryGP (万元)</th>
                 `;
             } else if (results.calculation_mode === '结构化-优先劣后') {
                 html += `
                             <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流<br><small>(万元)</small></th>
-                            <th class="rate-header">分派率<br><small>(%)</small></th>
-                            <th class="amount-header">优先级期初本金<br><small>(万元)</small></th>
-                            <th class="amount-header">优先级收益分配<br><small>(万元)</small></th>
-                            <th class="amount-header">优先级本金归还<br><small>(万元)</small></th>
-                            <th class="amount-header">劣后级本金余额<br><small>(万元)</small></th>
-                            <th class="amount-header">劣后级本金归还<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryLP<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryGP<br><small>(万元)</small></th>
+                            <th class="amount-header">净现金流 (万元)</th>
+                            <th class="rate-header">分派率 (%)</th>
+                            <th class="amount-header">优先级期初本金 (万元)</th>
+                            <th class="amount-header">优先级收益分配 (万元)</th>
+                            <th class="amount-header">优先级本金归还 (万元)</th>
+                            <th class="amount-header">劣后级本金余额 (万元)</th>
+                            <th class="amount-header">劣后级本金归还 (万元)</th>
+                            <th class="amount-header">CarryLP (万元)</th>
+                            <th class="amount-header">CarryGP (万元)</th>
                 `;
             } else if (results.calculation_mode === '结构化-包含夹层') {
                 html += `
                             <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流<br><small>(万元)</small></th>
-                            <th class="rate-header">分派率<br><small>(%)</small></th>
-                            <th class="amount-header">优先级期初本金<br><small>(万元)</small></th>
-                            <th class="amount-header">夹层期初本金<br><small>(万元)</small></th>
-                            <th class="amount-header">劣后级期初本金<br><small>(万元)</small></th>
-                            <th class="amount-header">优先级收益分配<br><small>(万元)</small></th>
-                            <th class="amount-header">夹层收益分配<br><small>(万元)</small></th>
-                            <th class="amount-header">优先级本金归还<br><small>(万元)</small></th>
-                            <th class="amount-header">夹层本金归还<br><small>(万元)</small></th>
-                            <th class="amount-header">劣后级本金归还<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryLP<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryGP<br><small>(万元)</small></th>
+                            <th class="amount-header">净现金流 (万元)</th>
+                            <th class="rate-header">分派率 (%)</th>
+                            <th class="amount-header">优先级期初本金 (万元)</th>
+                            <th class="amount-header">夹层期初本金 (万元)</th>
+                            <th class="amount-header">劣后级期初本金 (万元)</th>
+                            <th class="amount-header">优先级收益分配 (万元)</th>
+                            <th class="amount-header">夹层收益分配 (万元)</th>
+                            <th class="amount-header">优先级本金归还 (万元)</th>
+                            <th class="amount-header">夹层本金归还 (万元)</th>
+                            <th class="amount-header">劣后级本金归还 (万元)</th>
+                            <th class="amount-header">CarryLP (万元)</th>
+                            <th class="amount-header">CarryGP (万元)</th>
                 `;
             } else if (results.calculation_mode === '结构化-息息本本') {
                 html += `
                             <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流<br><small>(万元)</small></th>
-                            <th class="rate-header">分派率<br><small>(%)</small></th>
-                            <th class="amount-header">优先级期初本金<br><small>(万元)</small></th>
-                            <th class="amount-header">优先级期间收益<br><small>(万元)</small></th>
-                            <th class="amount-header">劣后级期初本金<br><small>(万元)</small></th>
-                            <th class="amount-header">劣后级期间收益<br><small>(万元)</small></th>
-                            <th class="amount-header">优先级本金归还<br><small>(万元)</small></th>
-                            <th class="amount-header">劣后级本金归还<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryLP<br><small>(万元)</small></th>
-                            <th class="amount-header">CarryGP<br><small>(万元)</small></th>
+                            <th class="amount-header">净现金流 (万元)</th>
+                            <th class="rate-header">分派率 (%)</th>
+                            <th class="amount-header">优先级期初本金 (万元)</th>
+                            <th class="amount-header">优先级期间收益 (万元)</th>
+                            <th class="amount-header">劣后级期初本金 (万元)</th>
+                            <th class="amount-header">劣后级期间收益 (万元)</th>
+                            <th class="amount-header">优先级本金归还 (万元)</th>
+                            <th class="amount-header">劣后级本金归还 (万元)</th>
+                            <th class="amount-header">CarryLP (万元)</th>
+                            <th class="amount-header">CarryGP (万元)</th>
                 `;
             }
             
@@ -2740,20 +2908,20 @@
             if (!file) return;
             
             try {
-                // 显示专业加载提示
-                disableInterface('正在解析Excel文件，请稍候...');
-                
+            // 显示专业加载提示
+            disableInterface('正在解析Excel文件，请稍候...');
+            
                 // 1. 首先重置系统状态，确保干净的开始
                 console.log('导入前重置系统状态');
                 await resetAllDataSilently(); // 使用静默重置避免重复提示
                 
                 // 2. 开始导入文件
-                const formData = new FormData();
-                formData.append('file', file);
-                
+            const formData = new FormData();
+            formData.append('file', file);
+            
                 const response = await fetch('/api/import', {
-                    method: 'POST',
-                    body: formData
+                method: 'POST',
+                body: formData
                 });
                 
                 const result = await response.json();
