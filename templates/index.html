@@ -2522,7 +2522,7 @@
                 </div>
                 <div class="metric-info-item">
                     <div class="metric-info-label">投资金额</div>
-                    <div class="metric-info-value">${typeof (basicParams.investment_amount) === 'number' ? (basicParams.investment_amount).toFixed(2) : (basicParams.investment_amount || 0)} 万元</div>
+                    <div class="metric-info-value">${typeof (basicParams.investment_amount) === 'number' ? (basicParams.investment_amount).toLocaleString('zh-CN', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : (basicParams.investment_amount || 0)} 万元</div>
                 </div>
                 <div class="metric-info-item">
                     <div class="metric-info-label">投资期限</div>
