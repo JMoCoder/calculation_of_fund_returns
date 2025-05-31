@@ -6,6 +6,16 @@
  */
 
 /**
+ * 安全的toFixed函数，防止NaN错误
+ */
+function safeToFixed(value, digits = 2) {
+    if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+        return '0.' + '0'.repeat(digits);
+    }
+    return value.toFixed(digits);
+}
+
+/**
  * 全局图表配置
  */
 const CHART_CONFIG = {
@@ -245,7 +255,7 @@ function createDistributionPieChart(distributions) {
                         label: function(context) {
                             const value = formatCurrency(context.parsed);
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            const percentage = safeToFixed((context.parsed / total) * 100, 1);
                             return `${context.label}: ${value} (${percentage}%)`;
                         }
                     }
@@ -324,10 +334,10 @@ function createMetricsChart(metrics) {
                             let value = context.parsed.y;
                             if (context.dataIndex === 0 || context.dataIndex === 2) {
                                 // IRR和净收益率显示为百分比
-                                return `${context.label}: ${value.toFixed(2)}%`;
+                                return `${context.label}: ${safeToFixed(value, 2)}%`;
                             } else {
                                 // DPI显示为倍数
-                                return `${context.label}: ${value.toFixed(2)}x`;
+                                return `${context.label}: ${safeToFixed(value, 2)}x`;
                             }
                         }
                     }

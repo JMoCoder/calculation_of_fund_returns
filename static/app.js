@@ -67,7 +67,7 @@ function bindEventListeners() {
     // 步骤导航点击事件
     $('.nav-link').click(function(e) {
         e.preventDefault();
-        var targetStep = parseInt($(this).data('step'));
+        var targetStep = safeParseInt($(this).data('step'));
         if (targetStep <= currentStep) {
             showStep(targetStep);
         }
@@ -456,7 +456,7 @@ function showStep(step) {
  */
 function updateStepNavigation() {
     $('.nav-link').each(function() {
-        const stepNum = parseInt($(this).data('step'));
+        const stepNum = safeParseInt($(this).data('step'));
         if (stepNum <= currentStep) {
             $(this).removeClass('disabled').prop('disabled', false);
         } else {
@@ -558,6 +558,17 @@ function safeParseFloat(value, defaultValue = 0) {
         return defaultValue;
     }
     const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+}
+
+/**
+ * 安全解析整数，防止NaN
+ */
+function safeParseInt(value, defaultValue = 0) {
+    if (value === null || value === undefined || value === '') {
+        return defaultValue;
+    }
+    const parsed = parseInt(value);
     return isNaN(parsed) ? defaultValue : parsed;
 }
 
