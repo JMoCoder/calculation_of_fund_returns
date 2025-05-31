@@ -892,6 +892,22 @@ class FundCalculator:
 # 全局计算器实例
 calculator = FundCalculator()
 
+# 新增：重置API端点
+@app.route('/api/reset', methods=['POST'])
+def reset_calculator():
+    """重置计算器状态"""
+    try:
+        global calculator
+        calculator.reset_data()
+        logger.info("计算器状态已重置")
+        return jsonify({
+            'success': True,
+            'message': '系统状态已重置'
+        })
+    except Exception as e:
+        logger.error(f"重置计算器错误: {str(e)}")
+        return jsonify({'success': False, 'message': f'重置失败: {str(e)}'}), 500
+
 @app.route('/')
 def index():
     """主页面"""
@@ -911,6 +927,22 @@ def set_basic_params():
     """设置基本投资参数"""
     try:
         data = request.get_json()
+        
+        # 增强数据验证和清理
+        if not data:
+            return jsonify({'success': False, 'message': '请提供有效的参数数据'}), 400
+        
+        # 验证和清理数值类型数据
+        for key in ['investment_amount', 'investment_period', 'hurdle_rate', 'management_carry']:
+            if key in data:
+                try:
+                    value = float(data[key])
+                    if math.isnan(value) or math.isinf(value):
+                        return jsonify({'success': False, 'message': f'{key}包含无效数值'}), 400
+                    data[key] = value
+                except (ValueError, TypeError):
+                    return jsonify({'success': False, 'message': f'{key}数据格式错误'}), 400
+        
         result = calculator.set_basic_params(data)
         return jsonify(result)
     except Exception as e:
@@ -922,8 +954,24 @@ def set_cash_flows():
     """设置净现金流数据"""
     try:
         data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'message': '请提供有效的现金流数据'}), 400
+        
         cash_flows = data.get('cash_flows', [])
-        result = calculator.set_cash_flows(cash_flows)
+        
+        # 增强现金流数据验证和清理
+        cleaned_cash_flows = []
+        for i, cf in enumerate(cash_flows):
+            try:
+                value = float(cf)
+                if math.isnan(value) or math.isinf(value):
+                    return jsonify({'success': False, 'message': f'第{i+1}年现金流包含无效数值'}), 400
+                cleaned_cash_flows.append(value)
+            except (ValueError, TypeError):
+                return jsonify({'success': False, 'message': f'第{i+1}年现金流数据格式错误'}), 400
+        
+        result = calculator.set_cash_flows(cleaned_cash_flows)
         return jsonify(result)
     except Exception as e:
         logger.error(f"设置现金流API错误: {str(e)}")
