@@ -1647,7 +1647,17 @@
         }
 
         /**
-         * 安全解析数值，防止NaN
+         * 安全的toFixed函数，防止NaN错误
+         */
+        function safeToFixed(value, digits = 2) {
+            if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+                return '0.' + '0'.repeat(digits);
+            }
+            return value.toFixed(digits);
+        }
+        
+        /**
+         * 安全解析浮点数，防止NaN
          */
         function safeParseFloat(value, defaultValue = 0) {
             if (value === null || value === undefined || value === '') {
@@ -1979,9 +1989,9 @@
             const seniorAmount = investmentAmount * seniorRatio / 100;
             const subordinateAmount = investmentAmount - seniorAmount;
             
-            seniorAmountElement.textContent = seniorAmount.toFixed(2);
-            subordinateAmountElement.textContent = subordinateAmount.toFixed(2);
-            seniorRateElement.textContent = hurdleRate.toFixed(2);
+            seniorAmountElement.textContent = safeToFixed(seniorAmount, 2);
+            subordinateAmountElement.textContent = safeToFixed(subordinateAmount, 2);
+            seniorRateElement.textContent = safeToFixed(hurdleRate, 2);
         }
 
         /**
@@ -2026,11 +2036,11 @@
             const seniorRateElement = document.getElementById('mezzanineSeniorRate');
             const totalElement = document.getElementById('mezzanineTotal');
             
-            if (seniorAmountElement) seniorAmountElement.textContent = seniorAmount.toFixed(2);
-            if (mezzanineAmountElement) mezzanineAmountElement.textContent = mezzanineAmount.toFixed(2);
-            if (subordinateAmountElement) subordinateAmountElement.textContent = subordinateAmount.toFixed(2);
-            if (seniorRateElement) seniorRateElement.textContent = hurdleRate.toFixed(2);
-            if (totalElement) totalElement.textContent = total.toFixed(0);
+            if (seniorAmountElement) seniorAmountElement.textContent = safeToFixed(seniorAmount, 2);
+            if (mezzanineAmountElement) mezzanineAmountElement.textContent = safeToFixed(mezzanineAmount, 2);
+            if (subordinateAmountElement) subordinateAmountElement.textContent = safeToFixed(subordinateAmount, 2);
+            if (seniorRateElement) seniorRateElement.textContent = safeToFixed(hurdleRate, 2);
+            if (totalElement) totalElement.textContent = safeToFixed(total, 0);
         }
 
         /**
@@ -2062,9 +2072,9 @@
             const subordinateAmountElement = document.getElementById('ipSubordinateAmount');
             const seniorRateElement = document.getElementById('ipSeniorRate');
             
-            if (seniorAmountElement) seniorAmountElement.textContent = seniorAmount.toFixed(2);
-            if (subordinateAmountElement) subordinateAmountElement.textContent = subordinateAmount.toFixed(2);
-            if (seniorRateElement) seniorRateElement.textContent = hurdleRate.toFixed(2);
+            if (seniorAmountElement) seniorAmountElement.textContent = safeToFixed(seniorAmount, 2);
+            if (subordinateAmountElement) subordinateAmountElement.textContent = safeToFixed(subordinateAmount, 2);
+            if (seniorRateElement) seniorRateElement.textContent = safeToFixed(hurdleRate, 2);
         }
 
         /**
