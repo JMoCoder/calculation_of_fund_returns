@@ -757,11 +757,11 @@
             font-style: italic;
         }
 
-        /* 核心指标网格 - 统一简约风格 */
+        /* 核心指标网格 - 统一简约风格，固定4列显示 */
         .metrics-info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                gap: var(--spacing-md);
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-md);
             margin-bottom: var(--spacing-lg);
             padding: var(--spacing-lg);
             background-color: var(--bg-secondary);
@@ -2490,13 +2490,13 @@
          * @param {Object} results - 计算结果对象
          */
         function displayResults(results) {
-            // 直接使用后端提供的格式化数据，不再进行前端计算
+            // 只显示投资收益分析部分，不包含计算详情表格
             let html = `
         <div class="results-container">
             <div class="results-title">
                 <i class="fas fa-chart-line"></i>
                 投资收益分析
-                    </div>
+            </div>
             
             <!-- 统一的核心指标网格 - 包含所有8个指标 -->
             <div class="metrics-info-grid">
@@ -2532,220 +2532,10 @@
                     <div class="metric-info-label">门槛收益率</div>
                     <div class="metric-info-value">${basicParams.hurdle_rate || 0}%</div>
                 </div>
-                    </div>
-                </div>
-                
-        <div class="results-container">
-            <div class="content-header">
-                <h2 class="content-title">
-                    <i class="fas fa-table"></i>
-                    计算详情
-                </h2>
-                <p class="content-subtitle">各年度详细的现金流分配情况（金额单位：万元）</p>
-            </div>
-                <div class="table-container">
-                <table class="result-table">
-                        <thead>
-                            <tr>
-            `;
-            
-            // 根据计算模式动态生成表头
-            if (results.calculation_mode === '平层结构-优先还本') {
-                html += `
-                            <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流 (万元)</th>
-                            <th class="rate-header">分派率 (%)</th>
-                            <th class="amount-header">期初本金余额 (万元)</th>
-                            <th class="amount-header">归还本金 (万元)</th>
-                            <th class="amount-header">计提门槛收益 (万元)</th>
-                            <th class="amount-header">分配门槛收益 (万元)</th>
-                            <th class="amount-header">CarryLP (万元)</th>
-                            <th class="amount-header">CarryGP (万元)</th>
-                `;
-            } else if (results.calculation_mode === '平层结构-期间分配') {
-                html += `
-                            <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流 (万元)</th>
-                            <th class="rate-header">分派率 (%)</th>
-                            <th class="amount-header">期初本金余额 (万元)</th>
-                            <th class="amount-header">期间分配 (万元)</th>
-                            <th class="amount-header">计提门槛收益 (万元)</th>
-                            <th class="amount-header">归还本金 (万元)</th>
-                            <th class="amount-header">分配门槛收益 (万元)</th>
-                            <th class="amount-header">CarryLP (万元)</th>
-                            <th class="amount-header">CarryGP (万元)</th>
-                `;
-            } else if (results.calculation_mode === '结构化-优先劣后') {
-                html += `
-                            <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流 (万元)</th>
-                            <th class="rate-header">分派率 (%)</th>
-                            <th class="amount-header">优先级期初本金 (万元)</th>
-                            <th class="amount-header">优先级收益分配 (万元)</th>
-                            <th class="amount-header">优先级本金归还 (万元)</th>
-                            <th class="amount-header">劣后级本金余额 (万元)</th>
-                            <th class="amount-header">劣后级本金归还 (万元)</th>
-                            <th class="amount-header">CarryLP (万元)</th>
-                            <th class="amount-header">CarryGP (万元)</th>
-                `;
-            } else if (results.calculation_mode === '结构化-包含夹层') {
-                html += `
-                            <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流 (万元)</th>
-                            <th class="rate-header">分派率 (%)</th>
-                            <th class="amount-header">优先级期初本金 (万元)</th>
-                            <th class="amount-header">夹层期初本金 (万元)</th>
-                            <th class="amount-header">劣后级期初本金 (万元)</th>
-                            <th class="amount-header">优先级收益分配 (万元)</th>
-                            <th class="amount-header">夹层收益分配 (万元)</th>
-                            <th class="amount-header">优先级本金归还 (万元)</th>
-                            <th class="amount-header">夹层本金归还 (万元)</th>
-                            <th class="amount-header">劣后级本金归还 (万元)</th>
-                            <th class="amount-header">CarryLP (万元)</th>
-                            <th class="amount-header">CarryGP (万元)</th>
-                `;
-            } else if (results.calculation_mode === '结构化-息息本本') {
-                html += `
-                            <th class="year-header">年份</th>
-                            <th class="amount-header">净现金流 (万元)</th>
-                            <th class="rate-header">分派率 (%)</th>
-                            <th class="amount-header">优先级期初本金 (万元)</th>
-                            <th class="amount-header">优先级期间收益 (万元)</th>
-                            <th class="amount-header">劣后级期初本金 (万元)</th>
-                            <th class="amount-header">劣后级期间收益 (万元)</th>
-                            <th class="amount-header">优先级本金归还 (万元)</th>
-                            <th class="amount-header">劣后级本金归还 (万元)</th>
-                            <th class="amount-header">CarryLP (万元)</th>
-                            <th class="amount-header">CarryGP (万元)</th>
-                `;
-            }
-            
-            html += `
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            // 添加数据行 - 直接使用后端格式化的字符串数据
-            results.cash_flow_table.forEach(row => {
-                html += '<tr>';
-                html += `<td class="year-cell">${row.year || '0'}</td>`;
-                html += `<td class="amount-cell">${row.net_cash_flow || '0'}</td>`;
-                html += `<td class="rate-cell">${row.cash_flow_distribution_rate || '0.00%'}</td>`;
-                
-                // 根据计算模式生成对应的数据列 - 直接使用字符串值
-                if (results.calculation_mode === '平层结构-优先还本') {
-                    html += `<td class="amount-cell">${row.beginning_principal_balance || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.accrued_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.distributed_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '平层结构-期间分配') {
-                    html += `<td class="amount-cell">${row.beginning_principal_balance || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.periodic_distribution || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.accrued_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.distributed_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '结构化-优先劣后') {
-                    html += `<td class="amount-cell">${row.senior_beginning_principal || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.senior_periodic_return || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.senior_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.subordinate_principal_balance || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.subordinate_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '结构化-包含夹层') {
-                    html += `<td class="amount-cell">${row.senior_beginning_principal || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.mezzanine_beginning_principal || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.subordinate_beginning_principal || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.senior_hurdle_distribution || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.mezzanine_hurdle_distribution || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.senior_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.mezzanine_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.subordinate_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '结构化-息息本本') {
-                    html += `<td class="amount-cell">${row.senior_beginning_principal || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.senior_periodic_return || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.subordinate_beginning_principal || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.subordinate_periodic_return || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.senior_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.subordinate_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.carry_gp || '0'}</td>`;
-                }
-                
-                html += '</tr>';
-            });
-            
-            // 添加总计行 - 使用后端提供的格式化总计数据
-            if (results.totals) {
-                html += '<tr class="total-row">';
-                html += '<td class="year-cell total-label">总计</td>';
-                html += `<td class="amount-cell total-value">${results.totals.net_cash_flow || '0'}</td>`;
-                html += '<td class="rate-cell total-value">-</td>'; // 分派率总计显示为横线
-                
-                // 根据计算模式添加总计列 - 直接使用格式化字符串
-                if (results.calculation_mode === '平层结构-优先还本') {
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.accrued_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.distributed_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '平层结构-期间分配') {
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.periodic_distribution || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.accrued_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.distributed_hurdle_return || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '结构化-优先劣后') {
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.senior_periodic_return || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.senior_principal_repayment || '0'}</td>`;
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.subordinate_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '结构化-包含夹层') {
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.senior_hurdle_distribution || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.mezzanine_hurdle_distribution || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.senior_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.mezzanine_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.subordinate_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_gp || '0'}</td>`;
-                } else if (results.calculation_mode === '结构化-息息本本') {
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.senior_periodic_return || '0'}</td>`;
-                    html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.subordinate_periodic_return || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.senior_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.subordinate_principal_repayment || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_lp || '0'}</td>`;
-                    html += `<td class="amount-cell total-value">${results.totals.carry_gp || '0'}</td>`;
-                }
-                
-                html += '</tr>';
-            }
-            
-            html += `
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>`;
             
-            // 直接返回HTML，不再设置到DOM
+            // 直接返回HTML，不再包含表格
             return html;
         }
 
