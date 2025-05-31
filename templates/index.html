@@ -2436,6 +2436,7 @@
          * @returns {string} 格式化后的字符串
          */
         function formatNumber(value, type = 'currency') {
+            // 安全检查：确保value是有效数字
             if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
                 return type === 'percent' ? '0.00%' : '0';
             }
@@ -2463,7 +2464,7 @@
                     }).format(value);
                 
                 default:
-                    return value.toString();
+                    return new Intl.NumberFormat('zh-CN').format(value);
             }
         }
 
@@ -3307,10 +3308,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- 自定义JavaScript文件 -->
-    <script src="{{ url_for('static', filename='utils.js') }}"></script>
-    <script src="{{ url_for('static', filename='charts.js') }}"></script>
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <!-- 引入自定义JavaScript文件 -->
+    <script src="{{ url_for('static', filename='utils.js') }}?v=2.5.8" defer></script>
+    <script src="{{ url_for('static', filename='charts.js') }}?v=2.5.8" defer></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=2.5.8" defer></script>
     
 </body>
 </html> 
