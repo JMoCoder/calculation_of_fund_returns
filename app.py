@@ -70,49 +70,38 @@ def safe_format_decimal(value, decimals=2):
 
 def safe_format_years(value):
     """安全格式化年份，特殊处理无法回本的情况"""
-    if value is None or math.isnan(value) or math.isinf(value) or value <= 0:
+    # 如果已经是字符串（比如"无法回本"），直接返回
+    if isinstance(value, str):
+        return value
+    
+    # 如果是None、NaN、Infinity或负数，返回"无法回本"
+    if value is None or (isinstance(value, (int, float)) and (math.isnan(value) or math.isinf(value) or value <= 0)):
         return "无法回本"
+    
+    # 否则格式化为带年份单位的字符串
     return f"{safe_round(value, 2):.2f} 年"
 
 def format_calculation_results(raw_data):
-    """格式化计算结果，返回包含原始数据和格式化数据的完整结构"""
+    """格式化计算结果，返回直接的格式化字符串"""
     try:
-        # 格式化核心指标
+        # 格式化核心指标 - 直接返回格式化字符串
         core_metrics = raw_data.get('core_metrics', {})
         formatted_metrics = {
-            'irr': {
-                'raw': safe_round(core_metrics.get('irr', 0)),
-                'formatted': safe_format_percentage(core_metrics.get('irr', 0))
-            },
-            'dpi': {
-                'raw': safe_round(core_metrics.get('dpi', 0)),
-                'formatted': safe_format_decimal(core_metrics.get('dpi', 0))
-            },
-            'static_payback_period': {
-                'raw': core_metrics.get('static_payback_period'),
-                'formatted': safe_format_years(core_metrics.get('static_payback_period'))
-            },
-            'dynamic_payback_period': {
-                'raw': core_metrics.get('dynamic_payback_period'),
-                'formatted': safe_format_years(core_metrics.get('dynamic_payback_period'))
-            }
+            'irr': safe_format_percentage(core_metrics.get('irr', 0)),
+            'dpi': safe_format_decimal(core_metrics.get('dpi', 0)),
+            'static_payback_period': safe_format_years(core_metrics.get('static_payback_period')),
+            'dynamic_payback_period': safe_format_years(core_metrics.get('dynamic_payback_period'))
         }
         
-        # 格式化现金流表格
+        # 格式化现金流表格 - 直接返回格式化字符串
         cash_flow_table = raw_data.get('cash_flow_table', [])
         formatted_table = []
         
         for row in cash_flow_table:
             formatted_row = {
                 'year': row.get('year', 0),
-                'net_cash_flow': {
-                    'raw': safe_round(row.get('net_cash_flow', 0)),
-                    'formatted': safe_format_currency(row.get('net_cash_flow', 0))
-                },
-                'cash_flow_distribution_rate': {
-                    'raw': safe_round(row.get('cash_flow_distribution_rate', 0)),
-                    'formatted': safe_format_percentage(row.get('cash_flow_distribution_rate', 0))
-                }
+                'net_cash_flow': safe_format_currency(row.get('net_cash_flow', 0)),
+                'cash_flow_distribution_rate': safe_format_percentage(row.get('cash_flow_distribution_rate', 0))
             }
             
             # 根据计算模式添加其他字段的格式化
@@ -120,69 +109,68 @@ def format_calculation_results(raw_data):
             
             if '平层结构-优先还本' in calculation_mode:
                 formatted_row.update({
-                    'beginning_principal_balance': {
-                        'raw': safe_round(row.get('beginning_principal_balance', 0)),
-                        'formatted': safe_format_currency(row.get('beginning_principal_balance', 0))
-                    },
-                    'principal_repayment': {
-                        'raw': safe_round(row.get('principal_repayment', 0)),
-                        'formatted': safe_format_currency(row.get('principal_repayment', 0))
-                    },
-                    'accrued_hurdle_return': {
-                        'raw': safe_round(row.get('accrued_hurdle_return', 0)),
-                        'formatted': safe_format_currency(row.get('accrued_hurdle_return', 0))
-                    },
-                    'distributed_hurdle_return': {
-                        'raw': safe_round(row.get('distributed_hurdle_return', 0)),
-                        'formatted': safe_format_currency(row.get('distributed_hurdle_return', 0))
-                    },
-                    'carry_lp': {
-                        'raw': safe_round(row.get('carry_lp', 0)),
-                        'formatted': safe_format_currency(row.get('carry_lp', 0))
-                    },
-                    'carry_gp': {
-                        'raw': safe_round(row.get('carry_gp', 0)),
-                        'formatted': safe_format_currency(row.get('carry_gp', 0))
-                    }
+                    'beginning_principal_balance': safe_format_currency(row.get('beginning_principal_balance', 0)),
+                    'principal_repayment': safe_format_currency(row.get('principal_repayment', 0)),
+                    'accrued_hurdle_return': safe_format_currency(row.get('accrued_hurdle_return', 0)),
+                    'distributed_hurdle_return': safe_format_currency(row.get('distributed_hurdle_return', 0)),
+                    'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
+                    'carry_gp': safe_format_currency(row.get('carry_gp', 0))
                 })
             elif '平层结构-期间分配' in calculation_mode:
                 formatted_row.update({
-                    'beginning_principal_balance': {
-                        'raw': safe_round(row.get('beginning_principal_balance', 0)),
-                        'formatted': safe_format_currency(row.get('beginning_principal_balance', 0))
-                    },
-                    'periodic_distribution': {
-                        'raw': safe_round(row.get('periodic_distribution', 0)),
-                        'formatted': safe_format_currency(row.get('periodic_distribution', 0))
-                    },
-                    'accrued_hurdle_return': {
-                        'raw': safe_round(row.get('accrued_hurdle_return', 0)),
-                        'formatted': safe_format_currency(row.get('accrued_hurdle_return', 0))
-                    },
-                    'principal_repayment': {
-                        'raw': safe_round(row.get('principal_repayment', 0)),
-                        'formatted': safe_format_currency(row.get('principal_repayment', 0))
-                    },
-                    'distributed_hurdle_return': {
-                        'raw': safe_round(row.get('distributed_hurdle_return', 0)),
-                        'formatted': safe_format_currency(row.get('distributed_hurdle_return', 0))
-                    },
-                    'carry_lp': {
-                        'raw': safe_round(row.get('carry_lp', 0)),
-                        'formatted': safe_format_currency(row.get('carry_lp', 0))
-                    },
-                    'carry_gp': {
-                        'raw': safe_round(row.get('carry_gp', 0)),
-                        'formatted': safe_format_currency(row.get('carry_gp', 0))
-                    }
+                    'beginning_principal_balance': safe_format_currency(row.get('beginning_principal_balance', 0)),
+                    'periodic_distribution': safe_format_currency(row.get('periodic_distribution', 0)),
+                    'accrued_hurdle_return': safe_format_currency(row.get('accrued_hurdle_return', 0)),
+                    'principal_repayment': safe_format_currency(row.get('principal_repayment', 0)),
+                    'distributed_hurdle_return': safe_format_currency(row.get('distributed_hurdle_return', 0)),
+                    'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
+                    'carry_gp': safe_format_currency(row.get('carry_gp', 0))
                 })
-            # 可以继续添加其他计算模式的格式化...
+            elif '结构化-优先劣后' in calculation_mode:
+                formatted_row.update({
+                    'senior_beginning_balance': safe_format_currency(row.get('senior_beginning_balance', 0)),
+                    'senior_interest_distribution': safe_format_currency(row.get('senior_interest_distribution', 0)),
+                    'senior_principal_repayment': safe_format_currency(row.get('senior_principal_repayment', 0)),
+                    'subordinate_remaining_balance': safe_format_currency(row.get('subordinate_remaining_balance', 0)),
+                    'subordinate_principal_repayment': safe_format_currency(row.get('subordinate_principal_repayment', 0)),
+                    'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
+                    'carry_gp': safe_format_currency(row.get('carry_gp', 0))
+                })
+            elif '结构化-包含夹层' in calculation_mode:
+                formatted_row.update({
+                    'senior_beginning_balance': safe_format_currency(row.get('senior_beginning_balance', 0)),
+                    'mezzanine_beginning_balance': safe_format_currency(row.get('mezzanine_beginning_balance', 0)),
+                    'subordinate_beginning_balance': safe_format_currency(row.get('subordinate_beginning_balance', 0)),
+                    'senior_interest_distribution': safe_format_currency(row.get('senior_interest_distribution', 0)),
+                    'mezzanine_interest_distribution': safe_format_currency(row.get('mezzanine_interest_distribution', 0)),
+                    'senior_principal_repayment': safe_format_currency(row.get('senior_principal_repayment', 0)),
+                    'mezzanine_principal_repayment': safe_format_currency(row.get('mezzanine_principal_repayment', 0)),
+                    'subordinate_principal_repayment': safe_format_currency(row.get('subordinate_principal_repayment', 0)),
+                    'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
+                    'carry_gp': safe_format_currency(row.get('carry_gp', 0))
+                })
+            elif '结构化-息息本本' in calculation_mode:
+                formatted_row.update({
+                    'senior_beginning_balance': safe_format_currency(row.get('senior_beginning_balance', 0)),
+                    'senior_periodic_return': safe_format_currency(row.get('senior_periodic_return', 0)),
+                    'subordinate_beginning_balance': safe_format_currency(row.get('subordinate_beginning_balance', 0)),
+                    'subordinate_periodic_return': safe_format_currency(row.get('subordinate_periodic_return', 0)),
+                    'senior_principal_repayment': safe_format_currency(row.get('senior_principal_repayment', 0)),
+                    'subordinate_principal_repayment': safe_format_currency(row.get('subordinate_principal_repayment', 0)),
+                    'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
+                    'carry_gp': safe_format_currency(row.get('carry_gp', 0))
+                })
             
             formatted_table.append(formatted_row)
         
-        # 计算并格式化总计
+        # 计算并格式化总计 - 直接返回格式化字符串
         totals = calculate_totals(cash_flow_table, calculation_mode)
-        formatted_totals = format_totals(totals)
+        formatted_totals = {}
+        for key, value in totals.items():
+            if key == 'cash_flow_distribution_rate':
+                # 分派率不做总计，用特殊处理
+                continue
+            formatted_totals[key] = safe_format_currency(value)
         
         return {
             'success': True,
@@ -228,19 +216,6 @@ def calculate_totals(cash_flow_table, calculation_mode):
             totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
             
     return totals
-
-def format_totals(totals):
-    """格式化总计数据"""
-    formatted = {}
-    for key, value in totals.items():
-        if key == 'cash_flow_distribution_rate':
-            # 分派率不做总计，用特殊处理
-            continue
-        formatted[key] = {
-            'raw': safe_round(value),
-            'formatted': safe_format_currency(value)
-        }
-    return formatted
 
 class FundCalculator:
     """
@@ -1356,16 +1331,16 @@ def calculate():
             periodic_rate = data.get('periodic_rate')
             if not validate_numeric_param('periodic_rate', periodic_rate, 0, 100):
                 return jsonify({'success': False, 'message': '期间收益率参数无效'})
-            result = calculator.calculate_flat_periodic_distribution(periodic_rate)
+            result = calculator.calculate_flat_structure_periodic_distribution(periodic_rate)
             
         elif mode == 'flat_priority_repayment':
-            result = calculator.calculate_flat_priority_repayment()
+            result = calculator.calculate_flat_structure_priority_repayment()
             
         elif mode == 'structured_senior_subordinate':
             senior_ratio = data.get('senior_ratio')
             if not validate_numeric_param('senior_ratio', senior_ratio, 1, 99):
                 return jsonify({'success': False, 'message': '优先级比例参数无效'})
-            result = calculator.calculate_structured_dual_layer(senior_ratio)
+            result = calculator.calculate_structured_senior_subordinate(senior_ratio)
             
         elif mode == 'structured_mezzanine':
             senior_ratio = data.get('senior_ratio')
@@ -1383,7 +1358,7 @@ def calculate():
             if senior_ratio + mezzanine_ratio >= 100:
                 return jsonify({'success': False, 'message': '优先级和夹层比例总和必须小于100%'})
                 
-            result = calculator.calculate_structured_triple_layer(senior_ratio, mezzanine_ratio, mezzanine_rate)
+            result = calculator.calculate_structured_mezzanine(senior_ratio, mezzanine_ratio, mezzanine_rate)
             
         elif mode == 'structured_interest_principal':
             senior_ratio = data.get('senior_ratio')
