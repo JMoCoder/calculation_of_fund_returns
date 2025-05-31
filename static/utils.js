@@ -10,6 +10,17 @@
  */
 class NumberFormatter {
     /**
+     * 安全解析浮点数，防止NaN
+     */
+    static safeParseFloat(value, defaultValue = 0) {
+        if (value === null || value === undefined || value === '') {
+            return defaultValue;
+        }
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? defaultValue : parsed;
+    }
+
+    /**
      * 格式化货币
      * @param {number} amount - 金额
      * @param {string} currency - 货币类型，默认CNY
@@ -59,7 +70,7 @@ class NumberFormatter {
     static parseCurrency(currencyStr) {
         // 移除货币符号和千位分隔符
         const cleaned = currencyStr.replace(/[￥¥$,\s]/g, '');
-        return parseFloat(cleaned) || 0;
+        return this.safeParseFloat(cleaned);
     }
 }
 
@@ -142,7 +153,7 @@ class Validator {
      * @returns {boolean} 验证结果
      */
     static isValidNumber(value, min = -Infinity, max = Infinity) {
-        const num = parseFloat(value);
+        const num = NumberFormatter.safeParseFloat(value);
         return !isNaN(num) && num >= min && num <= max;
     }
 
