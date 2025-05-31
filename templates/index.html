@@ -760,7 +760,7 @@
         /* 核心指标网格 - 统一简约风格，固定4列显示 */
         .metrics-info-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: var(--spacing-md);
             margin-bottom: var(--spacing-lg);
             padding: var(--spacing-lg);
@@ -2510,7 +2510,24 @@
                 </div>
                 <div class="metric-info-item">
                     <div class="metric-info-label">分派率</div>
-                    <div class="metric-info-value">详见下表</div>
+                    <div class="metric-info-value">${(() => {
+                        // 计算分派率范围
+                        const rates = results.cash_flow_table.map(row => {
+                            const rateStr = row.cash_flow_distribution_rate || '0.00%';
+                            return parseFloat(rateStr.replace('%', '')) || 0;
+                        }).filter(rate => rate > 0);
+                        
+                        if (rates.length === 0) return '0.00%';
+                        
+                        const minRate = Math.min(...rates);
+                        const maxRate = Math.max(...rates);
+                        
+                        if (minRate === maxRate) {
+                            return `${minRate.toFixed(2)}%`;
+                        } else {
+                            return `${minRate.toFixed(2)}%-${maxRate.toFixed(2)}%`;
+                        }
+                    })()}</div>
                 </div>
                 <div class="metric-info-item">
                     <div class="metric-info-label">静态回本周期</div>
