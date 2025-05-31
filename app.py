@@ -98,26 +98,24 @@ def format_calculation_results(raw_data):
         formatted_table = []
         
         for row in cash_flow_table:
-            formatted_row = {
-                'year': row.get('year', 0),
-                'net_cash_flow': safe_format_currency(row.get('net_cash_flow', 0)),
-                'cash_flow_distribution_rate': safe_format_percentage(row.get('cash_flow_distribution_rate', 0))
-            }
-            
-            # 根据计算模式添加其他字段的格式化
-            calculation_mode = raw_data.get('calculation_mode', '')
-            
-            if '平层结构-优先还本' in calculation_mode:
-                formatted_row.update({
+            # 格式化输出时的字段映射 - 统一字段名称
+            if raw_data.get('calculation_mode') == '平层结构-优先还本':
+                formatted_row = {
+                    'year': str(int(row.get('year', 0))),
+                    'net_cash_flow': safe_format_currency(row.get('net_cash_flow', 0)),
+                    'cash_flow_distribution_rate': safe_format_percentage(row.get('cash_flow_distribution_rate', 0)),
                     'beginning_principal_balance': safe_format_currency(row.get('beginning_principal_balance', 0)),
                     'principal_repayment': safe_format_currency(row.get('principal_repayment', 0)),
                     'accrued_hurdle_return': safe_format_currency(row.get('accrued_hurdle_return', 0)),
                     'distributed_hurdle_return': safe_format_currency(row.get('distributed_hurdle_return', 0)),
                     'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
                     'carry_gp': safe_format_currency(row.get('carry_gp', 0))
-                })
-            elif '平层结构-期间分配' in calculation_mode:
-                formatted_row.update({
+                }
+            elif raw_data.get('calculation_mode') == '平层结构-期间分配':
+                formatted_row = {
+                    'year': str(int(row.get('year', 0))),
+                    'net_cash_flow': safe_format_currency(row.get('net_cash_flow', 0)),
+                    'cash_flow_distribution_rate': safe_format_percentage(row.get('cash_flow_distribution_rate', 0)),
                     'beginning_principal_balance': safe_format_currency(row.get('beginning_principal_balance', 0)),
                     'periodic_distribution': safe_format_currency(row.get('periodic_distribution', 0)),
                     'accrued_hurdle_return': safe_format_currency(row.get('accrued_hurdle_return', 0)),
@@ -125,46 +123,56 @@ def format_calculation_results(raw_data):
                     'distributed_hurdle_return': safe_format_currency(row.get('distributed_hurdle_return', 0)),
                     'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
                     'carry_gp': safe_format_currency(row.get('carry_gp', 0))
-                })
-            elif '结构化-优先劣后' in calculation_mode:
-                formatted_row.update({
-                    'senior_beginning_balance': safe_format_currency(row.get('senior_beginning_balance', 0)),
-                    'senior_interest_distribution': safe_format_currency(row.get('senior_interest_distribution', 0)),
+                }
+            elif raw_data.get('calculation_mode') == '结构化-优先劣后':
+                formatted_row = {
+                    'year': str(int(row.get('year', 0))),
+                    'net_cash_flow': safe_format_currency(row.get('net_cash_flow', 0)),
+                    'cash_flow_distribution_rate': safe_format_percentage(row.get('cash_flow_distribution_rate', 0)),
+                    'senior_beginning_principal': safe_format_currency(row.get('senior_beginning_principal', 0)),
                     'senior_principal_repayment': safe_format_currency(row.get('senior_principal_repayment', 0)),
-                    'subordinate_remaining_balance': safe_format_currency(row.get('subordinate_remaining_balance', 0)),
+                    'senior_hurdle_accrual': safe_format_currency(row.get('senior_hurdle_accrual', 0)),
+                    'senior_periodic_return': safe_format_currency(row.get('senior_periodic_return', 0)),
+                    'subordinate_principal_balance': safe_format_currency(row.get('subordinate_principal_balance', 0)),
                     'subordinate_principal_repayment': safe_format_currency(row.get('subordinate_principal_repayment', 0)),
                     'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
                     'carry_gp': safe_format_currency(row.get('carry_gp', 0))
-                })
-            elif '结构化-包含夹层' in calculation_mode:
-                formatted_row.update({
-                    'senior_beginning_balance': safe_format_currency(row.get('senior_beginning_balance', 0)),
-                    'mezzanine_beginning_balance': safe_format_currency(row.get('mezzanine_beginning_balance', 0)),
-                    'subordinate_beginning_balance': safe_format_currency(row.get('subordinate_beginning_balance', 0)),
-                    'senior_interest_distribution': safe_format_currency(row.get('senior_interest_distribution', 0)),
-                    'mezzanine_interest_distribution': safe_format_currency(row.get('mezzanine_interest_distribution', 0)),
+                }
+            elif raw_data.get('calculation_mode') == '结构化-包含夹层':
+                formatted_row = {
+                    'year': str(int(row.get('year', 0))),
+                    'net_cash_flow': safe_format_currency(row.get('net_cash_flow', 0)),
+                    'cash_flow_distribution_rate': safe_format_percentage(row.get('cash_flow_distribution_rate', 0)),
+                    'senior_beginning_principal': safe_format_currency(row.get('senior_beginning_principal', 0)),
+                    'mezzanine_beginning_principal': safe_format_currency(row.get('mezzanine_beginning_principal', 0)),
+                    'subordinate_beginning_principal': safe_format_currency(row.get('subordinate_beginning_principal', 0)),
+                    'senior_hurdle_distribution': safe_format_currency(row.get('senior_hurdle_distribution', 0)),
+                    'mezzanine_hurdle_distribution': safe_format_currency(row.get('mezzanine_hurdle_distribution', 0)),
                     'senior_principal_repayment': safe_format_currency(row.get('senior_principal_repayment', 0)),
                     'mezzanine_principal_repayment': safe_format_currency(row.get('mezzanine_principal_repayment', 0)),
                     'subordinate_principal_repayment': safe_format_currency(row.get('subordinate_principal_repayment', 0)),
                     'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
                     'carry_gp': safe_format_currency(row.get('carry_gp', 0))
-                })
-            elif '结构化-息息本本' in calculation_mode:
-                formatted_row.update({
-                    'senior_beginning_balance': safe_format_currency(row.get('senior_beginning_balance', 0)),
+                }
+            elif raw_data.get('calculation_mode') == '结构化-息息本本':
+                formatted_row = {
+                    'year': str(int(row.get('year', 0))),
+                    'net_cash_flow': safe_format_currency(row.get('net_cash_flow', 0)),
+                    'cash_flow_distribution_rate': safe_format_percentage(row.get('cash_flow_distribution_rate', 0)),
+                    'senior_beginning_principal': safe_format_currency(row.get('senior_beginning_principal', 0)),
                     'senior_periodic_return': safe_format_currency(row.get('senior_periodic_return', 0)),
-                    'subordinate_beginning_balance': safe_format_currency(row.get('subordinate_beginning_balance', 0)),
+                    'subordinate_beginning_principal': safe_format_currency(row.get('subordinate_beginning_principal', 0)),
                     'subordinate_periodic_return': safe_format_currency(row.get('subordinate_periodic_return', 0)),
                     'senior_principal_repayment': safe_format_currency(row.get('senior_principal_repayment', 0)),
                     'subordinate_principal_repayment': safe_format_currency(row.get('subordinate_principal_repayment', 0)),
                     'carry_lp': safe_format_currency(row.get('carry_lp', 0)),
                     'carry_gp': safe_format_currency(row.get('carry_gp', 0))
-                })
+                }
             
             formatted_table.append(formatted_row)
         
         # 计算并格式化总计 - 直接返回格式化字符串
-        totals = calculate_totals(cash_flow_table, calculation_mode)
+        totals = calculate_totals(cash_flow_table, raw_data.get('calculation_mode'))
         formatted_totals = {}
         for key, value in totals.items():
             if key == 'cash_flow_distribution_rate':
@@ -174,7 +182,7 @@ def format_calculation_results(raw_data):
         
         return {
             'success': True,
-            'calculation_mode': calculation_mode,
+            'calculation_mode': raw_data.get('calculation_mode'),
             'core_metrics': formatted_metrics,
             'cash_flow_table': formatted_table,
             'totals': formatted_totals,
@@ -200,7 +208,7 @@ def calculate_totals(cash_flow_table, calculation_mode):
         totals['net_cash_flow'] += safe_round(row.get('net_cash_flow', 0))
         
         # 根据计算模式累计相应字段
-        if '平层结构-优先还本' in calculation_mode:
+        if calculation_mode == '平层结构-优先还本':
             if 'principal_repayment' not in totals:
                 totals.update({
                     'principal_repayment': 0,
@@ -212,6 +220,22 @@ def calculate_totals(cash_flow_table, calculation_mode):
             totals['principal_repayment'] += safe_round(row.get('principal_repayment', 0))
             totals['accrued_hurdle_return'] += safe_round(row.get('accrued_hurdle_return', 0))
             totals['distributed_hurdle_return'] += safe_round(row.get('distributed_hurdle_return', 0))
+            totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
+            totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
+        elif calculation_mode == '结构化-优先劣后':
+            if 'senior_principal_repayment' not in totals:
+                totals.update({
+                    'senior_principal_repayment': 0,
+                    'senior_hurdle_accrual': 0,
+                    'senior_periodic_return': 0,
+                    'subordinate_principal_repayment': 0,
+                    'carry_lp': 0,
+                    'carry_gp': 0
+                })
+            totals['senior_principal_repayment'] += safe_round(row.get('senior_principal_repayment', 0))
+            totals['senior_hurdle_accrual'] += safe_round(row.get('senior_hurdle_accrual', 0))
+            totals['senior_periodic_return'] += safe_round(row.get('senior_periodic_return', 0))
+            totals['subordinate_principal_repayment'] += safe_round(row.get('subordinate_principal_repayment', 0))
             totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
             totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
             
@@ -837,16 +861,21 @@ class FundCalculator:
             remaining_subordinate_principal = subordinate_amount
             accumulated_senior_hurdle = 0.0
             
+            # 用于记录期初本金的变量
+            senior_beginning_balance = senior_amount  # 首年期初本金 = 优先级投资金额
+            subordinate_beginning_balance = subordinate_amount  # 首年期初本金 = 劣后投资金额
+            
             for year in range(years):
                 year_data = {
                     'year': year + 1,
                     'net_cash_flow': self.cash_flows[year],
                     'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
-                    'senior_beginning_principal': remaining_senior_principal,
+                    'senior_beginning_principal': senior_beginning_balance,  # 使用正确的期初本金
+                    'subordinate_beginning_principal': subordinate_beginning_balance,  # 使用正确的期初本金
+                    'subordinate_principal_balance': remaining_subordinate_principal,  # 劣后本金余额
                     'senior_hurdle_accrual': 0.0,
                     'senior_periodic_return': 0.0,
                     'senior_principal_repayment': 0.0,
-                    'subordinate_principal_balance': remaining_subordinate_principal,
                     'subordinate_principal_repayment': 0.0,
                     'carry_lp': 0.0,
                     'carry_gp': 0.0
@@ -854,9 +883,9 @@ class FundCalculator:
                 
                 remaining_cash = self.cash_flows[year]
                 
-                # 步骤1：计提优先级门槛收益
-                if remaining_senior_principal > 0:
-                    senior_hurdle_accrual = remaining_senior_principal * senior_rate
+                # 步骤1：计提优先级门槛收益（基于期初本金）
+                if senior_beginning_balance > 0:
+                    senior_hurdle_accrual = senior_beginning_balance * senior_rate
                     year_data['senior_hurdle_accrual'] = senior_hurdle_accrual
                     accumulated_senior_hurdle += senior_hurdle_accrual
                 
@@ -887,6 +916,16 @@ class FundCalculator:
                     year_data['carry_gp'] = remaining_cash * carry_rate
                 
                 results.append(year_data)
+                
+                # 更新下一年的期初本金：本年期初本金 - 本年摊还本金
+                senior_beginning_balance = senior_beginning_balance - year_data['senior_principal_repayment']
+                subordinate_beginning_balance = subordinate_beginning_balance - year_data['subordinate_principal_repayment']
+                
+                # 确保期初本金不为负数
+                if senior_beginning_balance < 0:
+                    senior_beginning_balance = 0
+                if subordinate_beginning_balance < 0:
+                    subordinate_beginning_balance = 0
             
             # 计算核心指标
             irr = self.calculate_irr(self.cash_flows, investment_amount)
@@ -969,14 +1008,19 @@ class FundCalculator:
             accumulated_senior_hurdle = 0.0
             accumulated_mezzanine_hurdle = 0.0
             
+            # 用于记录期初本金的变量
+            senior_beginning_balance = senior_amount  # 首年期初本金 = 优先级投资金额
+            mezzanine_beginning_balance = mezzanine_amount  # 首年期初本金 = 夹层投资金额
+            subordinate_beginning_balance = subordinate_amount  # 首年期初本金 = 劣后投资金额
+            
             for year in range(years):
                 year_data = {
                     'year': year + 1,
                     'net_cash_flow': self.cash_flows[year],
                     'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
-                    'senior_beginning_principal': remaining_senior_principal,
-                    'mezzanine_beginning_principal': remaining_mezzanine_principal,
-                    'subordinate_beginning_principal': remaining_subordinate_principal,
+                    'senior_beginning_principal': senior_beginning_balance,  # 使用正确的期初本金
+                    'mezzanine_beginning_principal': mezzanine_beginning_balance,  # 使用正确的期初本金
+                    'subordinate_beginning_principal': subordinate_beginning_balance,  # 使用正确的期初本金
                     'senior_hurdle_accrual': 0.0,
                     'mezzanine_hurdle_accrual': 0.0,
                     'senior_hurdle_distribution': 0.0,
@@ -990,14 +1034,14 @@ class FundCalculator:
                 
                 remaining_cash = self.cash_flows[year]
                 
-                # 步骤1：计提门槛收益
-                if remaining_senior_principal > 0:
-                    senior_hurdle_accrual = remaining_senior_principal * senior_rate
+                # 步骤1：计提门槛收益（基于期初本金）
+                if senior_beginning_balance > 0:
+                    senior_hurdle_accrual = senior_beginning_balance * senior_rate
                     year_data['senior_hurdle_accrual'] = senior_hurdle_accrual
                     accumulated_senior_hurdle += senior_hurdle_accrual
                     
-                if remaining_mezzanine_principal > 0:
-                    mezzanine_hurdle_accrual = remaining_mezzanine_principal * mezzanine_rate_decimal
+                if mezzanine_beginning_balance > 0:
+                    mezzanine_hurdle_accrual = mezzanine_beginning_balance * mezzanine_rate_decimal
                     year_data['mezzanine_hurdle_accrual'] = mezzanine_hurdle_accrual
                     accumulated_mezzanine_hurdle += mezzanine_hurdle_accrual
                 
@@ -1043,6 +1087,19 @@ class FundCalculator:
                     year_data['carry_gp'] = remaining_cash * carry_rate
                 
                 results.append(year_data)
+                
+                # 更新下一年的期初本金：本年期初本金 - 本年摊还本金
+                senior_beginning_balance = senior_beginning_balance - year_data['senior_principal_repayment']
+                mezzanine_beginning_balance = mezzanine_beginning_balance - year_data['mezzanine_principal_repayment']
+                subordinate_beginning_balance = subordinate_beginning_balance - year_data['subordinate_principal_repayment']
+                
+                # 确保期初本金不为负数
+                if senior_beginning_balance < 0:
+                    senior_beginning_balance = 0
+                if mezzanine_beginning_balance < 0:
+                    mezzanine_beginning_balance = 0
+                if subordinate_beginning_balance < 0:
+                    subordinate_beginning_balance = 0
             
             # 计算核心指标
             irr = self.calculate_irr(self.cash_flows, investment_amount)
@@ -1124,13 +1181,17 @@ class FundCalculator:
             remaining_senior_principal = senior_amount
             remaining_subordinate_principal = subordinate_amount
             
+            # 用于记录期初本金的变量
+            senior_beginning_balance = senior_amount  # 首年期初本金 = 优先级投资金额
+            subordinate_beginning_balance = subordinate_amount  # 首年期初本金 = 劣后投资金额
+            
             for year in range(years):
                 year_data = {
                     'year': year + 1,
                     'net_cash_flow': self.cash_flows[year],
                     'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
-                    'senior_beginning_principal': remaining_senior_principal,
-                    'subordinate_beginning_principal': remaining_subordinate_principal,
+                    'senior_beginning_principal': senior_beginning_balance,  # 使用正确的期初本金
+                    'subordinate_beginning_principal': subordinate_beginning_balance,  # 使用正确的期初本金
                     'senior_periodic_return': 0.0,
                     'subordinate_periodic_return': 0.0,
                     'senior_principal_repayment': 0.0,
@@ -1141,15 +1202,15 @@ class FundCalculator:
                 
                 remaining_cash = self.cash_flows[year]
                 
-                # 步骤1：优先级期间收益
-                if remaining_senior_principal > 0 and remaining_cash > 0:
-                    senior_return = min(remaining_cash, remaining_senior_principal * senior_rate)
+                # 步骤1：优先级期间收益（基于期初本金）
+                if senior_beginning_balance > 0 and remaining_cash > 0:
+                    senior_return = min(remaining_cash, senior_beginning_balance * senior_rate)
                     year_data['senior_periodic_return'] = senior_return
                     remaining_cash -= senior_return
                 
-                # 步骤2：劣后期间收益  
-                if remaining_subordinate_principal > 0 and remaining_cash > 0:
-                    subordinate_return = min(remaining_cash, remaining_subordinate_principal * subordinate_rate_decimal)
+                # 步骤2：劣后期间收益（基于期初本金）
+                if subordinate_beginning_balance > 0 and remaining_cash > 0:
+                    subordinate_return = min(remaining_cash, subordinate_beginning_balance * subordinate_rate_decimal)
                     year_data['subordinate_periodic_return'] = subordinate_return
                     remaining_cash -= subordinate_return
                 

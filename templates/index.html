@@ -3116,8 +3116,9 @@
                                 <th class="amount-header">净现金流<br><small>(万元)</small></th>
                                 <th class="rate-header">分派率<br><small>(%)</small></th>
                                 <th class="amount-header">优先级期初本金<br><small>(万元)</small></th>
-                                <th class="amount-header">优先级收益分配<br><small>(万元)</small></th>
                                 <th class="amount-header">优先级本金归还<br><small>(万元)</small></th>
+                                <th class="amount-header">优先级收益计提<br><small>(万元)</small></th>
+                                <th class="amount-header">优先级收益分配<br><small>(万元)</small></th>
                                 <th class="amount-header">劣后级本金余额<br><small>(万元)</small></th>
                                 <th class="amount-header">劣后级本金归还<br><small>(万元)</small></th>
                                 <th class="amount-header">CarryLP<br><small>(万元)</small></th>
@@ -3186,8 +3187,9 @@
                     html += `<td class="amount-cell">${row.carry_gp || '0'}</td>`;
                 } else if (results.calculation_mode === '结构化-优先劣后') {
                     html += `<td class="amount-cell">${row.senior_beginning_principal || '0'}</td>`;
-                    html += `<td class="amount-cell">${row.senior_periodic_return || '0'}</td>`;
                     html += `<td class="amount-cell">${row.senior_principal_repayment || '0'}</td>`;
+                    html += `<td class="amount-cell">${row.senior_hurdle_accrual || '0'}</td>`;
+                    html += `<td class="amount-cell">${row.senior_periodic_return || '0'}</td>`;
                     html += `<td class="amount-cell">${row.subordinate_principal_balance || '0'}</td>`;
                     html += `<td class="amount-cell">${row.subordinate_principal_repayment || '0'}</td>`;
                     html += `<td class="amount-cell">${row.carry_lp || '0'}</td>`;
@@ -3242,8 +3244,9 @@
                     html += `<td class="amount-cell total-value">${results.totals.carry_gp || '0'}</td>`;
                 } else if (results.calculation_mode === '结构化-优先劣后') {
                     html += '<td class="amount-cell total-value">-</td>';
-                    html += `<td class="amount-cell total-value">${results.totals.senior_periodic_return || '0'}</td>`;
                     html += `<td class="amount-cell total-value">${results.totals.senior_principal_repayment || '0'}</td>`;
+                    html += `<td class="amount-cell total-value">${results.totals.senior_hurdle_accrual || '0'}</td>`;
+                    html += `<td class="amount-cell total-value">${results.totals.senior_periodic_return || '0'}</td>`;
                     html += '<td class="amount-cell total-value">-</td>';
                     html += `<td class="amount-cell total-value">${results.totals.subordinate_principal_repayment || '0'}</td>`;
                     html += `<td class="amount-cell total-value">${results.totals.carry_lp || '0'}</td>`;
