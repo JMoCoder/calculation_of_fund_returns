@@ -2145,8 +2145,8 @@
             
             // 验证现金流数据的有效性
             const validCashFlows = cashFlows.filter((cf, index) => {
-                const value = parseFloat(cf);
-                if (isNaN(value)) {
+                const value = safeParseFloat(cf);
+                if (isNaN(value) || !isFinite(value)) {
                     console.error(`第${index + 1}年现金流无效:`, cf);
                     showAlert(`第${index + 1}年现金流数据无效，请重新设置`, 'error');
                     return false;
@@ -2939,10 +2939,10 @@
                         // 数据验证和清理
                         const cleanParams = {
                             investment_target: String(params.investment_target || ''),
-                            investment_amount: parseFloat(params.investment_amount) || 0,
-                            investment_period: parseInt(params.investment_period) || 0,
-                            hurdle_rate: parseFloat(params.hurdle_rate) || 0,
-                            management_carry: parseFloat(params.management_carry) || 0
+                            investment_amount: safeParseFloat(params.investment_amount),
+                            investment_period: safeParseInt(params.investment_period),
+                            hurdle_rate: safeParseFloat(params.hurdle_rate),
+                            management_carry: safeParseFloat(params.management_carry)
                         };
                         
                         // 验证数据有效性

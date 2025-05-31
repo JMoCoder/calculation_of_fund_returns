@@ -1122,23 +1122,71 @@ def calculate():
         data = request.get_json()
         calculation_mode = data.get('mode')
         
+        # 验证计算模式
+        if not calculation_mode:
+            return jsonify({'success': False, 'message': '缺少计算模式参数'}), 400
+        
+        # 添加参数验证函数
+        def validate_numeric_param(value, param_name, min_val=None, max_val=None):
+            """验证数值参数"""
+            try:
+                num_value = float(value)
+                if math.isnan(num_value) or math.isinf(num_value):
+                    return False, f'{param_name}包含无效数值'
+                if min_val is not None and num_value < min_val:
+                    return False, f'{param_name}不能小于{min_val}'
+                if max_val is not None and num_value > max_val:
+                    return False, f'{param_name}不能大于{max_val}'
+                return True, num_value
+            except (ValueError, TypeError):
+                return False, f'{param_name}数据格式错误'
+        
         if calculation_mode == 'flat_priority_repayment':
             result = calculator.calculate_flat_structure_priority_repayment()
         elif calculation_mode == 'flat_periodic_distribution':
             periodic_rate = data.get('periodic_rate', 0)
-            result = calculator.calculate_flat_structure_periodic_distribution(periodic_rate)
+            is_valid, validated_value = validate_numeric_param(periodic_rate, '期间收益率', 0, 100)
+            if not is_valid:
+                return jsonify({'success': False, 'message': validated_value}), 400
+            result = calculator.calculate_flat_structure_periodic_distribution(validated_value)
         elif calculation_mode == 'structured_senior_subordinate':
             senior_ratio = data.get('senior_ratio', 0)
-            result = calculator.calculate_structured_senior_subordinate(senior_ratio)
+            is_valid, validated_value = validate_numeric_param(senior_ratio, '优先级比例', 0, 100)
+            if not is_valid:
+                return jsonify({'success': False, 'message': validated_value}), 400
+            result = calculator.calculate_structured_senior_subordinate(validated_value)
         elif calculation_mode == 'structured_mezzanine':
             senior_ratio = data.get('senior_ratio', 0)
             mezzanine_ratio = data.get('mezzanine_ratio', 0)
             mezzanine_rate = data.get('mezzanine_rate', 0)
-            result = calculator.calculate_structured_mezzanine(senior_ratio, mezzanine_ratio, mezzanine_rate)
+            
+            # 验证所有参数
+            is_valid, senior_val = validate_numeric_param(senior_ratio, '优先级比例', 0, 100)
+            if not is_valid:
+                return jsonify({'success': False, 'message': senior_val}), 400
+            
+            is_valid, mezz_ratio_val = validate_numeric_param(mezzanine_ratio, '夹层比例', 0, 100)
+            if not is_valid:
+                return jsonify({'success': False, 'message': mezz_ratio_val}), 400
+            
+            is_valid, mezz_rate_val = validate_numeric_param(mezzanine_rate, '夹层收益率', 0, 100)
+            if not is_valid:
+                return jsonify({'success': False, 'message': mezz_rate_val}), 400
+            
+            result = calculator.calculate_structured_mezzanine(senior_val, mezz_ratio_val, mezz_rate_val)
         elif calculation_mode == 'structured_interest_principal':
             senior_ratio = data.get('senior_ratio', 0)
             subordinate_rate = data.get('subordinate_rate', 0)
-            result = calculator.calculate_structured_interest_principal(senior_ratio, subordinate_rate)
+            
+            is_valid, senior_val = validate_numeric_param(senior_ratio, '优先级比例', 0, 100)
+            if not is_valid:
+                return jsonify({'success': False, 'message': senior_val}), 400
+            
+            is_valid, sub_rate_val = validate_numeric_param(subordinate_rate, '劣后级收益率', 0, 100)
+            if not is_valid:
+                return jsonify({'success': False, 'message': sub_rate_val}), 400
+            
+            result = calculator.calculate_structured_interest_principal(senior_val, sub_rate_val)
         else:
             result = {'success': False, 'message': '不支持的计算模式'}
         
@@ -1229,22 +1277,36 @@ def import_excel():
                 if '投资标的' in param_name:
                     basic_params['investment_target'] = str(param_value).strip()
                 elif '投资金额' in param_name:
-                    basic_params['investment_amount'] = float(param_value)
+                    value = float(param_value)
+                    if math.isnan(value) or math.isinf(value) or value <= 0:
+                        return jsonify({'success': False, 'message': '投资金额数据无效'}), 400
+                    basic_params['investment_amount'] = value
                 elif '投资期限' in param_name:
-                    basic_params['investment_period'] = int(param_value)
+                    value = int(param_value)
+                    if value <= 0 or value > 30:
+                        return jsonify({'success': False, 'message': '投资期限数据无效'}), 400
+                    basic_params['investment_period'] = value
                 elif '门槛收益率' in param_name:
-                    basic_params['hurdle_rate'] = float(param_value)
+                    value = float(param_value)
+                    if math.isnan(value) or math.isinf(value) or value < 0 or value > 100:
+                        return jsonify({'success': False, 'message': '门槛收益率数据无效'}), 400
+                    basic_params['hurdle_rate'] = value
                 elif 'Carry' in param_name or 'carry' in param_name:
-                    basic_params['management_carry'] = float(param_value)
+                    value = float(param_value)
+                    if math.isnan(value) or math.isinf(value) or value < 0 or value > 100:
+                        return jsonify({'success': False, 'message': '管理人Carry数据无效'}), 400
+                    basic_params['management_carry'] = value
         except Exception as e:
             return jsonify({'success': False, 'message': f'基本参数解析失败：{str(e)}'}), 400
         
         # 解析现金流数据
         cash_flows = []
         try:
-            for _, row in cashflow_df.iterrows():
-                cash_flow = float(row['净现金流(万元)'])
-                cash_flows.append(cash_flow)
+            for index, row in cashflow_df.iterrows():
+                value = float(row['净现金流(万元)'])
+                if math.isnan(value) or math.isinf(value) or value < 0:
+                    return jsonify({'success': False, 'message': f'第{index+1}年现金流数据无效'}), 400
+                cash_flows.append(value)
         except Exception as e:
             return jsonify({'success': False, 'message': f'现金流数据解析失败：{str(e)}'}), 400
         
