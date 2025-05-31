@@ -156,38 +156,97 @@ class FundCalculator:
             IRR值（百分比）
         """
         try:
+            # 输入验证
+            if not cash_flows or initial_investment <= 0:
+                logger.warning("IRR计算输入无效：现金流为空或初始投资金额无效")
+                return 0.0
+            
+            # 检查现金流是否全为零或负数
+            total_cash_flow = sum(cash_flows)
+            if total_cash_flow <= 0:
+                logger.warning("IRR计算：现金流总和小于等于零，无法计算有效IRR")
+                return 0.0
+            
             # 构建完整现金流序列：初始投资为负值，后续为正值
             full_cash_flows = [-initial_investment] + cash_flows
             
             # 使用牛顿法求解IRR
             def npv(rate, flows):
                 """计算净现值"""
-                return sum(cf / (1 + rate) ** i for i, cf in enumerate(flows))
+                try:
+                    if rate <= -1:  # 避免除零错误
+                        return float('inf')
+                    return sum(cf / (1 + rate) ** i for i, cf in enumerate(flows))
+                except (ZeroDivisionError, OverflowError):
+                    return float('inf')
             
             def npv_derivative(rate, flows):
                 """计算NPV对利率的导数"""
-                return sum(-i * cf / (1 + rate) ** (i + 1) for i, cf in enumerate(flows))
+                try:
+                    if rate <= -1:  # 避免除零错误
+                        return 0.0
+                    return sum(-i * cf / (1 + rate) ** (i + 1) for i, cf in enumerate(flows))
+                except (ZeroDivisionError, OverflowError):
+                    return 0.0
             
             # 初始猜测值
             rate = 0.1
             tolerance = 1e-6
             max_iterations = 100
             
-            for _ in range(max_iterations):
+            for iteration in range(max_iterations):
+                # 检查rate是否有效
+                if not isinstance(rate, (int, float)) or math.isnan(rate) or math.isinf(rate):
+                    logger.warning(f"IRR计算：第{iteration}次迭代时rate无效: {rate}")
+                    rate = 0.1  # 重置为初始猜测值
+                    continue
+                
                 npv_value = npv(rate, full_cash_flows)
                 if abs(npv_value) < tolerance:
                     break
                 
                 derivative = npv_derivative(rate, full_cash_flows)
                 if abs(derivative) < tolerance:
+                    logger.warning("IRR计算：导数太小，停止迭代")
                     break
                 
-                rate = rate - npv_value / derivative
+                # 计算新的rate值
+                new_rate = rate - npv_value / derivative
+                
+                # 检查new_rate是否有效
+                if not isinstance(new_rate, (int, float)) or math.isnan(new_rate) or math.isinf(new_rate):
+                    logger.warning(f"IRR计算：新rate值无效: {new_rate}，使用备用方法")
+                    # 使用简单的近似方法
+                    return (total_cash_flow / initial_investment - 1) * 100 / len(cash_flows) * 100
+                
+                # 限制rate的范围，避免极端值
+                if new_rate < -0.99:
+                    new_rate = -0.99
+                elif new_rate > 10:  # 限制最大1000%收益率
+                    new_rate = 10
+                
+                rate = new_rate
             
-            return rate * 100  # 转换为百分比
+            # 最终检查返回值
+            final_result = rate * 100
+            if not isinstance(final_result, (int, float)) or math.isnan(final_result) or math.isinf(final_result):
+                logger.warning(f"IRR计算：最终结果无效: {final_result}，使用备用计算")
+                # 使用简单的平均收益率作为备用
+                return (total_cash_flow / initial_investment - 1) * 100 / len(cash_flows) * 100
+            
+            return final_result  # 转换为百分比
             
         except Exception as e:
             logger.error(f"计算IRR时发生错误: {str(e)}")
+            # 返回安全的默认值
+            try:
+                # 计算简单的平均收益率
+                total_cash_flow = sum(cash_flows)
+                simple_return = (total_cash_flow / initial_investment - 1) * 100 / len(cash_flows) * 100
+                if isinstance(simple_return, (int, float)) and not math.isnan(simple_return) and not math.isinf(simple_return):
+                    return simple_return
+            except:
+                pass
             return 0.0
     
     def calculate_dpi(self, cash_flows: List[float], initial_investment: float) -> float:
@@ -202,8 +261,25 @@ class FundCalculator:
             DPI值
         """
         try:
+            # 输入验证
+            if not cash_flows or initial_investment <= 0:
+                logger.warning("DPI计算输入无效：现金流为空或初始投资金额无效")
+                return 0.0
+            
             total_distributions = sum(cash_flows)
-            return total_distributions / initial_investment if initial_investment > 0 else 0.0
+            
+            # 安全除法
+            if initial_investment > 0:
+                result = total_distributions / initial_investment
+                # 检查结果是否有效
+                if isinstance(result, (int, float)) and not math.isnan(result) and not math.isinf(result):
+                    return result
+                else:
+                    logger.warning(f"DPI计算结果无效: {result}")
+                    return 0.0
+            else:
+                return 0.0
+                
         except Exception as e:
             logger.error(f"计算DPI时发生错误: {str(e)}")
             return 0.0
@@ -220,17 +296,32 @@ class FundCalculator:
             静态回本周期（年）
         """
         try:
+            # 输入验证
+            if not cash_flows or initial_investment <= 0:
+                logger.warning("静态回本周期计算输入无效")
+                return float('inf')
+            
             cumulative_cash_flow = 0.0
             for i, cf in enumerate(cash_flows):
+                # 检查现金流值是否有效
+                if not isinstance(cf, (int, float)) or math.isnan(cf) or math.isinf(cf):
+                    logger.warning(f"第{i+1}年现金流无效: {cf}")
+                    continue
+                    
                 cumulative_cash_flow += cf
                 if cumulative_cash_flow >= initial_investment:
                     # 线性插值计算精确的回本时间
                     if i == 0:
-                        return cf / initial_investment if cf > 0 else float('inf')
+                        result = cf / initial_investment if cf > 0 else float('inf')
                     else:
                         prev_cumulative = cumulative_cash_flow - cf
                         remaining = initial_investment - prev_cumulative
-                        return i + (remaining / cf) if cf > 0 else i + 1
+                        result = i + (remaining / cf) if cf > 0 else i + 1
+                    
+                    # 检查结果是否有效
+                    if isinstance(result, (int, float)) and not math.isnan(result):
+                        return result
+                        
             return float('inf')  # 如果现金流总和不足以回本
         except Exception as e:
             logger.error(f"计算静态回本周期时发生错误: {str(e)}")
@@ -249,27 +340,74 @@ class FundCalculator:
             动态回本周期（年）
         """
         try:
+            # 输入验证
+            if not cash_flows or initial_investment <= 0:
+                logger.warning("动态回本周期计算输入无效")
+                return float('inf')
+            
             # 使用门槛收益率作为折现率
             if hasattr(self, 'basic_params') and 'hurdle_rate' in self.basic_params:
                 discount_rate = self.basic_params['hurdle_rate'] / 100
             
+            # 验证折现率
+            if not isinstance(discount_rate, (int, float)) or math.isnan(discount_rate) or discount_rate < 0:
+                discount_rate = 0.1  # 使用默认值
+            
             cumulative_pv = 0.0
             for i, cf in enumerate(cash_flows):
-                pv = cf / ((1 + discount_rate) ** (i + 1))
-                cumulative_pv += pv
-                if cumulative_pv >= initial_investment:
-                    # 线性插值计算精确的动态回本时间
-                    if i == 0:
-                        return 1.0 if pv >= initial_investment else float('inf')
-                    else:
-                        prev_pv = cumulative_pv - pv
-                        remaining = initial_investment - prev_pv
-                        year_fraction = remaining / pv if pv > 0 else 0
-                        return i + 1 + year_fraction
+                # 检查现金流值是否有效
+                if not isinstance(cf, (int, float)) or math.isnan(cf) or math.isinf(cf):
+                    logger.warning(f"第{i+1}年现金流无效: {cf}")
+                    continue
+                
+                try:
+                    pv = cf / ((1 + discount_rate) ** (i + 1))
+                    # 检查现值是否有效
+                    if not isinstance(pv, (int, float)) or math.isnan(pv) or math.isinf(pv):
+                        continue
+                        
+                    cumulative_pv += pv
+                    if cumulative_pv >= initial_investment:
+                        # 线性插值计算精确的动态回本时间
+                        if i == 0:
+                            result = 1.0 if pv >= initial_investment else float('inf')
+                        else:
+                            prev_pv = cumulative_pv - pv
+                            remaining = initial_investment - prev_pv
+                            year_fraction = remaining / pv if pv > 0 else 0
+                            result = i + 1 + year_fraction
+                        
+                        # 检查结果是否有效
+                        if isinstance(result, (int, float)) and not math.isnan(result):
+                            return result
+                            
+                except (ZeroDivisionError, OverflowError):
+                    continue
+                    
             return float('inf')  # 如果折现后现金流总和不足以回本
         except Exception as e:
             logger.error(f"计算动态回本周期时发生错误: {str(e)}")
             return float('inf')
+    
+    def safe_round(self, value, digits=2):
+        """
+        安全的round函数，确保不会因为NaN而崩溃
+        
+        Args:
+            value: 要四舍五入的值
+            digits: 小数位数
+        
+        Returns:
+            四舍五入后的值，如果输入无效则返回0
+        """
+        try:
+            if not isinstance(value, (int, float)):
+                return 0.0
+            if math.isnan(value) or math.isinf(value):
+                return 0.0
+            return round(value, digits)
+        except:
+            return 0.0
     
     def calculate_flat_structure_priority_repayment(self) -> Dict[str, Any]:
         """
@@ -349,17 +487,17 @@ class FundCalculator:
                 'success': True,
                 'calculation_mode': '平层结构-优先还本',
                 'core_metrics': {
-                    'irr': round(irr, 2),
-                    'dpi': round(dpi, 2),
-                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
-                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
+                    'irr': self.safe_round(irr),
+                    'dpi': self.safe_round(dpi),
+                    'static_payback_period': self.safe_round(static_payback) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': self.safe_round(dynamic_payback) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
-                    'total_principal_repaid': sum(row['principal_repayment'] for row in results),
-                    'total_hurdle_distributed': sum(row['distributed_hurdle_return'] for row in results),
-                    'total_carry_lp': sum(row['carry_lp'] for row in results),
-                    'total_carry_gp': sum(row['carry_gp'] for row in results)
+                    'total_principal_repaid': self.safe_round(sum(row['principal_repayment'] for row in results)),
+                    'total_hurdle_distributed': self.safe_round(sum(row['distributed_hurdle_return'] for row in results)),
+                    'total_carry_lp': self.safe_round(sum(row['carry_lp'] for row in results)),
+                    'total_carry_gp': self.safe_round(sum(row['carry_gp'] for row in results))
                 }
             }
             
@@ -459,18 +597,18 @@ class FundCalculator:
                 'success': True,
                 'calculation_mode': '平层结构-期间分配',
                 'core_metrics': {
-                    'irr': round(irr, 2),
-                    'dpi': round(dpi, 2),
-                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
-                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
+                    'irr': self.safe_round(irr),
+                    'dpi': self.safe_round(dpi),
+                    'static_payback_period': self.safe_round(static_payback) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': self.safe_round(dynamic_payback) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
-                    'total_periodic_distribution': sum(row['periodic_distribution'] for row in results),
-                    'total_principal_repaid': sum(row['principal_repayment'] for row in results),
-                    'total_hurdle_distributed': sum(row['distributed_hurdle_return'] for row in results),
-                    'total_carry_lp': sum(row['carry_lp'] for row in results),
-                    'total_carry_gp': sum(row['carry_gp'] for row in results)
+                    'total_periodic_distribution': self.safe_round(sum(row['periodic_distribution'] for row in results)),
+                    'total_principal_repaid': self.safe_round(sum(row['principal_repayment'] for row in results)),
+                    'total_hurdle_distributed': self.safe_round(sum(row['distributed_hurdle_return'] for row in results)),
+                    'total_carry_lp': self.safe_round(sum(row['carry_lp'] for row in results)),
+                    'total_carry_gp': self.safe_round(sum(row['carry_gp'] for row in results))
                 }
             }
             
@@ -575,24 +713,24 @@ class FundCalculator:
                 'success': True,
                 'calculation_mode': '结构化-优先劣后',
                 'structure_info': {
-                    'senior_amount': round(senior_amount, 2),
-                    'subordinate_amount': round(subordinate_amount, 2),
+                    'senior_amount': self.safe_round(senior_amount),
+                    'subordinate_amount': self.safe_round(subordinate_amount),
                     'senior_ratio': senior_ratio,
-                    'subordinate_ratio': 100 - senior_ratio
+                    'subordinate_ratio': self.safe_round(100 - senior_ratio)
                 },
                 'core_metrics': {
-                    'irr': round(irr, 2),
-                    'dpi': round(dpi, 2),
-                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
-                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
+                    'irr': self.safe_round(irr),
+                    'dpi': self.safe_round(dpi),
+                    'static_payback_period': self.safe_round(static_payback) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': self.safe_round(dynamic_payback) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
-                    'total_senior_return': sum(row['senior_periodic_return'] for row in results),
-                    'total_senior_principal': sum(row['senior_principal_repayment'] for row in results),
-                    'total_subordinate_principal': sum(row['subordinate_principal_repayment'] for row in results),
-                    'total_carry_lp': sum(row['carry_lp'] for row in results),
-                    'total_carry_gp': sum(row['carry_gp'] for row in results)
+                    'total_senior_return': self.safe_round(sum(row['senior_periodic_return'] for row in results)),
+                    'total_senior_principal': self.safe_round(sum(row['senior_principal_repayment'] for row in results)),
+                    'total_subordinate_principal': self.safe_round(sum(row['subordinate_principal_repayment'] for row in results)),
+                    'total_carry_lp': self.safe_round(sum(row['carry_lp'] for row in results)),
+                    'total_carry_gp': self.safe_round(sum(row['carry_gp'] for row in results))
                 }
             }
             
@@ -731,30 +869,30 @@ class FundCalculator:
                 'success': True,
                 'calculation_mode': '结构化-包含夹层',
                 'structure_info': {
-                    'senior_amount': round(senior_amount, 2),
-                    'mezzanine_amount': round(mezzanine_amount, 2),
-                    'subordinate_amount': round(subordinate_amount, 2),
+                    'senior_amount': self.safe_round(senior_amount),
+                    'mezzanine_amount': self.safe_round(mezzanine_amount),
+                    'subordinate_amount': self.safe_round(subordinate_amount),
                     'senior_ratio': senior_ratio,
                     'mezzanine_ratio': mezzanine_ratio,
-                    'subordinate_ratio': round(subordinate_ratio_decimal * 100, 2),
-                    'senior_rate': self.basic_params['hurdle_rate'],
+                    'subordinate_ratio': self.safe_round(subordinate_ratio_decimal * 100),
+                    'senior_rate': senior_rate,
                     'mezzanine_rate': mezzanine_rate
                 },
                 'core_metrics': {
-                    'irr': round(irr, 2),
-                    'dpi': round(dpi, 2),
-                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
-                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
+                    'irr': self.safe_round(irr),
+                    'dpi': self.safe_round(dpi),
+                    'static_payback_period': self.safe_round(static_payback) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': self.safe_round(dynamic_payback) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
-                    'total_senior_hurdle': sum(row['senior_hurdle_distribution'] for row in results),
-                    'total_mezzanine_hurdle': sum(row['mezzanine_hurdle_distribution'] for row in results),
-                    'total_senior_principal': sum(row['senior_principal_repayment'] for row in results),
-                    'total_mezzanine_principal': sum(row['mezzanine_principal_repayment'] for row in results),
-                    'total_subordinate_principal': sum(row['subordinate_principal_repayment'] for row in results),
-                    'total_carry_lp': sum(row['carry_lp'] for row in results),
-                    'total_carry_gp': sum(row['carry_gp'] for row in results)
+                    'total_senior_hurdle': self.safe_round(sum(row['senior_hurdle_distribution'] for row in results)),
+                    'total_mezzanine_hurdle': self.safe_round(sum(row['mezzanine_hurdle_distribution'] for row in results)),
+                    'total_senior_principal': self.safe_round(sum(row['senior_principal_repayment'] for row in results)),
+                    'total_mezzanine_principal': self.safe_round(sum(row['mezzanine_principal_repayment'] for row in results)),
+                    'total_subordinate_principal': self.safe_round(sum(row['subordinate_principal_repayment'] for row in results)),
+                    'total_carry_lp': self.safe_round(sum(row['carry_lp'] for row in results)),
+                    'total_carry_gp': self.safe_round(sum(row['carry_gp'] for row in results))
                 }
             }
             
@@ -861,27 +999,27 @@ class FundCalculator:
                 'success': True,
                 'calculation_mode': '结构化-息息本本',
                 'structure_info': {
-                    'senior_amount': round(senior_amount, 2),
-                    'subordinate_amount': round(subordinate_amount, 2),
+                    'senior_amount': self.safe_round(senior_amount),
+                    'subordinate_amount': self.safe_round(subordinate_amount),
                     'senior_ratio': senior_ratio,
-                    'subordinate_ratio': round(subordinate_ratio_decimal * 100, 2),
-                    'senior_rate': self.basic_params['hurdle_rate'],
+                    'subordinate_ratio': self.safe_round(subordinate_ratio_decimal * 100),
+                    'senior_rate': senior_rate,
                     'subordinate_rate': subordinate_rate
                 },
                 'core_metrics': {
-                    'irr': round(irr, 2),
-                    'dpi': round(dpi, 2),
-                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
-                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
+                    'irr': self.safe_round(irr),
+                    'dpi': self.safe_round(dpi),
+                    'static_payback_period': self.safe_round(static_payback) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': self.safe_round(dynamic_payback) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
-                    'total_senior_return': sum(row['senior_periodic_return'] for row in results),
-                    'total_subordinate_return': sum(row['subordinate_periodic_return'] for row in results),
-                    'total_senior_principal': sum(row['senior_principal_repayment'] for row in results),
-                    'total_subordinate_principal': sum(row['subordinate_principal_repayment'] for row in results),
-                    'total_carry_lp': sum(row['carry_lp'] for row in results),
-                    'total_carry_gp': sum(row['carry_gp'] for row in results)
+                    'total_senior_return': self.safe_round(sum(row['senior_periodic_return'] for row in results)),
+                    'total_subordinate_return': self.safe_round(sum(row['subordinate_periodic_return'] for row in results)),
+                    'total_senior_principal': self.safe_round(sum(row['senior_principal_repayment'] for row in results)),
+                    'total_subordinate_principal': self.safe_round(sum(row['subordinate_principal_repayment'] for row in results)),
+                    'total_carry_lp': self.safe_round(sum(row['carry_lp'] for row in results)),
+                    'total_carry_gp': self.safe_round(sum(row['carry_gp'] for row in results))
                 }
             }
             
