@@ -2514,24 +2514,31 @@
         /**
          * 导入Excel文件
          */
-        function importExcel() {
+        async function importExcel() {
             const fileInput = document.getElementById('excelFile');
             const file = fileInput.files[0];
             
             if (!file) return;
             
-            // 显示专业加载提示
-            disableInterface('正在解析Excel文件，请稍候...');
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            fetch('/api/import', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(result => {
+            try {
+                // 显示专业加载提示
+                disableInterface('正在解析Excel文件，请稍候...');
+                
+                // 1. 首先重置系统状态，确保干净的开始
+                console.log('导入前重置系统状态');
+                await resetAllDataSilently(); // 使用静默重置避免重复提示
+                
+                // 2. 开始导入文件
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('/api/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
                 // 确保加载状态被清除
                 enableInterface();
                 
@@ -2542,17 +2549,64 @@
                     if (result.data && result.data.basic_params) {
                         const params = result.data.basic_params;
                         
-                        // 填充基本参数表单
-                        document.getElementById('investmentTarget').value = params.investment_target || '';
-                        document.getElementById('investmentAmount').value = params.investment_amount || '';
-                        document.getElementById('investmentPeriod').value = params.investment_period || '';
-                        document.getElementById('hurdleRate').value = params.hurdle_rate || '';
-                        document.getElementById('managementCarry').value = params.management_carry || '';
+                        // 数据验证和清理
+                        const cleanParams = {
+                            investment_target: String(params.investment_target || ''),
+                            investment_amount: parseFloat(params.investment_amount) || 0,
+                            investment_period: parseInt(params.investment_period) || 0,
+                            hurdle_rate: parseFloat(params.hurdle_rate) || 0,
+                            management_carry: parseFloat(params.management_carry) || 0
+                        };
                         
-                        console.log('基本参数已填充:', params);
+                        // 验证数据有效性
+                        if (isNaN(cleanParams.investment_amount) || cleanParams.investment_amount <= 0) {
+                            showAlert('导入的投资金额无效，请检查Excel文件', 'error');
+                            fileInput.value = '';
+                            return;
+                        }
+                        
+                        if (isNaN(cleanParams.investment_period) || cleanParams.investment_period <= 0 || cleanParams.investment_period > 30) {
+                            showAlert('导入的投资期限无效，请检查Excel文件', 'error');
+                            fileInput.value = '';
+                            return;
+                        }
+                        
+                        if (isNaN(cleanParams.hurdle_rate) || cleanParams.hurdle_rate < 0 || cleanParams.hurdle_rate > 100) {
+                            showAlert('导入的门槛收益率无效，请检查Excel文件', 'error');
+                            fileInput.value = '';
+                            return;
+                        }
+                        
+                        if (isNaN(cleanParams.management_carry) || cleanParams.management_carry < 0 || cleanParams.management_carry > 100) {
+                            showAlert('导入的管理人Carry无效，请检查Excel文件', 'error');
+                            fileInput.value = '';
+                            return;
+                        }
+                        
+                        // 填充基本参数表单
+                        document.getElementById('investmentTarget').value = cleanParams.investment_target;
+                        document.getElementById('investmentAmount').value = cleanParams.investment_amount;
+                        document.getElementById('investmentPeriod').value = cleanParams.investment_period;
+                        document.getElementById('hurdleRate').value = cleanParams.hurdle_rate;
+                        document.getElementById('managementCarry').value = cleanParams.management_carry;
+                        
+                        console.log('基本参数已填充:', cleanParams);
                         
                         // 保存基本参数到全局变量
-                        basicParams = { ...params };
+                        basicParams = { ...cleanParams };
+                        
+                        // 重置步骤状态
+                        document.querySelectorAll('.step-item').forEach((item, index) => {
+                            item.classList.remove('completed');
+                            if (index === 0) {
+                                item.classList.add('completed');
+                                const stepNumber = item.querySelector('.step-number');
+                                stepNumber.innerHTML = '<i class="fas fa-check"></i>';
+                            } else {
+                                const stepNumber = item.querySelector('.step-number');
+                                stepNumber.textContent = index + 1;
+                            }
+                        });
                         
                         // 生成现金流输入框
                         generateCashFlowInputs();
@@ -2560,34 +2614,131 @@
                         // 延迟填充现金流数据，确保输入框已生成
                         setTimeout(() => {
                             if (result.data.cash_flows) {
-                                const cashFlows = result.data.cash_flows;
+                                const rawCashFlows = result.data.cash_flows;
+                                
+                                // 清理和验证现金流数据
+                                const cleanCashFlows = rawCashFlows.map((cf, index) => {
+                                    const cleanValue = parseFloat(cf);
+                                    if (isNaN(cleanValue)) {
+                                        console.warn(`第${index + 1}年现金流数据无效，设为0: ${cf}`);
+                                        return 0;
+                                    }
+                                    return cleanValue;
+                                });
+                                
+                                console.log('原始现金流数据:', rawCashFlows);
+                                console.log('清理后现金流数据:', cleanCashFlows);
                                 
                                 // 填充现金流数据
-                                for (let i = 0; i < cashFlows.length; i++) {
+                                for (let i = 0; i < cleanCashFlows.length && i < cleanParams.investment_period; i++) {
                                     const inputElement = document.getElementById(`cashFlow${i + 1}`);
                                     if (inputElement) {
-                                        inputElement.value = cashFlows[i] || '';
+                                        inputElement.value = cleanCashFlows[i];
                                     }
                                 }
                                 
-                                console.log('现金流数据已填充:', cashFlows);
+                                // 保存到全局变量
+                                cashFlows = [...cleanCashFlows];
+                                
+                                console.log('现金流数据已填充:', cleanCashFlows);
                                 showAlert('数据导入完成，请检查并确认', 'success');
                             }
                         }, 200);
                     }
                 } else {
-                    showAlert(result.message, 'error');
+                    showAlert(result.message || '导入失败，请检查文件格式', 'error');
                 }
                 
-                // 清空文件输入框
-                fileInput.value = '';
-            })
-            .catch(error => {
+            } catch (error) {
                 // 确保出错时也清除加载状态
                 enableInterface();
+                console.error('导入文件时发生错误:', error);
                 showAlert('导入文件时发生错误: ' + error.message, 'error');
+            } finally {
+                // 清空文件输入框
                 fileInput.value = '';
+            }
+        }
+
+        /**
+         * 静默重置所有数据和状态（不显示成功提示）
+         */
+        async function resetAllDataSilently() {
+            console.log('开始静默重置所有数据和状态');
+            
+            try {
+                // 1. 调用后端重置API
+                const response = await fetch('/api/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    console.warn('后端重置失败:', result.message);
+                }
+                
+                console.log('后端状态已重置');
+            } catch (error) {
+                console.error('调用后端重置API失败:', error);
+            }
+            
+            // 2. 重置前端状态（与resetAllData相同的逻辑）
+            basicParams = {};
+            cashFlows = [];
+            calculationResults = null;
+            currentStep = 1;
+            
+            // 清空表单字段
+            document.getElementById('investmentTarget').value = '';
+            document.getElementById('investmentAmount').value = '';
+            document.getElementById('investmentPeriod').value = '';
+            document.getElementById('hurdleRate').value = '';
+            document.getElementById('managementCarry').value = '';
+            
+            // 清空现金流输入区域
+            document.getElementById('cashFlowInputs').innerHTML = '<p class="help-text">请先完成基本参数设置</p>';
+            
+            // 重置分配模式选择
+            document.querySelectorAll('input[name="distributionMode"]').forEach(radio => {
+                radio.checked = false;
             });
+            document.querySelectorAll('.mode-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 隐藏所有额外输入
+            document.getElementById('periodicRateInput').style.display = 'none';
+            document.getElementById('seniorRatioInput').style.display = 'none';
+            document.getElementById('mezzanineInput').style.display = 'none';
+            document.getElementById('interestPrincipalInput').style.display = 'none';
+            
+            // 清空计算结果区域
+            document.getElementById('calculationResults').innerHTML = '<p class="help-text">请完成前面的步骤并执行计算</p>';
+            
+            // 禁用导出和可视化按钮
+            document.getElementById('exportBtn').disabled = true;
+            document.getElementById('visualizeBtn').disabled = true;
+            
+            // 重置步骤状态
+            document.querySelectorAll('.step-item').forEach((item, index) => {
+                item.classList.remove('completed', 'active');
+                const stepNumber = item.querySelector('.step-number');
+                stepNumber.textContent = index + 1;
+            });
+            
+            // 设置第一步为活动状态
+            document.querySelectorAll('.step-item')[0].classList.add('active');
+            
+            // 显示第一个标签页
+            showTab('basic-params');
+            
+            console.log('静默重置完成');
         }
 
         /**
@@ -2639,6 +2790,93 @@
                     alertDiv.parentNode.removeChild(alertDiv);
                 }
             }, 3000);
+        }
+
+        /**
+         * 重置所有数据和状态
+         */
+        async function resetAllData() {
+            console.log('开始重置所有数据和状态');
+            
+            try {
+                // 1. 首先调用后端重置API
+                const response = await fetch('/api/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    console.warn('后端重置失败:', result.message);
+                }
+                
+                console.log('后端状态已重置');
+            } catch (error) {
+                console.error('调用后端重置API失败:', error);
+                // 继续执行前端重置，不要因为后端问题而中断
+            }
+            
+            // 2. 重置前端全局变量
+            basicParams = {};
+            cashFlows = [];
+            calculationResults = null;
+            currentStep = 1;
+            
+            console.log('前端全局变量已重置');
+            
+            // 3. 清空表单字段
+            document.getElementById('investmentTarget').value = '';
+            document.getElementById('investmentAmount').value = '';
+            document.getElementById('investmentPeriod').value = '';
+            document.getElementById('hurdleRate').value = '';
+            document.getElementById('managementCarry').value = '';
+            
+            console.log('表单字段已清空');
+            
+            // 4. 清空现金流输入区域
+            document.getElementById('cashFlowInputs').innerHTML = '<p class="help-text">请先完成基本参数设置</p>';
+            
+            // 5. 重置分配模式选择
+            document.querySelectorAll('input[name="distributionMode"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.querySelectorAll('.mode-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 6. 隐藏所有额外输入
+            document.getElementById('periodicRateInput').style.display = 'none';
+            document.getElementById('seniorRatioInput').style.display = 'none';
+            document.getElementById('mezzanineInput').style.display = 'none';
+            document.getElementById('interestPrincipalInput').style.display = 'none';
+            
+            // 7. 清空计算结果区域
+            document.getElementById('calculationResults').innerHTML = '<p class="help-text">请完成前面的步骤并执行计算</p>';
+            
+            // 8. 禁用导出和可视化按钮
+            document.getElementById('exportBtn').disabled = true;
+            document.getElementById('visualizeBtn').disabled = true;
+            
+            // 9. 重置步骤状态
+            document.querySelectorAll('.step-item').forEach((item, index) => {
+                item.classList.remove('completed', 'active');
+                const stepNumber = item.querySelector('.step-number');
+                stepNumber.textContent = index + 1;
+            });
+            
+            // 10. 设置第一步为活动状态
+            document.querySelectorAll('.step-item')[0].classList.add('active');
+            
+            // 11. 显示第一个标签页
+            showTab('basic-params');
+            
+            console.log('数据重置完成');
+            showAlert('系统状态已重置，可以重新开始操作', 'success');
         }
     </script>
     
