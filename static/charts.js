@@ -1,197 +1,93 @@
 /**
- * 基金收益分配计算系统 - 图表模块
- * @description 使用Chart.js处理数据可视化功能
- * @author 基金计算系统团队
- * @version 1.0.0
+ * 基金收益分配计算系统 - 图表模块（简化版）
+ * 使用后端格式化数据，避免前端数值计算错误
  */
 
 /**
- * 安全的toFixed函数，防止NaN错误
+ * 创建现金流图表
+ * @param {Array} cashFlowData - 现金流数据（后端已格式化）
  */
-function safeToFixed(value, digits = 2) {
-    if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
-        return '0.' + '0'.repeat(digits);
-    }
-    return value.toFixed(digits);
-}
-
-/**
- * 安全计算百分比，防止除零错误
- */
-function safeCalculatePercentage(numerator, denominator) {
-    if (typeof numerator !== 'number' || isNaN(numerator) || !isFinite(numerator)) {
-        return 0;
-    }
-    if (typeof denominator !== 'number' || isNaN(denominator) || !isFinite(denominator) || denominator === 0) {
-        return 0;
-    }
-    const result = (numerator / denominator) * 100;
-    return isNaN(result) || !isFinite(result) ? 0 : result;
-}
-
-/**
- * 全局图表配置
- */
-const CHART_CONFIG = {
-    // 默认颜色主题
-    colors: {
-        primary: '#0d6efd',
-        success: '#198754',
-        danger: '#dc3545',
-        warning: '#ffc107',
-        info: '#0dcaf0',
-        secondary: '#6c757d',
-        light: '#f8f9fa',
-        dark: '#212529'
-    },
+function createCashFlowChart(cashFlowData) {
+    const ctx = document.getElementById('cashFlowChart');
+    if (!ctx || !cashFlowData) return;
     
-    // 字体配置
-    font: {
-        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        size: 12
-    },
+    // 使用原始数值用于图表显示
+    const years = cashFlowData.map(item => `第${item.year}年`);
+    const values = cashFlowData.map(item => item.net_cash_flow || 0);
     
-    // 动画配置
-    animation: {
-        duration: 1000,
-        easing: 'easeInOutQuart'
-    }
-};
-
-/**
- * 创建现金流趋势图
- * @param {Array} cashFlows - 现金流数据
- */
-function createCashFlowChart(cashFlows) {
-    const ctx = document.getElementById('cashFlowChart').getContext('2d');
-    
-    // 处理数据
-    const processedData = processCashFlowData(cashFlows);
-    
-    // 销毁之前的图表实例
-    if (window.cashFlowChartInstance) {
-        window.cashFlowChartInstance.destroy();
-    }
-    
-    // 创建新图表
-    window.cashFlowChartInstance = new Chart(ctx, {
-        type: 'line',
+    new Chart(ctx, {
+        type: 'bar',
         data: {
-            labels: processedData.labels,
-            datasets: [
-                {
-                    label: '累计投资',
-                    data: processedData.cumulativeInvestment,
-                    borderColor: CHART_CONFIG.colors.danger,
-                    backgroundColor: CHART_CONFIG.colors.danger + '20',
-                    borderWidth: 3,
-                    fill: false,
-                    tension: 0.4
-                },
-                {
-                    label: '累计回收',
-                    data: processedData.cumulativeReturn,
-                    borderColor: CHART_CONFIG.colors.success,
-                    backgroundColor: CHART_CONFIG.colors.success + '20',
-                    borderWidth: 3,
-                    fill: false,
-                    tension: 0.4
-                },
-                {
-                    label: '净现金流',
-                    data: processedData.netCashFlow,
-                    borderColor: CHART_CONFIG.colors.primary,
-                    backgroundColor: CHART_CONFIG.colors.primary + '20',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4
-                }
-            ]
+            labels: years,
+            datasets: [{
+                label: '净现金流',
+                data: values,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            animation: CHART_CONFIG.animation,
             plugins: {
                 title: {
                     display: true,
-                    text: '现金流趋势分析',
-                    font: {
-                        size: 16,
-                        weight: 'bold',
-                        family: CHART_CONFIG.font.family
-                    },
-                    padding: 20
-                },
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 20,
-                        font: {
-                            family: CHART_CONFIG.font.family,
-                            size: CHART_CONFIG.font.size
-                        }
-                    }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: CHART_CONFIG.colors.dark,
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: CHART_CONFIG.colors.primary,
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            const value = formatCurrency(context.parsed.y);
-                            return `${context.dataset.label}: ${value}`;
-                        }
-                    }
+                    text: '现金流分布图'
                 }
             },
             scales: {
-                x: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: '时间',
-                        font: {
-                            family: CHART_CONFIG.font.family,
-                            size: CHART_CONFIG.font.size,
-                            weight: 'bold'
-                        }
-                    },
-                    grid: {
-                        color: CHART_CONFIG.colors.light
-                    }
-                },
                 y: {
-                    display: true,
+                    beginAtZero: true,
                     title: {
                         display: true,
-                        text: '金额 (万元)',
-                        font: {
-                            family: CHART_CONFIG.font.family,
-                            size: CHART_CONFIG.font.size,
-                            weight: 'bold'
-                        }
-                    },
-                    grid: {
-                        color: CHART_CONFIG.colors.light
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return formatCurrency(value);
-                        }
+                        text: '金额（万元）'
                     }
                 }
+            }
+        }
+    });
+}
+
+/**
+ * 创建指标图表
+ * @param {Object} metrics - 指标数据（后端已格式化）
+ */
+function createMetricsChart(metrics) {
+    const ctx = document.getElementById('metricsChart');
+    if (!ctx || !metrics) return;
+    
+    // 使用原始数值用于图表显示
+    const data = [
+        metrics.irr || 0,
+        metrics.dpi || 0,
+        (metrics.net_profit && metrics.total_investment) ? 
+            (metrics.net_profit / metrics.total_investment) * 100 : 0
+    ];
+    
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['IRR (%)', 'DPI', '净收益率 (%)'],
+            datasets: [{
+                label: '投资收益指标',
+                data: data,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '投资收益指标雷达图'
+                }
             },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
+            scales: {
+                r: {
+                    beginAtZero: true
+                }
             }
         }
     });
@@ -221,12 +117,12 @@ function createDistributionPieChart(distributions) {
             datasets: [{
                 data: [totalGP, totalLP],
                 backgroundColor: [
-                    CHART_CONFIG.colors.warning,
-                    CHART_CONFIG.colors.success
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)'
                 ],
                 borderColor: [
-                    CHART_CONFIG.colors.warning,
-                    CHART_CONFIG.colors.success
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)'
                 ],
                 borderWidth: 2,
                 hoverOffset: 4
@@ -281,112 +177,6 @@ function createDistributionPieChart(distributions) {
 }
 
 /**
- * 创建收益率对比柱状图
- * @param {Object} metrics - 计算指标
- */
-function createMetricsChart(metrics) {
-    const ctx = document.getElementById('metricsChart').getContext('2d');
-    
-    // 销毁之前的图表实例
-    if (window.metricsChartInstance) {
-        window.metricsChartInstance.destroy();
-    }
-    
-    // 创建新图表
-    window.metricsChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['IRR (%)', 'DPI', '净收益率 (%)'],
-            datasets: [{
-                label: '投资指标',
-                data: [
-                    metrics.irr || 0,
-                    metrics.dpi || 0,
-                    safeCalculatePercentage(metrics.net_profit, metrics.total_investment)
-                ],
-                backgroundColor: [
-                    CHART_CONFIG.colors.primary + '80',
-                    CHART_CONFIG.colors.success + '80',
-                    CHART_CONFIG.colors.info + '80'
-                ],
-                borderColor: [
-                    CHART_CONFIG.colors.primary,
-                    CHART_CONFIG.colors.success,
-                    CHART_CONFIG.colors.info
-                ],
-                borderWidth: 2,
-                borderRadius: 5,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: CHART_CONFIG.animation,
-            plugins: {
-                title: {
-                    display: true,
-                    text: '投资业绩指标',
-                    font: {
-                        size: 16,
-                        weight: 'bold',
-                        family: CHART_CONFIG.font.family
-                    },
-                    padding: 20
-                },
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: CHART_CONFIG.colors.dark,
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: CHART_CONFIG.colors.primary,
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            let value = context.parsed.y;
-                            if (context.dataIndex === 0 || context.dataIndex === 2) {
-                                // IRR和净收益率显示为百分比
-                                return `${context.label}: ${safeToFixed(value, 2)}%`;
-                            } else {
-                                // DPI显示为倍数
-                                return `${context.label}: ${safeToFixed(value, 2)}x`;
-                            }
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        font: {
-                            family: CHART_CONFIG.font.family,
-                            size: CHART_CONFIG.font.size
-                        }
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: CHART_CONFIG.colors.light
-                    },
-                    ticks: {
-                        font: {
-                            family: CHART_CONFIG.font.family,
-                            size: CHART_CONFIG.font.size
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-/**
  * 创建时间序列分配图
  * @param {Array} distributions - 分配明细数据
  */
@@ -412,16 +202,16 @@ function createTimeSeriesDistributionChart(distributions) {
                 {
                     label: 'GP分配',
                     data: gpData,
-                    backgroundColor: CHART_CONFIG.colors.warning + '80',
-                    borderColor: CHART_CONFIG.colors.warning,
-                    borderWidth: 2
+                    backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1
                 },
                 {
                     label: 'LP分配',
                     data: lpData,
-                    backgroundColor: CHART_CONFIG.colors.success + '80',
-                    borderColor: CHART_CONFIG.colors.success,
-                    borderWidth: 2
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
                 }
             ]
         },
@@ -504,53 +294,6 @@ function createTimeSeriesDistributionChart(distributions) {
             }
         }
     });
-}
-
-/**
- * 处理现金流数据用于图表显示
- * @param {Array} cashFlows - 原始现金流数据
- * @returns {Object} 处理后的图表数据
- */
-function processCashFlowData(cashFlows) {
-    // 按日期排序
-    const sortedFlows = cashFlows.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    const labels = [];
-    const cumulativeInvestment = [];
-    const cumulativeReturn = [];
-    const netCashFlow = [];
-    
-    let totalInvestment = 0;
-    let totalReturn = 0;
-    
-    sortedFlows.forEach(flow => {
-        // 格式化日期标签
-        const date = new Date(flow.date);
-        const formattedDate = date.toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        labels.push(formattedDate);
-        
-        // 累计投资和回收
-        if (flow.type === 'investment' || flow.type === 'capital_call') {
-            totalInvestment += flow.amount;
-        } else if (flow.type === 'distribution' || flow.type === 'exit') {
-            totalReturn += flow.amount;
-        }
-        
-        cumulativeInvestment.push(totalInvestment);
-        cumulativeReturn.push(totalReturn);
-        netCashFlow.push(totalReturn - totalInvestment);
-    });
-    
-    return {
-        labels,
-        cumulativeInvestment,
-        cumulativeReturn,
-        netCashFlow
-    };
 }
 
 /**
