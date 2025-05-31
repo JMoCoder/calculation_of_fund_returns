@@ -1657,7 +1657,7 @@
         }
         
         /**
-         * 安全解析浮点数，防止NaN
+         * 安全解析浮点数，防止NaN - 仅用于表单输入验证
          */
         function safeParseFloat(value, defaultValue = 0) {
             if (value === null || value === undefined || value === '') {
@@ -1667,6 +1667,9 @@
             return isNaN(parsed) ? defaultValue : parsed;
         }
         
+        /**
+         * 安全解析整数，防止NaN - 仅用于表单输入验证
+         */
         function safeParseInt(value, defaultValue = 0) {
             if (value === null || value === undefined || value === '') {
                 return defaultValue;
@@ -3314,6 +3317,105 @@
             console.log('数据重置完成');
             showAlert('系统状态已重置，可以重新开始操作', 'success');
         }
+
+        /**
+         * 简化的结果显示函数 - 直接使用后端格式化数据
+         */
+        function displayCalculationResults(data) {
+            console.log('显示计算结果:', data);
+            
+            if (!data.success) {
+                showAlert(data.message || '计算失败', 'error');
+                return;
+            }
+            
+            // 显示核心指标 - 直接使用格式化数据
+            const metrics = data.core_metrics;
+            $('#irr-result').text(metrics.irr.formatted);
+            $('#dpi-result').text(metrics.dpi.formatted);
+            $('#static-payback-result').text(metrics.static_payback_period.formatted);
+            $('#dynamic-payback-result').text(metrics.dynamic_payback_period.formatted);
+            
+            // 显示计算模式
+            $('#calculation-mode').text(data.calculation_mode);
+            
+            // 显示现金流表格 - 直接使用格式化数据
+            displayCashFlowTable(data.cash_flow_table, data.calculation_mode, data.totals);
+            
+            // 显示投资收益分析
+            displayInvestmentAnalysis(data.raw_data);
+            
+            // 创建图表（使用原始数据）
+            if (typeof createCashFlowChart === 'function' && data.raw_data.cash_flow_table) {
+                createCashFlowChart(data.raw_data.cash_flow_table);
+            }
+            if (typeof createMetricsChart === 'function' && data.raw_data.core_metrics) {
+                createMetricsChart(data.raw_data.core_metrics);
+            }
+            
+            // 显示结果区域
+            $('#results').show();
+        }
+        
+        /**
+         * 显示现金流表格 - 使用后端格式化数据
+         */
+        function displayCashFlowTable(tableData, calculationMode, totals) {
+            let html = '';
+            
+            // 根据计算模式生成表头
+            html += generateTableHeader(calculationMode);
+            
+            // 生成数据行 - 直接使用格式化数据
+            tableData.forEach(row => {
+                html += '<tr>';
+                html += `<td class="year-cell">${row.year}</td>`;
+                html += `<td class="amount-cell">${row.net_cash_flow.formatted}</td>`;
+                html += `<td class="rate-cell">${row.cash_flow_distribution_rate.formatted}</td>`;
+                
+                // 根据计算模式添加相应列
+                if (calculationMode.includes('平层结构-优先还本')) {
+                    html += `<td class="amount-cell">${row.beginning_principal_balance.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.principal_repayment.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.accrued_hurdle_return.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.distributed_hurdle_return.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.carry_lp.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.carry_gp.formatted}</td>`;
+                } else if (calculationMode.includes('平层结构-期间分配')) {
+                    html += `<td class="amount-cell">${row.beginning_principal_balance.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.periodic_distribution.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.accrued_hurdle_return.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.principal_repayment.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.distributed_hurdle_return.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.carry_lp.formatted}</td>`;
+                    html += `<td class="amount-cell">${row.carry_gp.formatted}</td>`;
+                }
+                // 可以继续添加其他计算模式的列...
+                
+                html += '</tr>';
+            });
+            
+            // 添加总计行 - 直接使用格式化数据
+            html += '<tr class="total-row">';
+            html += '<td class="year-cell total-label">总计</td>';
+            html += `<td class="amount-cell total-value">${totals.net_cash_flow.formatted}</td>`;
+            html += '<td class="rate-cell total-value">-</td>'; // 分派率不总计
+            
+            // 根据计算模式添加总计列
+            if (calculationMode.includes('平层结构-优先还本')) {
+                html += '<td class="amount-cell total-value">-</td>'; // 期初本金余额不总计
+                html += `<td class="amount-cell total-value">${totals.principal_repayment.formatted}</td>`;
+                html += `<td class="amount-cell total-value">${totals.accrued_hurdle_return.formatted}</td>`;
+                html += `<td class="amount-cell total-value">${totals.distributed_hurdle_return.formatted}</td>`;
+                html += `<td class="amount-cell total-value">${totals.carry_lp.formatted}</td>`;
+                html += `<td class="amount-cell total-value">${totals.carry_gp.formatted}</td>`;
+            }
+            // 可以继续添加其他计算模式的总计...
+            
+            html += '</tr>';
+            
+            $('#cash-flow-table tbody').html(html);
+        }
     </script>
     
     <!-- 外部JavaScript库 -->
@@ -3323,9 +3425,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- 引入自定义JavaScript文件 -->
-    <script src="{{ url_for('static', filename='utils.js') }}?v=2.6.0" defer></script>
-    <script src="{{ url_for('static', filename='charts.js') }}?v=2.6.0" defer></script>
-    <script src="{{ url_for('static', filename='app.js') }}?v=2.6.0" defer></script>
+    <script src="{{ url_for('static', filename='utils.js') }}?v=3.0.0" defer></script>
+    <script src="{{ url_for('static', filename='charts.js') }}?v=3.0.0" defer></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=3.0.0" defer></script>
     
 </body>
 </html> 

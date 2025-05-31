@@ -24,6 +24,7 @@ import tempfile
 import logging
 from typing import Dict, List, Any, Optional, Tuple
 import math
+import traceback
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +32,215 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
+
+# 全局计算器实例
+calculator = None
+
+# ==================== 数据格式化工具函数 ====================
+
+def safe_round(value, decimals=2):
+    """安全的数值舍入，防止NaN和Infinity"""
+    if value is None or math.isnan(value) or math.isinf(value):
+        return 0.0
+    return round(float(value), decimals)
+
+def safe_format_currency(value):
+    """安全格式化货币，返回格式化字符串"""
+    safe_value = safe_round(value, 0)
+    try:
+        return f"{safe_value:,.0f}"
+    except (ValueError, TypeError):
+        return "0"
+
+def safe_format_percentage(value, decimals=2):
+    """安全格式化百分比，返回格式化字符串"""
+    safe_value = safe_round(value, decimals)
+    try:
+        return f"{safe_value:.{decimals}f}%"
+    except (ValueError, TypeError):
+        return f"0.{'0' * decimals}%"
+
+def safe_format_decimal(value, decimals=2):
+    """安全格式化小数，返回格式化字符串"""
+    safe_value = safe_round(value, decimals)
+    try:
+        return f"{safe_value:.{decimals}f}"
+    except (ValueError, TypeError):
+        return f"0.{'0' * decimals}"
+
+def safe_format_years(value):
+    """安全格式化年份，特殊处理无法回本的情况"""
+    if value is None or math.isnan(value) or math.isinf(value) or value <= 0:
+        return "无法回本"
+    return f"{safe_round(value, 2):.2f} 年"
+
+def format_calculation_results(raw_data):
+    """格式化计算结果，返回包含原始数据和格式化数据的完整结构"""
+    try:
+        # 格式化核心指标
+        core_metrics = raw_data.get('core_metrics', {})
+        formatted_metrics = {
+            'irr': {
+                'raw': safe_round(core_metrics.get('irr', 0)),
+                'formatted': safe_format_percentage(core_metrics.get('irr', 0))
+            },
+            'dpi': {
+                'raw': safe_round(core_metrics.get('dpi', 0)),
+                'formatted': safe_format_decimal(core_metrics.get('dpi', 0))
+            },
+            'static_payback_period': {
+                'raw': core_metrics.get('static_payback_period'),
+                'formatted': safe_format_years(core_metrics.get('static_payback_period'))
+            },
+            'dynamic_payback_period': {
+                'raw': core_metrics.get('dynamic_payback_period'),
+                'formatted': safe_format_years(core_metrics.get('dynamic_payback_period'))
+            }
+        }
+        
+        # 格式化现金流表格
+        cash_flow_table = raw_data.get('cash_flow_table', [])
+        formatted_table = []
+        
+        for row in cash_flow_table:
+            formatted_row = {
+                'year': row.get('year', 0),
+                'net_cash_flow': {
+                    'raw': safe_round(row.get('net_cash_flow', 0)),
+                    'formatted': safe_format_currency(row.get('net_cash_flow', 0))
+                },
+                'cash_flow_distribution_rate': {
+                    'raw': safe_round(row.get('cash_flow_distribution_rate', 0)),
+                    'formatted': safe_format_percentage(row.get('cash_flow_distribution_rate', 0))
+                }
+            }
+            
+            # 根据计算模式添加其他字段的格式化
+            calculation_mode = raw_data.get('calculation_mode', '')
+            
+            if '平层结构-优先还本' in calculation_mode:
+                formatted_row.update({
+                    'beginning_principal_balance': {
+                        'raw': safe_round(row.get('beginning_principal_balance', 0)),
+                        'formatted': safe_format_currency(row.get('beginning_principal_balance', 0))
+                    },
+                    'principal_repayment': {
+                        'raw': safe_round(row.get('principal_repayment', 0)),
+                        'formatted': safe_format_currency(row.get('principal_repayment', 0))
+                    },
+                    'accrued_hurdle_return': {
+                        'raw': safe_round(row.get('accrued_hurdle_return', 0)),
+                        'formatted': safe_format_currency(row.get('accrued_hurdle_return', 0))
+                    },
+                    'distributed_hurdle_return': {
+                        'raw': safe_round(row.get('distributed_hurdle_return', 0)),
+                        'formatted': safe_format_currency(row.get('distributed_hurdle_return', 0))
+                    },
+                    'carry_lp': {
+                        'raw': safe_round(row.get('carry_lp', 0)),
+                        'formatted': safe_format_currency(row.get('carry_lp', 0))
+                    },
+                    'carry_gp': {
+                        'raw': safe_round(row.get('carry_gp', 0)),
+                        'formatted': safe_format_currency(row.get('carry_gp', 0))
+                    }
+                })
+            elif '平层结构-期间分配' in calculation_mode:
+                formatted_row.update({
+                    'beginning_principal_balance': {
+                        'raw': safe_round(row.get('beginning_principal_balance', 0)),
+                        'formatted': safe_format_currency(row.get('beginning_principal_balance', 0))
+                    },
+                    'periodic_distribution': {
+                        'raw': safe_round(row.get('periodic_distribution', 0)),
+                        'formatted': safe_format_currency(row.get('periodic_distribution', 0))
+                    },
+                    'accrued_hurdle_return': {
+                        'raw': safe_round(row.get('accrued_hurdle_return', 0)),
+                        'formatted': safe_format_currency(row.get('accrued_hurdle_return', 0))
+                    },
+                    'principal_repayment': {
+                        'raw': safe_round(row.get('principal_repayment', 0)),
+                        'formatted': safe_format_currency(row.get('principal_repayment', 0))
+                    },
+                    'distributed_hurdle_return': {
+                        'raw': safe_round(row.get('distributed_hurdle_return', 0)),
+                        'formatted': safe_format_currency(row.get('distributed_hurdle_return', 0))
+                    },
+                    'carry_lp': {
+                        'raw': safe_round(row.get('carry_lp', 0)),
+                        'formatted': safe_format_currency(row.get('carry_lp', 0))
+                    },
+                    'carry_gp': {
+                        'raw': safe_round(row.get('carry_gp', 0)),
+                        'formatted': safe_format_currency(row.get('carry_gp', 0))
+                    }
+                })
+            # 可以继续添加其他计算模式的格式化...
+            
+            formatted_table.append(formatted_row)
+        
+        # 计算并格式化总计
+        totals = calculate_totals(cash_flow_table, calculation_mode)
+        formatted_totals = format_totals(totals)
+        
+        return {
+            'success': True,
+            'calculation_mode': calculation_mode,
+            'core_metrics': formatted_metrics,
+            'cash_flow_table': formatted_table,
+            'totals': formatted_totals,
+            'raw_data': raw_data  # 保留原始数据供图表使用
+        }
+        
+    except Exception as e:
+        logger.error(f"格式化计算结果时发生错误: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {
+            'success': False,
+            'message': f'数据格式化失败: {str(e)}'
+        }
+
+def calculate_totals(cash_flow_table, calculation_mode):
+    """计算各列的总计"""
+    totals = {
+        'net_cash_flow': 0,
+        'cash_flow_distribution_rate': 0
+    }
+    
+    for row in cash_flow_table:
+        totals['net_cash_flow'] += safe_round(row.get('net_cash_flow', 0))
+        
+        # 根据计算模式累计相应字段
+        if '平层结构-优先还本' in calculation_mode:
+            if 'principal_repayment' not in totals:
+                totals.update({
+                    'principal_repayment': 0,
+                    'accrued_hurdle_return': 0,
+                    'distributed_hurdle_return': 0,
+                    'carry_lp': 0,
+                    'carry_gp': 0
+                })
+            totals['principal_repayment'] += safe_round(row.get('principal_repayment', 0))
+            totals['accrued_hurdle_return'] += safe_round(row.get('accrued_hurdle_return', 0))
+            totals['distributed_hurdle_return'] += safe_round(row.get('distributed_hurdle_return', 0))
+            totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
+            totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
+            
+    return totals
+
+def format_totals(totals):
+    """格式化总计数据"""
+    formatted = {}
+    for key, value in totals.items():
+        if key == 'cash_flow_distribution_rate':
+            # 分派率不做总计，用特殊处理
+            continue
+        formatted[key] = {
+            'raw': safe_round(value),
+            'formatted': safe_format_currency(value)
+        }
+    return formatted
 
 class FundCalculator:
     """
@@ -1027,9 +1237,6 @@ class FundCalculator:
             logger.error(f"计算结构化-息息本本时发生错误: {str(e)}")
             return {'success': False, 'message': f'计算失败: {str(e)}'}
 
-# 全局计算器实例
-calculator = FundCalculator()
-
 # 新增：重置API端点
 @app.route('/api/reset', methods=['POST'])
 def reset_calculator():
@@ -1117,83 +1324,96 @@ def set_cash_flows():
 
 @app.route('/api/calculate', methods=['POST'])
 def calculate():
-    """执行计算"""
+    """
+    执行收益分配计算
+    """
+    global calculator
+    
     try:
         data = request.get_json()
-        calculation_mode = data.get('mode')
+        logger.info(f"收到计算请求: {data}")
+        
+        if not calculator:
+            calculator = FundCalculator()
         
         # 验证计算模式
-        if not calculation_mode:
-            return jsonify({'success': False, 'message': '缺少计算模式参数'}), 400
+        mode = data.get('mode')
+        if not mode:
+            return jsonify({'success': False, 'message': '缺少计算模式参数'})
         
-        # 添加参数验证函数
-        def validate_numeric_param(value, param_name, min_val=None, max_val=None):
-            """验证数值参数"""
-            try:
-                num_value = float(value)
-                if math.isnan(num_value) or math.isinf(num_value):
-                    return False, f'{param_name}包含无效数值'
-                if min_val is not None and num_value < min_val:
-                    return False, f'{param_name}不能小于{min_val}'
-                if max_val is not None and num_value > max_val:
-                    return False, f'{param_name}不能大于{max_val}'
-                return True, num_value
-            except (ValueError, TypeError):
-                return False, f'{param_name}数据格式错误'
+        # 验证所有数值参数，防止NaN
+        def validate_numeric_param(param_name, value, min_val=0, max_val=100):
+            if value is None:
+                return True  # 允许None值，由各模式自行处理
+            if isinstance(value, (int, float)) and not (math.isnan(value) or math.isinf(value)):
+                if min_val <= value <= max_val:
+                    return True
+            logger.error(f"参数 {param_name} 值无效: {value}")
+            return False
         
-        if calculation_mode == 'flat_priority_repayment':
-            result = calculator.calculate_flat_structure_priority_repayment()
-        elif calculation_mode == 'flat_periodic_distribution':
-            periodic_rate = data.get('periodic_rate', 0)
-            is_valid, validated_value = validate_numeric_param(periodic_rate, '期间收益率', 0, 100)
-            if not is_valid:
-                return jsonify({'success': False, 'message': validated_value}), 400
-            result = calculator.calculate_flat_structure_periodic_distribution(validated_value)
-        elif calculation_mode == 'structured_senior_subordinate':
-            senior_ratio = data.get('senior_ratio', 0)
-            is_valid, validated_value = validate_numeric_param(senior_ratio, '优先级比例', 0, 100)
-            if not is_valid:
-                return jsonify({'success': False, 'message': validated_value}), 400
-            result = calculator.calculate_structured_senior_subordinate(validated_value)
-        elif calculation_mode == 'structured_mezzanine':
-            senior_ratio = data.get('senior_ratio', 0)
-            mezzanine_ratio = data.get('mezzanine_ratio', 0)
-            mezzanine_rate = data.get('mezzanine_rate', 0)
+        # 根据模式验证参数
+        if mode == 'flat_periodic_distribution':
+            periodic_rate = data.get('periodic_rate')
+            if not validate_numeric_param('periodic_rate', periodic_rate, 0, 100):
+                return jsonify({'success': False, 'message': '期间收益率参数无效'})
+            result = calculator.calculate_flat_periodic_distribution(periodic_rate)
             
-            # 验证所有参数
-            is_valid, senior_val = validate_numeric_param(senior_ratio, '优先级比例', 0, 100)
-            if not is_valid:
-                return jsonify({'success': False, 'message': senior_val}), 400
+        elif mode == 'flat_priority_repayment':
+            result = calculator.calculate_flat_priority_repayment()
             
-            is_valid, mezz_ratio_val = validate_numeric_param(mezzanine_ratio, '夹层比例', 0, 100)
-            if not is_valid:
-                return jsonify({'success': False, 'message': mezz_ratio_val}), 400
+        elif mode == 'structured_senior_subordinate':
+            senior_ratio = data.get('senior_ratio')
+            if not validate_numeric_param('senior_ratio', senior_ratio, 1, 99):
+                return jsonify({'success': False, 'message': '优先级比例参数无效'})
+            result = calculator.calculate_structured_dual_layer(senior_ratio)
             
-            is_valid, mezz_rate_val = validate_numeric_param(mezzanine_rate, '夹层收益率', 0, 100)
-            if not is_valid:
-                return jsonify({'success': False, 'message': mezz_rate_val}), 400
+        elif mode == 'structured_mezzanine':
+            senior_ratio = data.get('senior_ratio')
+            mezzanine_ratio = data.get('mezzanine_ratio')
+            mezzanine_rate = data.get('mezzanine_rate')
             
-            result = calculator.calculate_structured_mezzanine(senior_val, mezz_ratio_val, mezz_rate_val)
-        elif calculation_mode == 'structured_interest_principal':
-            senior_ratio = data.get('senior_ratio', 0)
-            subordinate_rate = data.get('subordinate_rate', 0)
+            if not validate_numeric_param('senior_ratio', senior_ratio, 1, 97):
+                return jsonify({'success': False, 'message': '优先级比例参数无效'})
+            if not validate_numeric_param('mezzanine_ratio', mezzanine_ratio, 1, 97):
+                return jsonify({'success': False, 'message': '夹层比例参数无效'})
+            if not validate_numeric_param('mezzanine_rate', mezzanine_rate, 0, 100):
+                return jsonify({'success': False, 'message': '夹层收益率参数无效'})
+                
+            # 验证比例总和
+            if senior_ratio + mezzanine_ratio >= 100:
+                return jsonify({'success': False, 'message': '优先级和夹层比例总和必须小于100%'})
+                
+            result = calculator.calculate_structured_triple_layer(senior_ratio, mezzanine_ratio, mezzanine_rate)
             
-            is_valid, senior_val = validate_numeric_param(senior_ratio, '优先级比例', 0, 100)
-            if not is_valid:
-                return jsonify({'success': False, 'message': senior_val}), 400
+        elif mode == 'structured_interest_principal':
+            senior_ratio = data.get('senior_ratio')
+            subordinate_rate = data.get('subordinate_rate')
             
-            is_valid, sub_rate_val = validate_numeric_param(subordinate_rate, '劣后级收益率', 0, 100)
-            if not is_valid:
-                return jsonify({'success': False, 'message': sub_rate_val}), 400
+            if not validate_numeric_param('senior_ratio', senior_ratio, 1, 99):
+                return jsonify({'success': False, 'message': '优先级比例参数无效'})
+            if not validate_numeric_param('subordinate_rate', subordinate_rate, 0, 100):
+                return jsonify({'success': False, 'message': '劣后级收益率参数无效'})
+                
+            result = calculator.calculate_structured_interest_principal(senior_ratio, subordinate_rate)
             
-            result = calculator.calculate_structured_interest_principal(senior_val, sub_rate_val)
         else:
-            result = {'success': False, 'message': '不支持的计算模式'}
+            return jsonify({'success': False, 'message': f'不支持的计算模式: {mode}'})
         
-        return jsonify(result)
+        logger.info(f"计算完成，模式: {mode}")
+        
+        # 格式化结果并返回
+        if result.get('success'):
+            formatted_result = format_calculation_results(result)
+            logger.info("结果格式化完成")
+            return jsonify(formatted_result)
+        else:
+            logger.error(f"计算失败: {result.get('message')}")
+            return jsonify(result)
+            
     except Exception as e:
-        logger.error(f"计算API错误: {str(e)}")
-        return jsonify({'success': False, 'message': f'计算失败: {str(e)}'}), 500
+        logger.error(f"计算请求处理异常: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({'success': False, 'message': f'计算请求处理失败: {str(e)}'})
 
 @app.route('/api/export', methods=['POST'])
 def export_results():
@@ -1373,9 +1593,9 @@ def download_template():
         return jsonify({'success': False, 'message': f'下载模板失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    # 创建模板目录
-    os.makedirs('templates', exist_ok=True)
-    os.makedirs('static', exist_ok=True)
+    # 初始化全局计算器
+    calculator = FundCalculator()
+    logger.info("后端服务启动，计算器已初始化")
     
-    # 启动应用
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    # 启动开发服务器
+    app.run(host='0.0.0.0', port=5000, debug=True) 
