@@ -7,6 +7,10 @@
     
     <!-- 外部资源 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     
     <style>
         :root {
@@ -660,19 +664,371 @@
         .table .negative {
             color: var(--error-color);
         }
+
+        /* 结果展示页面专用样式 */
+        .results-section {
+            margin-bottom: var(--spacing-xl);
+        }
         
-        /* 加载动画 */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
+        .section-header {
+            margin-bottom: var(--spacing-lg);
+            text-align: center;
+        }
+        
+        .section-header h3 {
+            color: var(--text-primary);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            gap: var(--spacing-sm);
+        }
+        
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* 综合指标区域样式 */
+        .comprehensive-metrics {
+            background: linear-gradient(135deg, #f8fafc, #ffffff);
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            border: 2px solid var(--border-secondary);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .metrics-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .metrics-header h3 {
+            color: var(--text-primary);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .metrics-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        .metrics-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+        
+        /* 指标行样式 */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+        
+        /* 重新设计的指标卡片 */
+        .metric-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            opacity: 0.6;
+        }
+        
+        .metric-card.primary {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .metric-card.success {
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+        }
+        
+        .metric-card.info {
+            border-color: var(--info-color);
+            color: var(--info-color);
+        }
+        
+        .metric-card.warning {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-secondary);
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+        
+        .metric-unit {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+        
+        /* 项目信息样式 */
+        .project-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            background: rgba(24, 144, 255, 0.03);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid rgba(24, 144, 255, 0.1);
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: var(--spacing-sm);
+        }
+        
+        .info-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+        
+        /* 总计行样式 */
+        .total-row {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 2px solid #5a67d8;
+        }
+        
+        .total-row td {
+            padding: 12px 8px;
+            border: none !important;
+            text-align: center;
+        }
+        
+        .total-label {
+            font-size: 18px;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .total-value {
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .total-dash {
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+        
+        .total-value.positive {
+            color: #90cdf4;
+            text-shadow: 0 0 8px rgba(144, 205, 244, 0.3);
+        }
+        
+        /* 表格包装器 - 居中显示 */
+        .table-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        /* 优化后的结果表格样式 */
+        .results-table {
+            width: auto;
+            min-width: 90%;
+            max-width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-primary);
+            font-size: 13px;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin: 0 auto;
+        }
+        
+        .results-table thead {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+        
+        .results-table th {
+            padding: var(--spacing-md) var(--spacing-sm);
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-primary);
+            border-right: 1px solid var(--border-secondary);
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+        
+        .results-table th:last-child {
+            border-right: none;
+        }
+        
+        /* 不同列类型的样式 */
+        .year-col {
+            width: 60px;
+            background-color: rgba(24, 144, 255, 0.1) !important;
+        }
+        
+        .amount-col {
+            width: 80px;
+            min-width: 70px;
+        }
+        
+        .rate-col {
+            width: 70px;
+        }
+        
+        /* 表格行样式 */
+        .results-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        .results-table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .results-table tbody tr:hover {
+            background-color: rgba(24, 144, 255, 0.05);
+        }
+        
+        /* 单元格样式 */
+        .results-table td {
+            padding: var(--spacing-sm);
+            border-bottom: 1px solid var(--border-secondary);
+            border-right: 1px solid var(--border-secondary);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .results-table td:last-child {
+            border-right: none;
+        }
+        
+        .year-cell {
+            text-align: center;
+            font-weight: 600;
+            background-color: rgba(24, 144, 255, 0.05);
+            color: var(--primary-color);
+        }
+        
+        .amount-cell {
+            text-align: right;
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            font-weight: 500;
+        }
+        
+        .rate-cell {
+            text-align: right;
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            color: var(--text-secondary);
+        }
+        
+        .amount-cell.positive {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        .amount-cell.negative {
+            color: var(--error-color);
+            font-weight: 600;
+        }
+        
+        /* 响应式表格优化 */
+        @media (max-width: 1200px) {
+            .results-table {
+                font-size: 12px;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: var(--spacing-xs) var(--spacing-sm);
+            }
+            
+            .amount-col {
+                width: 70px;
+                min-width: 60px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .results-table {
+                min-width: 100%;
+                font-size: 11px;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: var(--spacing-xs);
+            }
+            
+            .metrics-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .project-info {
+                grid-template-columns: 1fr;
+            }
         }
         
         .loading-overlay.show {
@@ -799,6 +1155,260 @@
             .container {
                 padding: 0 var(--spacing-md);
             }
+        }
+        
+        /* 计算结果区域整体优化 */
+        .results-section {
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 0 20px;
+        }
+        
+        .results-container {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .results-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .results-title i {
+            color: #667eea;
+            font-size: 26px;
+        }
+        
+        .results-subtitle {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+        
+        /* 指标卡片网格优化 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.25);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), transparent);
+            pointer-events: none;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.35);
+        }
+        
+        .metric-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            opacity: 0.9;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .metric-unit {
+            font-size: 14px;
+            font-weight: 400;
+            opacity: 0.8;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 项目信息网格优化 */
+        .project-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 24px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .info-item {
+            text-align: center;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .info-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            color: #2d3748;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        
+        /* 表格容器优化 */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .table-header {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: white;
+            padding: 20px 24px;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .table-header i {
+            font-size: 20px;
+        }
+        
+        /* 表格样式优化 */
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 14px;
+        }
+        
+        .result-table th {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            color: white;
+            padding: 14px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid #2d3748;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .result-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            background: white;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .result-table tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+        
+        .result-table tr:hover td {
+            background: #e6fffa !important;
+            transform: scale(1.01);
+        }
+        
+        /* 年份列特殊样式 */
+        .year-cell {
+            background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%) !important;
+            font-weight: 700 !important;
+            color: #2d3748 !important;
+            border-left: 4px solid #667eea !important;
+        }
+        
+        /* 金额列样式 */
+        .amount-cell {
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        /* 百分比列样式 */
+        .rate-cell {
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            font-weight: 600;
+            color: #805ad5;
+        }
+        
+        /* 正值高亮 */
+        .positive {
+            color: #38a169 !important;
+            font-weight: 700 !important;
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 50%) !important;
+        }
+        
+        /* 加载遮罩样式 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-overlay.show {
+            display: flex;
         }
     </style>
 </head>
@@ -997,70 +1607,156 @@
                         </div>
 
                         <div class="mode-grid">
+                            <!-- 平层结构模式 -->
                             <div class="mode-card">
                                 <div class="mode-header">
                                     <i class="fas fa-layer-group"></i>
                                     <span class="mode-title">平层结构</span>
                                 </div>
                                 
+                                <!-- 分配方式1.1：优先还本 -->
                                 <div class="mode-option" onclick="selectMode(this, 'flat_priority_repayment')">
                                     <div class="radio-wrapper">
                                         <input type="radio" name="distributionMode" id="flatPriorityRepayment" value="flat_priority_repayment">
                                         <div>
-                                            <div class="radio-label">优先还本模式</div>
-                                            <div class="radio-description">净现金流优先偿还本金，本金还完后再分配门槛收益和超额收益</div>
+                                            <div class="radio-label">优先还本模式（方式1.1）</div>
+                                            <div class="radio-description">分配顺序：还本 → 门槛收益 → Carry分配</div>
                                         </div>
                                     </div>
                                 </div>
 
+                                <!-- 分配方式1.2：期间分配 -->
                                 <div class="mode-option" onclick="selectMode(this, 'flat_periodic_distribution')">
                                     <div class="radio-wrapper">
                                         <input type="radio" name="distributionMode" id="flatPeriodicDistribution" value="flat_periodic_distribution">
                                         <div>
-                                            <div class="radio-label">期间分配模式</div>
-                                            <div class="radio-description">优先分配期间收益，然后偿还本金和分配剩余超额收益</div>
+                                            <div class="radio-label">期间分配模式（方式1.2）</div>
+                                            <div class="radio-description">分配顺序：期间收益 → 还本 → 剩余门槛收益 → Carry分配</div>
                                         </div>
                                     </div>
                                 </div>
 
+                                <!-- 期间收益率参数输入 -->
                                 <div id="periodicRateInput" style="display: none;">
                                     <div class="field-wrapper">
-                                        <label class="label" for="periodicRate">期间收益率</label>
+                                        <label class="label" for="periodicRate">期间收益率 <span class="required">*</span></label>
                                         <div class="input-group">
-                                            <input type="number" class="input" id="periodicRate" placeholder="收益率" min="0" max="100" step="0.1">
+                                            <input type="number" class="input" id="periodicRate" placeholder="期间收益率" min="0" max="100" step="0.01">
                                             <span class="input-addon">%</span>
                                         </div>
+                                        <div class="help-text">期间收益率不能超过门槛收益率</div>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- 结构化模式 -->
                             <div class="mode-card">
                                 <div class="mode-header">
                                     <i class="fas fa-chart-bar"></i>
                                     <span class="mode-title">结构化</span>
                                 </div>
                                 
+                                <!-- 分配方式2.1：优先劣后 -->
                                 <div class="mode-option" onclick="selectMode(this, 'structured_senior_subordinate')">
                                     <div class="radio-wrapper">
                                         <input type="radio" name="distributionMode" id="structuredSeniorSubordinate" value="structured_senior_subordinate">
                                         <div>
-                                            <div class="radio-label">优先劣后模式</div>
-                                            <div class="radio-description">优先级投资者优先获得本息回报，劣后级承担主要风险</div>
+                                            <div class="radio-label">优先劣后模式（方式2.1）</div>
+                                            <div class="radio-description">分配顺序：优先级还本 → 优先级门槛收益 → 劣后还本 → Carry分配</div>
                                         </div>
                                     </div>
                                 </div>
 
+                                <!-- 优先劣后比例参数输入 -->
                                 <div id="seniorRatioInput" style="display: none;">
                                     <div class="field-wrapper">
-                                        <label class="label" for="seniorRatio">优先级投资比例</label>
+                                        <label class="label" for="seniorRatio">优先级投资比例 <span class="required">*</span></label>
                                         <div class="input-group">
-                                            <input type="number" class="input" id="seniorRatio" placeholder="比例" min="1" max="99" step="1">
+                                            <input type="number" class="input" id="seniorRatio" placeholder="优先级比例" min="1" max="99" step="1">
                                             <span class="input-addon">%</span>
                                         </div>
                                     </div>
                                     <div class="form-row" style="margin-top: var(--spacing-md);">
                                         <div class="help-text">优先级金额: <span id="seniorAmount">0.00</span> 万元</div>
                                         <div class="help-text">劣后级金额: <span id="subordinateAmount">0.00</span> 万元</div>
+                                        <div class="help-text">优先级收益率: <span id="seniorRate">-</span>%（引用门槛收益率）</div>
+                                    </div>
+                                </div>
+
+                                <!-- 分配方式2.2：包含夹层 -->
+                                <div class="mode-option" onclick="selectMode(this, 'structured_mezzanine')">
+                                    <div class="radio-wrapper">
+                                        <input type="radio" name="distributionMode" id="structuredMezzanine" value="structured_mezzanine">
+                                        <div>
+                                            <div class="radio-label">包含夹层模式（方式2.2）</div>
+                                            <div class="radio-description">分配顺序：优先级门槛收益 → 夹层门槛收益 → 优先级还本 → 夹层还本 → 劣后还本 → Carry分配</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 夹层结构参数输入 -->
+                                <div id="mezzanineInput" style="display: none;">
+                                    <div class="field-wrapper">
+                                        <label class="label" for="mezzanineSeniorRatio">优先级投资比例 <span class="required">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="mezzanineSeniorRatio" placeholder="优先级比例" min="1" max="97" step="1">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="field-wrapper">
+                                        <label class="label" for="mezzanineRatio">夹层投资比例 <span class="required">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="mezzanineRatio" placeholder="夹层比例" min="1" max="97" step="1">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="field-wrapper">
+                                        <label class="label" for="mezzanineRate">夹层收益率 <span class="required">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="mezzanineRate" placeholder="夹层收益率" min="0" max="100" step="0.01">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" style="margin-top: var(--spacing-md);">
+                                        <div class="help-text">优先级金额: <span id="mezzanineSeniorAmount">0.00</span> 万元</div>
+                                        <div class="help-text">夹层金额: <span id="mezzanineMezzanineAmount">0.00</span> 万元</div>
+                                        <div class="help-text">劣后级金额: <span id="mezzanineSubordinateAmount">0.00</span> 万元</div>
+                                        <div class="help-text">优先级收益率: <span id="mezzanineSeniorRate">-</span>%（引用门槛收益率）</div>
+                                        <div class="help-text">比例总和: <span id="mezzanineTotal">0</span>%</div>
+                                    </div>
+                                </div>
+
+                                <!-- 分配方式2.3：息息本本 -->
+                                <div class="mode-option" onclick="selectMode(this, 'structured_interest_principal')">
+                                    <div class="radio-wrapper">
+                                        <input type="radio" name="distributionMode" id="structuredInterestPrincipal" value="structured_interest_principal">
+                                        <div>
+                                            <div class="radio-label">息息本本模式（方式2.3）</div>
+                                            <div class="radio-description">分配顺序：优先级期间收益 → 劣后期间收益 → 优先级还本 → 劣后还本 → Carry分配</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 息息本本参数输入 -->
+                                <div id="interestPrincipalInput" style="display: none;">
+                                    <div class="field-wrapper">
+                                        <label class="label" for="ipSeniorRatio">优先级投资比例 <span class="required">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="ipSeniorRatio" placeholder="优先级比例" min="1" max="99" step="1">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="field-wrapper">
+                                        <label class="label" for="subordinateRate">劣后级收益率 <span class="required">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="subordinateRate" placeholder="劣后级收益率" min="0" max="100" step="0.01">
+                                            <span class="input-addon">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" style="margin-top: var(--spacing-md);">
+                                        <div class="help-text">优先级金额: <span id="ipSeniorAmount">0.00</span> 万元</div>
+                                        <div class="help-text">劣后级金额: <span id="ipSubordinateAmount">0.00</span> 万元</div>
+                                        <div class="help-text">优先级收益率: <span id="ipSeniorRate">-</span>%（引用门槛收益率）</div>
                                     </div>
                                 </div>
                             </div>
@@ -1229,10 +1925,7 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             if (loadingOverlay) {
                 loadingOverlay.classList.remove('show');
-                const loadingText = loadingOverlay.querySelector('p');
-                if (loadingText) {
-                    loadingText.textContent = '正在计算中，请稍候...';
-                }
+                // 不要重新设置为"正在计算中"的消息
             }
             
             // 启用所有交互元素
@@ -1269,13 +1962,20 @@
             showMainApp() {
                 console.log('开始显示主应用界面');
                 
-                // 隐藏加载遮罩
-                const loadingOverlay = document.getElementById('pageLoadingOverlay');
-                if (loadingOverlay) {
-                    loadingOverlay.classList.add('hidden');
-                    console.log('加载遮罩已隐藏');
+                // 隐藏页面加载遮罩
+                const pageLoadingOverlay = document.getElementById('pageLoadingOverlay');
+                if (pageLoadingOverlay) {
+                    pageLoadingOverlay.classList.add('hidden');
+                    console.log('页面加载遮罩已隐藏');
                 } else {
-                    console.warn('未找到加载遮罩元素');
+                    console.warn('未找到页面加载遮罩元素');
+                }
+                
+                // 确保计算加载遮罩也是隐藏的
+                const calculationLoadingOverlay = document.getElementById('loadingOverlay');
+                if (calculationLoadingOverlay) {
+                    calculationLoadingOverlay.classList.remove('show');
+                    console.log('计算加载遮罩已确保隐藏');
                 }
                 
                 // 显示主应用内容
@@ -1293,9 +1993,9 @@
                 
                 // 延迟移除DOM元素
                 setTimeout(() => {
-                    if (loadingOverlay && loadingOverlay.parentNode) {
-                        loadingOverlay.style.display = 'none';
-                        console.log('加载遮罩DOM已移除');
+                    if (pageLoadingOverlay && pageLoadingOverlay.parentNode) {
+                        pageLoadingOverlay.style.display = 'none';
+                        console.log('页面加载遮罩DOM已移除');
                     }
                 }, 500);
             }
@@ -1544,13 +2244,30 @@
             // 隐藏所有额外输入
             document.getElementById('periodicRateInput').style.display = 'none';
             document.getElementById('seniorRatioInput').style.display = 'none';
+            document.getElementById('mezzanineInput').style.display = 'none';
+            document.getElementById('interestPrincipalInput').style.display = 'none';
             
             // 根据选择的模式显示相应输入
             if (mode === 'flat_periodic_distribution') {
                 document.getElementById('periodicRateInput').style.display = 'block';
+                // 绑定事件监听期间收益率不能超过门槛收益率
+                document.getElementById('periodicRate').addEventListener('input', validatePeriodicRate);
             } else if (mode === 'structured_senior_subordinate') {
                 document.getElementById('seniorRatioInput').style.display = 'block';
                 updateStructureAmounts();
+                // 绑定事件监听比例变化
+                document.getElementById('seniorRatio').addEventListener('input', updateStructureAmounts);
+            } else if (mode === 'structured_mezzanine') {
+                document.getElementById('mezzanineInput').style.display = 'block';
+                updateMezzanineAmounts();
+                // 绑定事件监听
+                document.getElementById('mezzanineSeniorRatio').addEventListener('input', updateMezzanineAmounts);
+                document.getElementById('mezzanineRatio').addEventListener('input', updateMezzanineAmounts);
+            } else if (mode === 'structured_interest_principal') {
+                document.getElementById('interestPrincipalInput').style.display = 'block';
+                updateInterestPrincipalAmounts();
+                // 绑定事件监听
+                document.getElementById('ipSeniorRatio').addEventListener('input', updateInterestPrincipalAmounts);
             }
             
             // 更新卡片选中状态
@@ -1561,17 +2278,76 @@
         }
 
         /**
+         * 验证期间收益率不能超过门槛收益率
+         */
+        function validatePeriodicRate() {
+            const periodicRate = parseFloat(document.getElementById('periodicRate').value) || 0;
+            const hurdleRate = basicParams.hurdle_rate || 0;
+            
+            if (periodicRate > hurdleRate) {
+                showAlert(`期间收益率(${periodicRate}%)不能超过门槛收益率(${hurdleRate}%)`, 'warning');
+                document.getElementById('periodicRate').value = hurdleRate;
+            }
+        }
+
+        /**
          * 更新结构化金额显示
          */
         function updateStructureAmounts() {
             const seniorRatio = parseFloat(document.getElementById('seniorRatio').value) || 0;
             const investmentAmount = basicParams.investment_amount || 0;
+            const hurdleRate = basicParams.hurdle_rate || 0;
             
             const seniorAmount = investmentAmount * seniorRatio / 100;
             const subordinateAmount = investmentAmount - seniorAmount;
             
             document.getElementById('seniorAmount').textContent = seniorAmount.toFixed(2);
             document.getElementById('subordinateAmount').textContent = subordinateAmount.toFixed(2);
+            document.getElementById('seniorRate').textContent = hurdleRate.toFixed(2);
+        }
+
+        /**
+         * 更新夹层结构金额显示
+         */
+        function updateMezzanineAmounts() {
+            const seniorRatio = parseFloat(document.getElementById('mezzanineSeniorRatio').value) || 0;
+            const mezzanineRatio = parseFloat(document.getElementById('mezzanineRatio').value) || 0;
+            const subordinateRatio = 100 - seniorRatio - mezzanineRatio;
+            const investmentAmount = basicParams.investment_amount || 0;
+            const hurdleRate = basicParams.hurdle_rate || 0;
+            
+            // 验证比例总和
+            const total = seniorRatio + mezzanineRatio;
+            if (total > 100) {
+                showAlert('优先级和夹层比例总和不能超过100%', 'warning');
+                return;
+            }
+            
+            const seniorAmount = investmentAmount * seniorRatio / 100;
+            const mezzanineAmount = investmentAmount * mezzanineRatio / 100;
+            const subordinateAmount = investmentAmount * subordinateRatio / 100;
+            
+            document.getElementById('mezzanineSeniorAmount').textContent = seniorAmount.toFixed(2);
+            document.getElementById('mezzanineMezzanineAmount').textContent = mezzanineAmount.toFixed(2);
+            document.getElementById('mezzanineSubordinateAmount').textContent = subordinateAmount.toFixed(2);
+            document.getElementById('mezzanineSeniorRate').textContent = hurdleRate.toFixed(2);
+            document.getElementById('mezzanineTotal').textContent = total.toFixed(0);
+        }
+
+        /**
+         * 更新息息本本金额显示
+         */
+        function updateInterestPrincipalAmounts() {
+            const seniorRatio = parseFloat(document.getElementById('ipSeniorRatio').value) || 0;
+            const investmentAmount = basicParams.investment_amount || 0;
+            const hurdleRate = basicParams.hurdle_rate || 0;
+            
+            const seniorAmount = investmentAmount * seniorRatio / 100;
+            const subordinateAmount = investmentAmount - seniorAmount;
+            
+            document.getElementById('ipSeniorAmount').textContent = seniorAmount.toFixed(2);
+            document.getElementById('ipSubordinateAmount').textContent = subordinateAmount.toFixed(2);
+            document.getElementById('ipSeniorRate').textContent = hurdleRate.toFixed(2);
         }
 
         /**
@@ -1596,7 +2372,15 @@
                     document.getElementById('periodicRate').focus();
                     return;
                 }
+                // 验证期间收益率不能超过门槛收益率
+                const hurdleRate = basicParams.hurdle_rate || 0;
+                if (periodicRate > hurdleRate) {
+                    showAlert(`期间收益率(${periodicRate}%)不能超过门槛收益率(${hurdleRate}%)`, 'warning');
+                    document.getElementById('periodicRate').focus();
+                    return;
+                }
                 calculationData.periodic_rate = periodicRate;
+                
             } else if (selectedMode.value === 'structured_senior_subordinate') {
                 const seniorRatio = parseFloat(document.getElementById('seniorRatio').value);
                 if (isNaN(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
@@ -1605,6 +2389,64 @@
                     return;
                 }
                 calculationData.senior_ratio = seniorRatio;
+                
+            } else if (selectedMode.value === 'structured_mezzanine') {
+                const seniorRatio = parseFloat(document.getElementById('mezzanineSeniorRatio').value);
+                const mezzanineRatio = parseFloat(document.getElementById('mezzanineRatio').value);
+                const mezzanineRate = parseFloat(document.getElementById('mezzanineRate').value);
+                
+                // 验证优先级比例
+                if (isNaN(seniorRatio) || seniorRatio < 1 || seniorRatio > 97) {
+                    showAlert('请输入有效的优先级比例(1-97%)', 'warning');
+                    document.getElementById('mezzanineSeniorRatio').focus();
+                    return;
+                }
+                
+                // 验证夹层比例
+                if (isNaN(mezzanineRatio) || mezzanineRatio < 1 || mezzanineRatio > 97) {
+                    showAlert('请输入有效的夹层比例(1-97%)', 'warning');
+                    document.getElementById('mezzanineRatio').focus();
+                    return;
+                }
+                
+                // 验证夹层收益率
+                if (isNaN(mezzanineRate) || mezzanineRate < 0 || mezzanineRate > 100) {
+                    showAlert('请输入有效的夹层收益率(0-100%)', 'warning');
+                    document.getElementById('mezzanineRate').focus();
+                    return;
+                }
+                
+                // 验证比例总和
+                const total = seniorRatio + mezzanineRatio;
+                if (total >= 100) {
+                    showAlert('优先级和夹层比例总和必须小于100%', 'warning');
+                    return;
+                }
+                
+                calculationData.senior_ratio = seniorRatio;
+                calculationData.mezzanine_ratio = mezzanineRatio;
+                calculationData.mezzanine_rate = mezzanineRate;
+                
+            } else if (selectedMode.value === 'structured_interest_principal') {
+                const seniorRatio = parseFloat(document.getElementById('ipSeniorRatio').value);
+                const subordinateRate = parseFloat(document.getElementById('subordinateRate').value);
+                
+                // 验证优先级比例
+                if (isNaN(seniorRatio) || seniorRatio <= 0 || seniorRatio >= 100) {
+                    showAlert('请输入有效的优先级比例(1-99%)', 'warning');
+                    document.getElementById('ipSeniorRatio').focus();
+                    return;
+                }
+                
+                // 验证劣后级收益率
+                if (isNaN(subordinateRate) || subordinateRate < 0 || subordinateRate > 100) {
+                    showAlert('请输入有效的劣后级收益率(0-100%)', 'warning');
+                    document.getElementById('subordinateRate').focus();
+                    return;
+                }
+                
+                calculationData.senior_ratio = seniorRatio;
+                calculationData.subordinate_rate = subordinateRate;
             }
             
             showLoading(true);
@@ -1641,111 +2483,415 @@
         }
 
         /**
+         * 格式化数字显示
+         * @param {number} value - 要格式化的数值
+         * @param {string} type - 格式化类型：'currency'(金额), 'percent'(百分比), 'decimal'(小数)
+         * @returns {string} 格式化后的字符串
+         */
+        function formatNumber(value, type = 'currency') {
+            if (typeof value !== 'number') return value;
+            
+            switch (type) {
+                case 'currency':
+                    // 金额显示为整数，添加千分位分隔符
+                    return new Intl.NumberFormat('zh-CN', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(Math.round(value));
+                
+                case 'percent':
+                    // 百分比保留2位小数
+                    return new Intl.NumberFormat('zh-CN', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(value);
+                
+                case 'decimal':
+                    // 小数保留2位
+                    return new Intl.NumberFormat('zh-CN', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(value);
+                
+                default:
+                    return value.toString();
+            }
+        }
+
+        /**
          * 显示计算结果
+         * @param {Object} results - 计算结果对象
          */
         function displayResults(results) {
             const container = document.getElementById('calculationResults');
             
             let html = `
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">内部收益率 (IRR)</div>
-                        <div class="metric-value">${results.core_metrics.irr}%</div>
+                <!-- 核心指标和计算汇总合并区域 -->
+                <div class="comprehensive-metrics">
+                    <div class="metrics-header">
+                        <h3><i class="fas fa-chart-line"></i> 投资收益分析</h3>
+                        <p class="metrics-subtitle">核心指标与计算汇总</p>
                     </div>
-                    <div class="metric-card success">
-                        <div class="metric-label">分配倍数 (DPI)</div>
-                        <div class="metric-value">${results.core_metrics.dpi}</div>
+                    
+                    <div class="metrics-container">
+                        <!-- 第一行：核心财务指标 -->
+                        <div class="metrics-row">
+                            <div class="metric-card primary">
+                                <div class="metric-label">内部收益率</div>
+                                <div class="metric-value">${formatNumber(results.core_metrics.irr, 'percent')}%</div>
+                                <div class="metric-unit">IRR</div>
+                            </div>
+                            <div class="metric-card success">
+                                <div class="metric-label">分配倍数</div>
+                                <div class="metric-value">${formatNumber(results.core_metrics.dpi, 'decimal')}</div>
+                                <div class="metric-unit">DPI</div>
+                            </div>
+                            <div class="metric-card info">
+                                <div class="metric-label">静态回本周期</div>
+                                <div class="metric-value">${typeof results.core_metrics.static_payback_period === 'string' ? results.core_metrics.static_payback_period : formatNumber(results.core_metrics.static_payback_period, 'decimal')}</div>
+                                <div class="metric-unit">${typeof results.core_metrics.static_payback_period === 'string' ? '' : '年'}</div>
+                            </div>
+                            <div class="metric-card warning">
+                                <div class="metric-label">动态回本周期</div>
+                                <div class="metric-value">${typeof results.core_metrics.dynamic_payback_period === 'string' ? results.core_metrics.dynamic_payback_period : formatNumber(results.core_metrics.dynamic_payback_period, 'decimal')}</div>
+                                <div class="metric-unit">${typeof results.core_metrics.dynamic_payback_period === 'string' ? '' : '年'}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第二行：项目基本信息 -->
+                        <div class="project-info">
+                            <div class="info-item">
+                                <span class="info-label">计算模式</span>
+                                <span class="info-value">${results.calculation_mode}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">投资金额</span>
+                                <span class="info-value">${formatNumber(basicParams.investment_amount, 'currency')} 万元</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">投资期限</span>
+                                <span class="info-value">${basicParams.investment_period} 年</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">门槛收益率</span>
+                                <span class="info-value">${formatNumber(basicParams.hurdle_rate, 'percent')}%</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">管理人Carry</span>
+                                <span class="info-value">${formatNumber(basicParams.management_carry, 'percent')}%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <h3 style="margin-bottom: var(--spacing-md);">现金流分配详表</h3>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>年份</th>
-                                <th>净现金流</th>
-                                <th>现金流分派率(%)</th>
+                <!-- 详细分配表格 -->
+                <div class="results-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-table"></i> 现金流分配详表</h3>
+                        <p class="section-subtitle">各年度详细的现金流分配情况（金额单位：万元）</p>
+                    </div>
+                    
+                    <div class="table-wrapper">
+                        <div class="table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th class="year-col">年份</th>
+                                        <th class="amount-col">净现金流</th>
+                                        <th class="rate-col">分派率</th>
             `;
             
             // 根据计算模式添加相应的列标题
             if (results.calculation_mode === '平层结构-优先还本') {
                 html += `
-                    <th>期初本金余额</th>
-                    <th>摊还本金</th>
-                    <th>计提门槛收益</th>
-                    <th>分配门槛收益</th>
-                    <th>Carry LP</th>
-                    <th>Carry GP</th>
+                    <th class="amount-col">期初本金</th>
+                    <th class="amount-col">摊还本金</th>
+                    <th class="amount-col">计提收益</th>
+                    <th class="amount-col">分配收益</th>
+                    <th class="amount-col">Carry LP</th>
+                    <th class="amount-col">Carry GP</th>
                 `;
             } else if (results.calculation_mode === '平层结构-期间分配') {
                 html += `
-                    <th>期初本金余额</th>
-                    <th>期间分配收益</th>
-                    <th>计提门槛收益</th>
-                    <th>摊还本金</th>
-                    <th>分配门槛收益</th>
-                    <th>Carry LP</th>
-                    <th>Carry GP</th>
+                    <th class="amount-col">期初本金</th>
+                    <th class="amount-col">期间收益</th>
+                    <th class="amount-col">计提收益</th>
+                    <th class="amount-col">摊还本金</th>
+                    <th class="amount-col">分配收益</th>
+                    <th class="amount-col">Carry LP</th>
+                    <th class="amount-col">Carry GP</th>
                 `;
             } else if (results.calculation_mode === '结构化-优先劣后') {
                 html += `
-                    <th>优先期初本金</th>
-                    <th>优先期间收益</th>
-                    <th>优先摊还本金</th>
-                    <th>劣后本金余额</th>
-                    <th>劣后摊还本金</th>
-                    <th>Carry LP</th>
-                    <th>Carry GP</th>
+                    <th class="amount-col">优先本金</th>
+                    <th class="amount-col">优先收益</th>
+                    <th class="amount-col">优先还本</th>
+                    <th class="amount-col">劣后本金</th>
+                    <th class="amount-col">劣后还本</th>
+                    <th class="amount-col">Carry LP</th>
+                    <th class="amount-col">Carry GP</th>
+                `;
+            } else if (results.calculation_mode === '结构化-包含夹层') {
+                html += `
+                    <th class="amount-col">优先本金</th>
+                    <th class="amount-col">夹层本金</th>
+                    <th class="amount-col">劣后本金</th>
+                    <th class="amount-col">优先收益</th>
+                    <th class="amount-col">夹层收益</th>
+                    <th class="amount-col">优先还本</th>
+                    <th class="amount-col">夹层还本</th>
+                    <th class="amount-col">劣后还本</th>
+                    <th class="amount-col">Carry LP</th>
+                    <th class="amount-col">Carry GP</th>
+                `;
+            } else if (results.calculation_mode === '结构化-息息本本') {
+                html += `
+                    <th class="amount-col">优先本金</th>
+                    <th class="amount-col">劣后本金</th>
+                    <th class="amount-col">优先收益</th>
+                    <th class="amount-col">劣后收益</th>
+                    <th class="amount-col">优先还本</th>
+                    <th class="amount-col">劣后还本</th>
+                    <th class="amount-col">Carry LP</th>
+                    <th class="amount-col">Carry GP</th>
                 `;
             }
             
             html += '</tr></thead><tbody>';
             
-            // 添加数据行
+            // 计算总计数据
+            const totals = {
+                net_cash_flow: 0,
+                cash_flow_distribution_rate: 0
+            };
+            
+            // 根据模式初始化总计字段
+            if (results.calculation_mode === '平层结构-优先还本') {
+                Object.assign(totals, {
+                    beginning_principal_balance: '-',
+                    principal_repayment: 0,
+                    accrued_hurdle_return: 0,
+                    distributed_hurdle_return: 0,
+                    carry_lp: 0,
+                    carry_gp: 0
+                });
+            } else if (results.calculation_mode === '平层结构-期间分配') {
+                Object.assign(totals, {
+                    beginning_principal_balance: '-',
+                    periodic_distribution: 0,
+                    accrued_hurdle_return: 0,
+                    principal_repayment: 0,
+                    distributed_hurdle_return: 0,
+                    carry_lp: 0,
+                    carry_gp: 0
+                });
+            } else if (results.calculation_mode === '结构化-优先劣后') {
+                Object.assign(totals, {
+                    senior_beginning_principal: '-',
+                    senior_periodic_return: 0,
+                    senior_principal_repayment: 0,
+                    subordinate_principal_balance: '-',
+                    subordinate_principal_repayment: 0,
+                    carry_lp: 0,
+                    carry_gp: 0
+                });
+            } else if (results.calculation_mode === '结构化-包含夹层') {
+                Object.assign(totals, {
+                    senior_beginning_principal: '-',
+                    mezzanine_beginning_principal: '-',
+                    subordinate_beginning_principal: '-',
+                    senior_hurdle_distribution: 0,
+                    mezzanine_hurdle_distribution: 0,
+                    senior_principal_repayment: 0,
+                    mezzanine_principal_repayment: 0,
+                    subordinate_principal_repayment: 0,
+                    carry_lp: 0,
+                    carry_gp: 0
+                });
+            } else if (results.calculation_mode === '结构化-息息本本') {
+                Object.assign(totals, {
+                    senior_beginning_principal: '-',
+                    subordinate_beginning_principal: '-',
+                    senior_periodic_return: 0,
+                    subordinate_periodic_return: 0,
+                    senior_principal_repayment: 0,
+                    subordinate_principal_repayment: 0,
+                    carry_lp: 0,
+                    carry_gp: 0
+                });
+            }
+            
+            // 添加数据行并计算总计
             results.cash_flow_table.forEach(row => {
                 html += `<tr>
-                    <td>${row.year}</td>
-                    <td>${formatNumber(row.net_cash_flow)}</td>
-                    <td>${formatNumber(row.cash_flow_distribution_rate)}%</td>
+                    <td class="year-cell">${row.year}</td>
+                    <td class="amount-cell">${formatNumber(row.net_cash_flow, 'currency')}</td>
+                    <td class="rate-cell">${formatNumber(row.cash_flow_distribution_rate, 'percent')}%</td>
                 `;
                 
-                // 根据计算模式添加相应的数据列
+                // 累计总计
+                totals.net_cash_flow += row.net_cash_flow;
+                totals.cash_flow_distribution_rate += row.cash_flow_distribution_rate;
+                
+                // 根据计算模式添加相应的数据列并累计总计
                 if (results.calculation_mode === '平层结构-优先还本') {
                     html += `
-                        <td>${formatNumber(row.beginning_principal_balance)}</td>
-                        <td>${formatNumber(row.principal_repayment)}</td>
-                        <td>${formatNumber(row.accrued_hurdle_return)}</td>
-                        <td>${formatNumber(row.distributed_hurdle_return)}</td>
-                        <td class="${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp)}</td>
-                        <td class="${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp)}</td>
+                        <td class="amount-cell">${formatNumber(row.beginning_principal_balance, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.principal_repayment, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.accrued_hurdle_return, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.distributed_hurdle_return, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp, 'currency')}</td>
                     `;
+                    totals.principal_repayment += row.principal_repayment;
+                    totals.accrued_hurdle_return += row.accrued_hurdle_return;
+                    totals.distributed_hurdle_return += row.distributed_hurdle_return;
+                    totals.carry_lp += row.carry_lp;
+                    totals.carry_gp += row.carry_gp;
                 } else if (results.calculation_mode === '平层结构-期间分配') {
                     html += `
-                        <td>${formatNumber(row.beginning_principal_balance)}</td>
-                        <td>${formatNumber(row.periodic_distribution)}</td>
-                        <td>${formatNumber(row.accrued_hurdle_return)}</td>
-                        <td>${formatNumber(row.principal_repayment)}</td>
-                        <td>${formatNumber(row.distributed_hurdle_return)}</td>
-                        <td class="${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp)}</td>
-                        <td class="${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp)}</td>
+                        <td class="amount-cell">${formatNumber(row.beginning_principal_balance, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.periodic_distribution, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.accrued_hurdle_return, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.principal_repayment, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.distributed_hurdle_return, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp, 'currency')}</td>
                     `;
+                    totals.periodic_distribution += row.periodic_distribution;
+                    totals.accrued_hurdle_return += row.accrued_hurdle_return;
+                    totals.principal_repayment += row.principal_repayment;
+                    totals.distributed_hurdle_return += row.distributed_hurdle_return;
+                    totals.carry_lp += row.carry_lp;
+                    totals.carry_gp += row.carry_gp;
                 } else if (results.calculation_mode === '结构化-优先劣后') {
                     html += `
-                        <td>${formatNumber(row.senior_beginning_principal)}</td>
-                        <td>${formatNumber(row.senior_periodic_return)}</td>
-                        <td>${formatNumber(row.senior_principal_repayment)}</td>
-                        <td>${formatNumber(row.subordinate_principal_balance)}</td>
-                        <td>${formatNumber(row.subordinate_principal_repayment)}</td>
-                        <td class="${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp)}</td>
-                        <td class="${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp)}</td>
+                        <td class="amount-cell">${formatNumber(row.senior_beginning_principal, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.senior_periodic_return, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.senior_principal_repayment, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.subordinate_principal_balance, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.subordinate_principal_repayment, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp, 'currency')}</td>
                     `;
+                    totals.senior_periodic_return += row.senior_periodic_return;
+                    totals.senior_principal_repayment += row.senior_principal_repayment;
+                    totals.subordinate_principal_repayment += row.subordinate_principal_repayment;
+                    totals.carry_lp += row.carry_lp;
+                    totals.carry_gp += row.carry_gp;
+                } else if (results.calculation_mode === '结构化-包含夹层') {
+                    html += `
+                        <td class="amount-cell">${formatNumber(row.senior_beginning_principal, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.mezzanine_beginning_principal, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.subordinate_beginning_principal, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.senior_hurdle_distribution, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.mezzanine_hurdle_distribution, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.senior_principal_repayment, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.mezzanine_principal_repayment, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.subordinate_principal_repayment, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp, 'currency')}</td>
+                    `;
+                    totals.senior_hurdle_distribution += row.senior_hurdle_distribution;
+                    totals.mezzanine_hurdle_distribution += row.mezzanine_hurdle_distribution;
+                    totals.senior_principal_repayment += row.senior_principal_repayment;
+                    totals.mezzanine_principal_repayment += row.mezzanine_principal_repayment;
+                    totals.subordinate_principal_repayment += row.subordinate_principal_repayment;
+                    totals.carry_lp += row.carry_lp;
+                    totals.carry_gp += row.carry_gp;
+                } else if (results.calculation_mode === '结构化-息息本本') {
+                    html += `
+                        <td class="amount-cell">${formatNumber(row.senior_beginning_principal, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.subordinate_beginning_principal, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.senior_periodic_return, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.subordinate_periodic_return, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.senior_principal_repayment, 'currency')}</td>
+                        <td class="amount-cell">${formatNumber(row.subordinate_principal_repayment, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_lp > 0 ? 'positive' : ''}">${formatNumber(row.carry_lp, 'currency')}</td>
+                        <td class="amount-cell ${row.carry_gp > 0 ? 'positive' : ''}">${formatNumber(row.carry_gp, 'currency')}</td>
+                    `;
+                    totals.senior_periodic_return += row.senior_periodic_return;
+                    totals.subordinate_periodic_return += row.subordinate_periodic_return;
+                    totals.senior_principal_repayment += row.senior_principal_repayment;
+                    totals.subordinate_principal_repayment += row.subordinate_principal_repayment;
+                    totals.carry_lp += row.carry_lp;
+                    totals.carry_gp += row.carry_gp;
                 }
                 
                 html += '</tr>';
             });
             
-            html += '</tbody></table></div>';
+            // 添加总计行
+            html += `
+                <tr class="total-row">
+                    <td class="year-cell total-label">总计</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.net_cash_flow, 'currency')}</td>
+                    <td class="rate-cell total-value">${formatNumber(totals.net_cash_flow / basicParams.investment_amount * 100, 'percent')}%</td>
+            `;
+            
+            // 根据模式添加总计行的其他列
+            if (results.calculation_mode === '平层结构-优先还本') {
+                html += `
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.accrued_hurdle_return, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.distributed_hurdle_return, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_lp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_lp, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_gp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_gp, 'currency')}</td>
+                `;
+            } else if (results.calculation_mode === '平层结构-期间分配') {
+                html += `
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.periodic_distribution, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.accrued_hurdle_return, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.distributed_hurdle_return, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_lp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_lp, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_gp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_gp, 'currency')}</td>
+                `;
+            } else if (results.calculation_mode === '结构化-优先劣后') {
+                html += `
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.senior_periodic_return, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.senior_principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.subordinate_principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_lp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_lp, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_gp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_gp, 'currency')}</td>
+                `;
+            } else if (results.calculation_mode === '结构化-包含夹层') {
+                html += `
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.senior_hurdle_distribution, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.mezzanine_hurdle_distribution, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.senior_principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.mezzanine_principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.subordinate_principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_lp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_lp, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_gp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_gp, 'currency')}</td>
+                `;
+            } else if (results.calculation_mode === '结构化-息息本本') {
+                html += `
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-dash">-</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.senior_periodic_return, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.subordinate_periodic_return, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.senior_principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value">${formatNumber(totals.subordinate_principal_repayment, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_lp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_lp, 'currency')}</td>
+                    <td class="amount-cell total-value ${totals.carry_gp > 0 ? 'positive' : ''}">${formatNumber(totals.carry_gp, 'currency')}</td>
+                `;
+            }
+            
+            html += `
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>`;
             
             container.innerHTML = html;
         }
@@ -1834,6 +2980,7 @@
             })
             .then(response => response.json())
             .then(result => {
+                // 确保加载状态被清除
                 enableInterface();
                 
                 if (result.success) {
@@ -1884,6 +3031,7 @@
                 fileInput.value = '';
             })
             .catch(error => {
+                // 确保出错时也清除加载状态
                 enableInterface();
                 showAlert('导入文件时发生错误: ' + error.message, 'error');
                 fileInput.value = '';
@@ -1914,17 +3062,6 @@
         }
 
         /**
-         * 格式化数字显示
-         */
-        function formatNumber(value) {
-            if (typeof value !== 'number') return value;
-            return new Intl.NumberFormat('zh-CN', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(value);
-        }
-
-        /**
          * 显示提示消息
          */
         function showAlert(message, type) {
@@ -1952,5 +3089,17 @@
             }, 3000);
         }
     </script>
+    
+    <!-- 外部JavaScript库 -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- 自定义JavaScript文件 -->
+    <script src="{{ url_for('static', filename='utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    
 </body>
 </html> 

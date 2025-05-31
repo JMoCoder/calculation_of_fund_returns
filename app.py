@@ -208,14 +208,77 @@ class FundCalculator:
             logger.error(f"计算DPI时发生错误: {str(e)}")
             return 0.0
     
+    def calculate_static_payback_period(self, cash_flows: List[float], initial_investment: float) -> float:
+        """
+        计算静态回本周期
+        
+        Args:
+            cash_flows: 现金流列表
+            initial_investment: 初始投资金额
+        
+        Returns:
+            静态回本周期（年）
+        """
+        try:
+            cumulative_cash_flow = 0.0
+            for i, cf in enumerate(cash_flows):
+                cumulative_cash_flow += cf
+                if cumulative_cash_flow >= initial_investment:
+                    # 线性插值计算精确的回本时间
+                    if i == 0:
+                        return cf / initial_investment if cf > 0 else float('inf')
+                    else:
+                        prev_cumulative = cumulative_cash_flow - cf
+                        remaining = initial_investment - prev_cumulative
+                        return i + (remaining / cf) if cf > 0 else i + 1
+            return float('inf')  # 如果现金流总和不足以回本
+        except Exception as e:
+            logger.error(f"计算静态回本周期时发生错误: {str(e)}")
+            return float('inf')
+    
+    def calculate_dynamic_payback_period(self, cash_flows: List[float], initial_investment: float, discount_rate: float = 0.1) -> float:
+        """
+        计算动态回本周期（考虑时间价值）
+        
+        Args:
+            cash_flows: 现金流列表
+            initial_investment: 初始投资金额
+            discount_rate: 折现率（默认10%）
+        
+        Returns:
+            动态回本周期（年）
+        """
+        try:
+            # 使用门槛收益率作为折现率
+            if hasattr(self, 'basic_params') and 'hurdle_rate' in self.basic_params:
+                discount_rate = self.basic_params['hurdle_rate'] / 100
+            
+            cumulative_pv = 0.0
+            for i, cf in enumerate(cash_flows):
+                pv = cf / ((1 + discount_rate) ** (i + 1))
+                cumulative_pv += pv
+                if cumulative_pv >= initial_investment:
+                    # 线性插值计算精确的动态回本时间
+                    if i == 0:
+                        return 1.0 if pv >= initial_investment else float('inf')
+                    else:
+                        prev_pv = cumulative_pv - pv
+                        remaining = initial_investment - prev_pv
+                        year_fraction = remaining / pv if pv > 0 else 0
+                        return i + 1 + year_fraction
+            return float('inf')  # 如果折现后现金流总和不足以回本
+        except Exception as e:
+            logger.error(f"计算动态回本周期时发生错误: {str(e)}")
+            return float('inf')
+    
     def calculate_flat_structure_priority_repayment(self) -> Dict[str, Any]:
         """
-        计算平层结构 - 优先还本模式
+        计算平层结构 - 优先还本模式（分配方式1.1）
         
         分配顺序：
-        1. 净现金流优先还本，并按期初本金余额计提门槛收益
-        2. 本金还完当期，开始分配已计提的门槛收益
-        3. 门槛收益还完当期，剩余净现金流开始分配Carry
+        1. 还本
+        2. 门槛收益
+        3. Carry分配
         
         Returns:
             计算结果详细表格
@@ -263,14 +326,14 @@ class FundCalculator:
                     remaining_cash -= principal_payment
                 
                 # 步骤3：分配门槛收益
-                if remaining_principal == 0 and accumulated_hurdle > 0 and remaining_cash > 0:
+                if accumulated_hurdle > 0 and remaining_cash > 0:
                     hurdle_payment = min(remaining_cash, accumulated_hurdle)
                     year_data['distributed_hurdle_return'] = hurdle_payment
                     accumulated_hurdle -= hurdle_payment
                     remaining_cash -= hurdle_payment
                 
                 # 步骤4：分配Carry
-                if remaining_principal == 0 and accumulated_hurdle == 0 and remaining_cash > 0:
+                if accumulated_hurdle == 0 and remaining_cash > 0:
                     year_data['carry_lp'] = remaining_cash * (1 - carry_rate)
                     year_data['carry_gp'] = remaining_cash * carry_rate
                 
@@ -279,13 +342,17 @@ class FundCalculator:
             # 计算核心指标
             irr = self.calculate_irr(self.cash_flows, investment_amount)
             dpi = self.calculate_dpi(self.cash_flows, investment_amount)
+            static_payback = self.calculate_static_payback_period(self.cash_flows, investment_amount)
+            dynamic_payback = self.calculate_dynamic_payback_period(self.cash_flows, investment_amount)
             
             return {
                 'success': True,
                 'calculation_mode': '平层结构-优先还本',
                 'core_metrics': {
                     'irr': round(irr, 2),
-                    'dpi': round(dpi, 2)
+                    'dpi': round(dpi, 2),
+                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
@@ -302,16 +369,16 @@ class FundCalculator:
     
     def calculate_flat_structure_periodic_distribution(self, periodic_rate: float) -> Dict[str, Any]:
         """
-        计算平层结构 - 期间分配模式
+        计算平层结构 - 期间分配模式（分配方式1.2）
         
         Args:
             periodic_rate: 期间收益率（%）
         
         分配顺序：
-        1. 净现金流优先按照期初本金余额分配期间收益
-        2. 分配期间收益后，剩余现金流归还本金，并按期初本金余额计提门槛收益
-        3. 本金还完当期，开始分配已计提的剩余门槛收益
-        4. 门槛收益还完当期，剩余净现金流开始分配Carry
+        1. 期间收益
+        2. 还本
+        3. 剩余门槛收益
+        4. Carry分配
         
         Returns:
             计算结果详细表格
@@ -353,7 +420,7 @@ class FundCalculator:
                     year_data['periodic_distribution'] = periodic_payment
                     remaining_cash -= periodic_payment
                 
-                # 步骤2：计提门槛收益（扣除期间收益率）
+                # 步骤2：计提剩余门槛收益（扣除期间收益率）
                 if remaining_principal > 0:
                     net_hurdle_rate = hurdle_rate - periodic_rate_decimal
                     if net_hurdle_rate > 0:
@@ -368,15 +435,15 @@ class FundCalculator:
                     remaining_principal -= principal_payment
                     remaining_cash -= principal_payment
                 
-                # 步骤4：分配门槛收益
-                if remaining_principal == 0 and accumulated_hurdle > 0 and remaining_cash > 0:
+                # 步骤4：分配剩余门槛收益
+                if accumulated_hurdle > 0 and remaining_cash > 0:
                     hurdle_payment = min(remaining_cash, accumulated_hurdle)
                     year_data['distributed_hurdle_return'] = hurdle_payment
                     accumulated_hurdle -= hurdle_payment
                     remaining_cash -= hurdle_payment
                 
                 # 步骤5：分配Carry
-                if remaining_principal == 0 and accumulated_hurdle == 0 and remaining_cash > 0:
+                if accumulated_hurdle == 0 and remaining_cash > 0:
                     year_data['carry_lp'] = remaining_cash * (1 - carry_rate)
                     year_data['carry_gp'] = remaining_cash * carry_rate
                 
@@ -385,13 +452,17 @@ class FundCalculator:
             # 计算核心指标
             irr = self.calculate_irr(self.cash_flows, investment_amount)
             dpi = self.calculate_dpi(self.cash_flows, investment_amount)
+            static_payback = self.calculate_static_payback_period(self.cash_flows, investment_amount)
+            dynamic_payback = self.calculate_dynamic_payback_period(self.cash_flows, investment_amount)
             
             return {
                 'success': True,
                 'calculation_mode': '平层结构-期间分配',
                 'core_metrics': {
                     'irr': round(irr, 2),
-                    'dpi': round(dpi, 2)
+                    'dpi': round(dpi, 2),
+                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
@@ -409,16 +480,16 @@ class FundCalculator:
     
     def calculate_structured_senior_subordinate(self, senior_ratio: float) -> Dict[str, Any]:
         """
-        计算结构化 - 优先劣后模式
+        计算结构化 - 优先劣后模式（分配方式2.1）
         
         Args:
             senior_ratio: 优先级比例（%）
         
         分配顺序：
-        1. 当期净现金流优先按期初优先级剩余本金*优先级收益率分配给优先级
-        2. 剩余净现金流偿还优先级本金
-        3. 优先级退出后，剩余净现金流开始偿还劣后本金
-        4. 劣后本金退出后，剩余净现金流开始分配Carry
+        1. 优先级还本
+        2. 优先级门槛收益
+        3. 劣后还本
+        4. Carry分配
         
         Returns:
             计算结果详细表格
@@ -441,6 +512,7 @@ class FundCalculator:
             # 跟踪变量
             remaining_senior_principal = senior_amount
             remaining_subordinate_principal = subordinate_amount
+            accumulated_senior_hurdle = 0.0
             
             for year in range(years):
                 year_data = {
@@ -448,6 +520,7 @@ class FundCalculator:
                     'net_cash_flow': self.cash_flows[year],
                     'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
                     'senior_beginning_principal': remaining_senior_principal,
+                    'senior_hurdle_accrual': 0.0,
                     'senior_periodic_return': 0.0,
                     'senior_principal_repayment': 0.0,
                     'subordinate_principal_balance': remaining_subordinate_principal,
@@ -458,11 +531,11 @@ class FundCalculator:
                 
                 remaining_cash = self.cash_flows[year]
                 
-                # 步骤1：分配优先级收益
-                if remaining_senior_principal > 0 and remaining_cash > 0:
-                    senior_return = min(remaining_cash, remaining_senior_principal * senior_rate)
-                    year_data['senior_periodic_return'] = senior_return
-                    remaining_cash -= senior_return
+                # 步骤1：计提优先级门槛收益
+                if remaining_senior_principal > 0:
+                    senior_hurdle_accrual = remaining_senior_principal * senior_rate
+                    year_data['senior_hurdle_accrual'] = senior_hurdle_accrual
+                    accumulated_senior_hurdle += senior_hurdle_accrual
                 
                 # 步骤2：偿还优先级本金
                 if remaining_senior_principal > 0 and remaining_cash > 0:
@@ -471,15 +544,22 @@ class FundCalculator:
                     remaining_senior_principal -= senior_principal_payment
                     remaining_cash -= senior_principal_payment
                 
-                # 步骤3：偿还劣后本金
-                if remaining_senior_principal == 0 and remaining_subordinate_principal > 0 and remaining_cash > 0:
+                # 步骤3：分配优先级门槛收益
+                if accumulated_senior_hurdle > 0 and remaining_cash > 0:
+                    senior_hurdle_payment = min(remaining_cash, accumulated_senior_hurdle)
+                    year_data['senior_periodic_return'] = senior_hurdle_payment
+                    accumulated_senior_hurdle -= senior_hurdle_payment
+                    remaining_cash -= senior_hurdle_payment
+                
+                # 步骤4：偿还劣后本金
+                if remaining_senior_principal == 0 and accumulated_senior_hurdle == 0 and remaining_subordinate_principal > 0 and remaining_cash > 0:
                     subordinate_principal_payment = min(remaining_cash, remaining_subordinate_principal)
                     year_data['subordinate_principal_repayment'] = subordinate_principal_payment
                     remaining_subordinate_principal -= subordinate_principal_payment
                     remaining_cash -= subordinate_principal_payment
                 
-                # 步骤4：分配Carry
-                if remaining_senior_principal == 0 and remaining_subordinate_principal == 0 and remaining_cash > 0:
+                # 步骤5：分配Carry
+                if remaining_senior_principal == 0 and accumulated_senior_hurdle == 0 and remaining_subordinate_principal == 0 and remaining_cash > 0:
                     year_data['carry_lp'] = remaining_cash * (1 - carry_rate)
                     year_data['carry_gp'] = remaining_cash * carry_rate
                 
@@ -488,6 +568,8 @@ class FundCalculator:
             # 计算核心指标
             irr = self.calculate_irr(self.cash_flows, investment_amount)
             dpi = self.calculate_dpi(self.cash_flows, investment_amount)
+            static_payback = self.calculate_static_payback_period(self.cash_flows, investment_amount)
+            dynamic_payback = self.calculate_dynamic_payback_period(self.cash_flows, investment_amount)
             
             return {
                 'success': True,
@@ -500,7 +582,9 @@ class FundCalculator:
                 },
                 'core_metrics': {
                     'irr': round(irr, 2),
-                    'dpi': round(dpi, 2)
+                    'dpi': round(dpi, 2),
+                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
                 },
                 'cash_flow_table': results,
                 'summary': {
@@ -514,6 +598,295 @@ class FundCalculator:
             
         except Exception as e:
             logger.error(f"计算结构化-优先劣后时发生错误: {str(e)}")
+            return {'success': False, 'message': f'计算失败: {str(e)}'}
+
+    def calculate_structured_mezzanine(self, senior_ratio: float, mezzanine_ratio: float, mezzanine_rate: float) -> Dict[str, Any]:
+        """
+        计算结构化 - 包含夹层模式（分配方式2.2）
+        
+        Args:
+            senior_ratio: 优先级比例（%）
+            mezzanine_ratio: 夹层比例（%）
+            mezzanine_rate: 夹层收益率（%）
+        
+        分配顺序：
+        1. 优先级门槛收益
+        2. 夹层门槛收益  
+        3. 优先级还本
+        4. 夹层还本
+        5. 劣后还本
+        6. Carry分配
+        
+        Returns:
+            计算结果详细表格
+        """
+        try:
+            investment_amount = self.basic_params['investment_amount']
+            senior_rate = self.basic_params['hurdle_rate'] / 100  # 优先级收益率等于门槛收益率
+            mezzanine_rate_decimal = mezzanine_rate / 100
+            carry_rate = self.basic_params['management_carry'] / 100
+            
+            senior_ratio_decimal = senior_ratio / 100
+            mezzanine_ratio_decimal = mezzanine_ratio / 100
+            subordinate_ratio_decimal = 1 - senior_ratio_decimal - mezzanine_ratio_decimal
+            
+            senior_amount = investment_amount * senior_ratio_decimal
+            mezzanine_amount = investment_amount * mezzanine_ratio_decimal
+            subordinate_amount = investment_amount * subordinate_ratio_decimal
+            
+            years = len(self.cash_flows)
+            
+            # 初始化结果表格
+            results = []
+            
+            # 跟踪变量
+            remaining_senior_principal = senior_amount
+            remaining_mezzanine_principal = mezzanine_amount
+            remaining_subordinate_principal = subordinate_amount
+            accumulated_senior_hurdle = 0.0
+            accumulated_mezzanine_hurdle = 0.0
+            
+            for year in range(years):
+                year_data = {
+                    'year': year + 1,
+                    'net_cash_flow': self.cash_flows[year],
+                    'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
+                    'senior_beginning_principal': remaining_senior_principal,
+                    'mezzanine_beginning_principal': remaining_mezzanine_principal,
+                    'subordinate_beginning_principal': remaining_subordinate_principal,
+                    'senior_hurdle_accrual': 0.0,
+                    'mezzanine_hurdle_accrual': 0.0,
+                    'senior_hurdle_distribution': 0.0,
+                    'mezzanine_hurdle_distribution': 0.0,
+                    'senior_principal_repayment': 0.0,
+                    'mezzanine_principal_repayment': 0.0,
+                    'subordinate_principal_repayment': 0.0,
+                    'carry_lp': 0.0,
+                    'carry_gp': 0.0
+                }
+                
+                remaining_cash = self.cash_flows[year]
+                
+                # 步骤1：计提门槛收益
+                if remaining_senior_principal > 0:
+                    senior_hurdle_accrual = remaining_senior_principal * senior_rate
+                    year_data['senior_hurdle_accrual'] = senior_hurdle_accrual
+                    accumulated_senior_hurdle += senior_hurdle_accrual
+                    
+                if remaining_mezzanine_principal > 0:
+                    mezzanine_hurdle_accrual = remaining_mezzanine_principal * mezzanine_rate_decimal
+                    year_data['mezzanine_hurdle_accrual'] = mezzanine_hurdle_accrual
+                    accumulated_mezzanine_hurdle += mezzanine_hurdle_accrual
+                
+                # 步骤2：分配优先级门槛收益
+                if accumulated_senior_hurdle > 0 and remaining_cash > 0:
+                    senior_hurdle_payment = min(remaining_cash, accumulated_senior_hurdle)
+                    year_data['senior_hurdle_distribution'] = senior_hurdle_payment
+                    accumulated_senior_hurdle -= senior_hurdle_payment
+                    remaining_cash -= senior_hurdle_payment
+                
+                # 步骤3：分配夹层门槛收益
+                if accumulated_mezzanine_hurdle > 0 and remaining_cash > 0:
+                    mezzanine_hurdle_payment = min(remaining_cash, accumulated_mezzanine_hurdle)
+                    year_data['mezzanine_hurdle_distribution'] = mezzanine_hurdle_payment
+                    accumulated_mezzanine_hurdle -= mezzanine_hurdle_payment
+                    remaining_cash -= mezzanine_hurdle_payment
+                
+                # 步骤4：优先级还本
+                if accumulated_senior_hurdle == 0 and remaining_senior_principal > 0 and remaining_cash > 0:
+                    senior_principal_payment = min(remaining_cash, remaining_senior_principal)
+                    year_data['senior_principal_repayment'] = senior_principal_payment
+                    remaining_senior_principal -= senior_principal_payment
+                    remaining_cash -= senior_principal_payment
+                
+                # 步骤5：夹层还本
+                if accumulated_mezzanine_hurdle == 0 and remaining_senior_principal == 0 and remaining_mezzanine_principal > 0 and remaining_cash > 0:
+                    mezzanine_principal_payment = min(remaining_cash, remaining_mezzanine_principal)
+                    year_data['mezzanine_principal_repayment'] = mezzanine_principal_payment
+                    remaining_mezzanine_principal -= mezzanine_principal_payment
+                    remaining_cash -= mezzanine_principal_payment
+                
+                # 步骤6：劣后还本
+                if remaining_senior_principal == 0 and remaining_mezzanine_principal == 0 and remaining_subordinate_principal > 0 and remaining_cash > 0:
+                    subordinate_principal_payment = min(remaining_cash, remaining_subordinate_principal)
+                    year_data['subordinate_principal_repayment'] = subordinate_principal_payment
+                    remaining_subordinate_principal -= subordinate_principal_payment
+                    remaining_cash -= subordinate_principal_payment
+                
+                # 步骤7：分配Carry
+                if (remaining_senior_principal == 0 and remaining_mezzanine_principal == 0 and 
+                    remaining_subordinate_principal == 0 and remaining_cash > 0):
+                    year_data['carry_lp'] = remaining_cash * (1 - carry_rate)
+                    year_data['carry_gp'] = remaining_cash * carry_rate
+                
+                results.append(year_data)
+            
+            # 计算核心指标
+            irr = self.calculate_irr(self.cash_flows, investment_amount)
+            dpi = self.calculate_dpi(self.cash_flows, investment_amount)
+            static_payback = self.calculate_static_payback_period(self.cash_flows, investment_amount)
+            dynamic_payback = self.calculate_dynamic_payback_period(self.cash_flows, investment_amount)
+            
+            return {
+                'success': True,
+                'calculation_mode': '结构化-包含夹层',
+                'structure_info': {
+                    'senior_amount': round(senior_amount, 2),
+                    'mezzanine_amount': round(mezzanine_amount, 2),
+                    'subordinate_amount': round(subordinate_amount, 2),
+                    'senior_ratio': senior_ratio,
+                    'mezzanine_ratio': mezzanine_ratio,
+                    'subordinate_ratio': round(subordinate_ratio_decimal * 100, 2),
+                    'senior_rate': self.basic_params['hurdle_rate'],
+                    'mezzanine_rate': mezzanine_rate
+                },
+                'core_metrics': {
+                    'irr': round(irr, 2),
+                    'dpi': round(dpi, 2),
+                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
+                },
+                'cash_flow_table': results,
+                'summary': {
+                    'total_senior_hurdle': sum(row['senior_hurdle_distribution'] for row in results),
+                    'total_mezzanine_hurdle': sum(row['mezzanine_hurdle_distribution'] for row in results),
+                    'total_senior_principal': sum(row['senior_principal_repayment'] for row in results),
+                    'total_mezzanine_principal': sum(row['mezzanine_principal_repayment'] for row in results),
+                    'total_subordinate_principal': sum(row['subordinate_principal_repayment'] for row in results),
+                    'total_carry_lp': sum(row['carry_lp'] for row in results),
+                    'total_carry_gp': sum(row['carry_gp'] for row in results)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"计算结构化-包含夹层时发生错误: {str(e)}")
+            return {'success': False, 'message': f'计算失败: {str(e)}'}
+
+    def calculate_structured_interest_principal(self, senior_ratio: float, subordinate_rate: float) -> Dict[str, Any]:
+        """
+        计算结构化 - 息息本本模式（分配方式2.3）
+        
+        Args:
+            senior_ratio: 优先级比例（%）
+            subordinate_rate: 劣后级收益率（%）
+        
+        分配顺序：
+        1. 优先级期间收益
+        2. 劣后期间收益
+        3. 优先级还本
+        4. 劣后还本
+        5. Carry分配
+        
+        Returns:
+            计算结果详细表格
+        """
+        try:
+            investment_amount = self.basic_params['investment_amount']
+            senior_rate = self.basic_params['hurdle_rate'] / 100  # 优先级收益率等于门槛收益率
+            subordinate_rate_decimal = subordinate_rate / 100
+            carry_rate = self.basic_params['management_carry'] / 100
+            
+            senior_ratio_decimal = senior_ratio / 100
+            subordinate_ratio_decimal = 1 - senior_ratio_decimal
+            
+            senior_amount = investment_amount * senior_ratio_decimal
+            subordinate_amount = investment_amount * subordinate_ratio_decimal
+            
+            years = len(self.cash_flows)
+            
+            # 初始化结果表格
+            results = []
+            
+            # 跟踪变量
+            remaining_senior_principal = senior_amount
+            remaining_subordinate_principal = subordinate_amount
+            
+            for year in range(years):
+                year_data = {
+                    'year': year + 1,
+                    'net_cash_flow': self.cash_flows[year],
+                    'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
+                    'senior_beginning_principal': remaining_senior_principal,
+                    'subordinate_beginning_principal': remaining_subordinate_principal,
+                    'senior_periodic_return': 0.0,
+                    'subordinate_periodic_return': 0.0,
+                    'senior_principal_repayment': 0.0,
+                    'subordinate_principal_repayment': 0.0,
+                    'carry_lp': 0.0,
+                    'carry_gp': 0.0
+                }
+                
+                remaining_cash = self.cash_flows[year]
+                
+                # 步骤1：优先级期间收益
+                if remaining_senior_principal > 0 and remaining_cash > 0:
+                    senior_return = min(remaining_cash, remaining_senior_principal * senior_rate)
+                    year_data['senior_periodic_return'] = senior_return
+                    remaining_cash -= senior_return
+                
+                # 步骤2：劣后期间收益  
+                if remaining_subordinate_principal > 0 and remaining_cash > 0:
+                    subordinate_return = min(remaining_cash, remaining_subordinate_principal * subordinate_rate_decimal)
+                    year_data['subordinate_periodic_return'] = subordinate_return
+                    remaining_cash -= subordinate_return
+                
+                # 步骤3：优先级还本
+                if remaining_senior_principal > 0 and remaining_cash > 0:
+                    senior_principal_payment = min(remaining_cash, remaining_senior_principal)
+                    year_data['senior_principal_repayment'] = senior_principal_payment
+                    remaining_senior_principal -= senior_principal_payment
+                    remaining_cash -= senior_principal_payment
+                
+                # 步骤4：劣后还本
+                if remaining_senior_principal == 0 and remaining_subordinate_principal > 0 and remaining_cash > 0:
+                    subordinate_principal_payment = min(remaining_cash, remaining_subordinate_principal)
+                    year_data['subordinate_principal_repayment'] = subordinate_principal_payment
+                    remaining_subordinate_principal -= subordinate_principal_payment
+                    remaining_cash -= subordinate_principal_payment
+                
+                # 步骤5：分配Carry
+                if remaining_senior_principal == 0 and remaining_subordinate_principal == 0 and remaining_cash > 0:
+                    year_data['carry_lp'] = remaining_cash * (1 - carry_rate)
+                    year_data['carry_gp'] = remaining_cash * carry_rate
+                
+                results.append(year_data)
+            
+            # 计算核心指标
+            irr = self.calculate_irr(self.cash_flows, investment_amount)
+            dpi = self.calculate_dpi(self.cash_flows, investment_amount)
+            static_payback = self.calculate_static_payback_period(self.cash_flows, investment_amount)
+            dynamic_payback = self.calculate_dynamic_payback_period(self.cash_flows, investment_amount)
+            
+            return {
+                'success': True,
+                'calculation_mode': '结构化-息息本本',
+                'structure_info': {
+                    'senior_amount': round(senior_amount, 2),
+                    'subordinate_amount': round(subordinate_amount, 2),
+                    'senior_ratio': senior_ratio,
+                    'subordinate_ratio': round(subordinate_ratio_decimal * 100, 2),
+                    'senior_rate': self.basic_params['hurdle_rate'],
+                    'subordinate_rate': subordinate_rate
+                },
+                'core_metrics': {
+                    'irr': round(irr, 2),
+                    'dpi': round(dpi, 2),
+                    'static_payback_period': round(static_payback, 2) if static_payback != float('inf') else '无法回本',
+                    'dynamic_payback_period': round(dynamic_payback, 2) if dynamic_payback != float('inf') else '无法回本'
+                },
+                'cash_flow_table': results,
+                'summary': {
+                    'total_senior_return': sum(row['senior_periodic_return'] for row in results),
+                    'total_subordinate_return': sum(row['subordinate_periodic_return'] for row in results),
+                    'total_senior_principal': sum(row['senior_principal_repayment'] for row in results),
+                    'total_subordinate_principal': sum(row['subordinate_principal_repayment'] for row in results),
+                    'total_carry_lp': sum(row['carry_lp'] for row in results),
+                    'total_carry_gp': sum(row['carry_gp'] for row in results)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"计算结构化-息息本本时发生错误: {str(e)}")
             return {'success': False, 'message': f'计算失败: {str(e)}'}
 
 # 全局计算器实例
@@ -571,6 +944,15 @@ def calculate():
         elif calculation_mode == 'structured_senior_subordinate':
             senior_ratio = data.get('senior_ratio', 0)
             result = calculator.calculate_structured_senior_subordinate(senior_ratio)
+        elif calculation_mode == 'structured_mezzanine':
+            senior_ratio = data.get('senior_ratio', 0)
+            mezzanine_ratio = data.get('mezzanine_ratio', 0)
+            mezzanine_rate = data.get('mezzanine_rate', 0)
+            result = calculator.calculate_structured_mezzanine(senior_ratio, mezzanine_ratio, mezzanine_rate)
+        elif calculation_mode == 'structured_interest_principal':
+            senior_ratio = data.get('senior_ratio', 0)
+            subordinate_rate = data.get('subordinate_rate', 0)
+            result = calculator.calculate_structured_interest_principal(senior_ratio, subordinate_rate)
         else:
             result = {'success': False, 'message': '不支持的计算模式'}
         
