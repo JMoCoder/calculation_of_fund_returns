@@ -564,8 +564,27 @@ class FinanceUtils {
      * @returns {number} 年化收益率（百分比）
      */
     static calculateAnnualizedReturn(startValue, endValue, years) {
-        if (startValue === 0 || years === 0) return 0;
-        return (Math.pow(endValue / startValue, 1 / years) - 1) * 100;
+        // 安全检查：确保所有参数都是有效数字
+        if (typeof startValue !== 'number' || isNaN(startValue) || !isFinite(startValue) || startValue <= 0) {
+            return 0;
+        }
+        if (typeof endValue !== 'number' || isNaN(endValue) || !isFinite(endValue) || endValue < 0) {
+            return 0;
+        }
+        if (typeof years !== 'number' || isNaN(years) || !isFinite(years) || years <= 0) {
+            return 0;
+        }
+        
+        try {
+            const ratio = endValue / startValue;
+            if (ratio <= 0) return 0;
+            
+            const result = (Math.pow(ratio, 1 / years) - 1) * 100;
+            return isNaN(result) || !isFinite(result) ? 0 : result;
+        } catch (error) {
+            console.warn('计算年化收益率时发生错误:', error);
+            return 0;
+        }
     }
 }
 

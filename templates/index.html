@@ -1674,6 +1674,20 @@
             const parsed = parseInt(value);
             return isNaN(parsed) ? defaultValue : parsed;
         }
+        
+        /**
+         * 安全计算百分比，防止除零错误
+         */
+        function safeCalculatePercentage(numerator, denominator) {
+            if (typeof numerator !== 'number' || isNaN(numerator) || !isFinite(numerator)) {
+                return 0;
+            }
+            if (typeof denominator !== 'number' || isNaN(denominator) || !isFinite(denominator) || denominator === 0) {
+                return 0;
+            }
+            const result = (numerator / denominator) * 100;
+            return isNaN(result) || !isFinite(result) ? 0 : result;
+        }
 
         /**
          * 保存基本参数
@@ -2778,7 +2792,7 @@
                 <tr class="total-row">
                     <td class="year-cell total-label">总计</td>
                     <td class="amount-cell total-value">${formatNumber(totals.net_cash_flow, 'currency')}</td>
-                    <td class="rate-cell total-value">${formatNumber(totals.net_cash_flow / basicParams.investment_amount * 100, 'percent')}%</td>
+                    <td class="rate-cell total-value">${formatNumber(safeCalculatePercentage(totals.net_cash_flow, basicParams.investment_amount), 'percent')}%</td>
             `;
             
             // 根据模式添加总计行的其他列
@@ -3309,9 +3323,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- 引入自定义JavaScript文件 -->
-    <script src="{{ url_for('static', filename='utils.js') }}?v=2.5.8" defer></script>
-    <script src="{{ url_for('static', filename='charts.js') }}?v=2.5.8" defer></script>
-    <script src="{{ url_for('static', filename='app.js') }}?v=2.5.8" defer></script>
+    <script src="{{ url_for('static', filename='utils.js') }}?v=2.6.0" defer></script>
+    <script src="{{ url_for('static', filename='charts.js') }}?v=2.6.0" defer></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=2.6.0" defer></script>
     
 </body>
 </html> 

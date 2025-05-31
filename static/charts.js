@@ -16,6 +16,20 @@ function safeToFixed(value, digits = 2) {
 }
 
 /**
+ * 安全计算百分比，防止除零错误
+ */
+function safeCalculatePercentage(numerator, denominator) {
+    if (typeof numerator !== 'number' || isNaN(numerator) || !isFinite(numerator)) {
+        return 0;
+    }
+    if (typeof denominator !== 'number' || isNaN(denominator) || !isFinite(denominator) || denominator === 0) {
+        return 0;
+    }
+    const result = (numerator / denominator) * 100;
+    return isNaN(result) || !isFinite(result) ? 0 : result;
+}
+
+/**
  * 全局图表配置
  */
 const CHART_CONFIG = {
@@ -255,7 +269,7 @@ function createDistributionPieChart(distributions) {
                         label: function(context) {
                             const value = formatCurrency(context.parsed);
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = safeToFixed((context.parsed / total) * 100, 1);
+                            const percentage = safeToFixed(safeCalculatePercentage(context.parsed, total), 1);
                             return `${context.label}: ${value} (${percentage}%)`;
                         }
                     }
@@ -286,9 +300,9 @@ function createMetricsChart(metrics) {
             datasets: [{
                 label: '投资指标',
                 data: [
-                    metrics.irr,
-                    metrics.dpi,
-                    (metrics.net_profit / metrics.total_investment) * 100
+                    metrics.irr || 0,
+                    metrics.dpi || 0,
+                    safeCalculatePercentage(metrics.net_profit, metrics.total_investment)
                 ],
                 backgroundColor: [
                     CHART_CONFIG.colors.primary + '80',
