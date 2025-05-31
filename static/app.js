@@ -551,6 +551,17 @@ function formatNumber(value) {
 }
 
 /**
+ * 安全解析浮点数，防止NaN
+ */
+function safeParseFloat(value, defaultValue = 0) {
+    if (value === null || value === undefined || value === '') {
+        return defaultValue;
+    }
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+}
+
+/**
  * 数据验证：基础参数验证
  * @param {Object} data - 表单数据
  * @returns {boolean} 验证结果
@@ -561,12 +572,12 @@ function validateBasicParams(data) {
         return false;
     }
     
-    if (!data.fund_size || parseFloat(data.fund_size) <= 0) {
+    if (!data.fund_size || safeParseFloat(data.fund_size) <= 0) {
         showAlert('请输入有效的基金规模', 'warning');
         return false;
     }
     
-    if (!data.management_fee_rate || parseFloat(data.management_fee_rate) < 0) {
+    if (!data.management_fee_rate || safeParseFloat(data.management_fee_rate) < 0) {
         showAlert('请输入有效的管理费率', 'warning');
         return false;
     }
@@ -585,7 +596,7 @@ function collectCashFlowData() {
         const row = $(this);
         const date = row.find('input[type="date"]').val();
         const type = row.find('select').val();
-        const amount = parseFloat(row.find('input[type="number"]').val());
+        const amount = safeParseFloat(row.find('input[type="number"]').val());
         
         if (date && type && amount) {
             cashFlows.push({
@@ -608,12 +619,12 @@ function collectDistributionParams(mode) {
     const params = {};
     
     if (mode === 'flat') {
-        params.hurdle_rate = parseFloat($('#hurdleRate').val()) || 0;
-        params.carry_rate = parseFloat($('#carryRate').val()) || 0;
+        params.hurdle_rate = safeParseFloat($('#hurdleRate').val());
+        params.carry_rate = safeParseFloat($('#carryRate').val());
     } else if (mode === 'structured') {
-        params.senior_rate = parseFloat($('#seniorRate').val()) || 0;
-        params.subordinate_rate = parseFloat($('#subordinateRate').val()) || 0;
-        params.catch_up_rate = parseFloat($('#catchUpRate').val()) || 0;
+        params.senior_rate = safeParseFloat($('#seniorRate').val());
+        params.subordinate_rate = safeParseFloat($('#subordinateRate').val());
+        params.catch_up_rate = safeParseFloat($('#catchUpRate').val());
     }
     
     return params;

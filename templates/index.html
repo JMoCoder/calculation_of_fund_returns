@@ -2426,7 +2426,9 @@
          * @returns {string} 格式化后的字符串
          */
         function formatNumber(value, type = 'currency') {
-            if (typeof value !== 'number') return value;
+            if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+                return type === 'percent' ? '0.00%' : '0';
+            }
             
             switch (type) {
                 case 'currency':
