@@ -1052,6 +1052,10 @@
                                         <i class="fas fa-upload"></i>
                                         导入Excel
                                     </button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetAllData()">
+                                        <i class="fas fa-refresh"></i>
+                                        重置数据
+                                    </button>
                                 </div>
                                 <button type="button" class="btn btn-primary" onclick="saveBasicParams()">
                                     下一步
@@ -1530,8 +1534,67 @@
         let cashFlows = [];
         let calculationResults = null;
 
-        // 页面加载完成后初始化
-        // （已集成到上面的DOMContentLoaded事件中）
+        /**
+         * 重置所有数据和状态
+         */
+        function resetAllData() {
+            console.log('重置所有数据和状态');
+            
+            // 清空全局变量
+            basicParams = {};
+            cashFlows = [];
+            calculationResults = null;
+            currentStep = 1;
+            
+            // 清空表单字段
+            document.getElementById('investmentTarget').value = '';
+            document.getElementById('investmentAmount').value = '';
+            document.getElementById('investmentPeriod').value = '';
+            document.getElementById('hurdleRate').value = '';
+            document.getElementById('managementCarry').value = '';
+            
+            // 清空现金流输入区域
+            document.getElementById('cashFlowInputs').innerHTML = '<p class="help-text">请先完成基本参数设置</p>';
+            
+            // 重置分配模式选择
+            document.querySelectorAll('input[name="distributionMode"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.querySelectorAll('.mode-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 隐藏所有额外输入
+            document.getElementById('periodicRateInput').style.display = 'none';
+            document.getElementById('seniorRatioInput').style.display = 'none';
+            document.getElementById('mezzanineInput').style.display = 'none';
+            document.getElementById('interestPrincipalInput').style.display = 'none';
+            
+            // 清空计算结果区域
+            document.getElementById('calculationResults').innerHTML = '<p class="help-text">请完成前面的步骤并执行计算</p>';
+            
+            // 禁用导出和可视化按钮
+            document.getElementById('exportBtn').disabled = true;
+            document.getElementById('visualizeBtn').disabled = true;
+            
+            // 重置步骤状态
+            document.querySelectorAll('.step-item').forEach((item, index) => {
+                item.classList.remove('completed', 'active');
+                const stepNumber = item.querySelector('.step-number');
+                stepNumber.textContent = index + 1;
+            });
+            
+            // 设置第一步为活动状态
+            document.querySelectorAll('.step-item')[0].classList.add('active');
+            
+            // 显示第一个标签页
+            showTab('basic-params');
+            
+            console.log('数据重置完成');
+        }
 
         /**
          * 显示指定的标签页
@@ -1889,6 +1952,53 @@
             if (!cashFlows || cashFlows.length === 0) {
                 showAlert('请先完成现金流设置', 'warning');
                 console.error('现金流数据未设置');
+                return;
+            }
+            
+            // 验证基本参数的有效性
+            if (isNaN(basicParams.investment_amount) || basicParams.investment_amount <= 0) {
+                showAlert('投资金额无效，请重新设置', 'error');
+                console.error('投资金额无效:', basicParams.investment_amount);
+                return;
+            }
+            
+            if (isNaN(basicParams.investment_period) || basicParams.investment_period <= 0) {
+                showAlert('投资期限无效，请重新设置', 'error');
+                console.error('投资期限无效:', basicParams.investment_period);
+                return;
+            }
+            
+            if (isNaN(basicParams.hurdle_rate) || basicParams.hurdle_rate < 0) {
+                showAlert('门槛收益率无效，请重新设置', 'error');
+                console.error('门槛收益率无效:', basicParams.hurdle_rate);
+                return;
+            }
+            
+            if (isNaN(basicParams.management_carry) || basicParams.management_carry < 0) {
+                showAlert('管理人Carry无效，请重新设置', 'error');
+                console.error('管理人Carry无效:', basicParams.management_carry);
+                return;
+            }
+            
+            // 验证现金流数据的有效性
+            const validCashFlows = cashFlows.filter((cf, index) => {
+                const value = parseFloat(cf);
+                if (isNaN(value)) {
+                    console.error(`第${index + 1}年现金流无效:`, cf);
+                    showAlert(`第${index + 1}年现金流数据无效，请重新设置`, 'error');
+                    return false;
+                }
+                return true;
+            });
+            
+            if (validCashFlows.length !== cashFlows.length) {
+                showAlert('现金流数据包含无效值，请检查并重新设置', 'error');
+                return;
+            }
+            
+            // 检查现金流数据长度是否匹配投资期限
+            if (cashFlows.length !== basicParams.investment_period) {
+                showAlert(`现金流数据长度(${cashFlows.length})与投资期限(${basicParams.investment_period})不匹配`, 'error');
                 return;
             }
             
