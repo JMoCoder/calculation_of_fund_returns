@@ -887,6 +887,10 @@
             background-color: var(--warning-color);
         }
         
+        .alert.info {
+            background-color: var(--info-color);
+        }
+        
         .alert i {
             font-size: 18px;
         }
@@ -925,6 +929,431 @@
             color: var(--text-secondary);
             line-height: 1.5;
         }
+
+        /* ==================== 图表分析页面样式 ==================== */
+        
+        /* 图表工具栏 */
+        .charts-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md) 0;
+            margin-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .toolbar-left,
+        .toolbar-right {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        /* 图表区域分组 */
+        .charts-section {
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .section-title i {
+            color: var(--primary-color);
+            font-size: 22px;
+        }
+        
+        /* 图表核心指标网格 */
+        .charts-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .charts-metric-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: var(--text-inverse);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 90px;
+        }
+        
+        .charts-metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: rotate(45deg);
+        }
+        
+        .charts-metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .metric-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .metric-icon i {
+            font-size: 16px;
+            color: var(--text-inverse);
+        }
+        
+        .metric-content {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+            min-width: 0;
+        }
+        
+        .metric-label {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-bottom: var(--spacing-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .metric-subtitle {
+            font-size: 10px;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+        
+        /* 分配情况概览 */
+        .distribution-overview {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xl);
+            border: 1px solid var(--border-secondary);
+        }
+        
+        .distribution-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .distribution-header h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .distribution-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .distribution-flow {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        .distribution-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+            min-width: 350px;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-secondary);
+        }
+        
+        .distribution-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .distribution-item.principal {
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .distribution-item.return {
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .distribution-item.carry {
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .distribution-item.hurdle {
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .distribution-step {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .distribution-content {
+            flex: 1;
+        }
+        
+        .distribution-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .distribution-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .distribution-percentage {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .distribution-arrow {
+            color: var(--primary-color);
+            font-size: 20px;
+            margin: var(--spacing-sm) 0;
+        }
+        
+        /* 图表网格 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        /* 图表卡片 */
+        .chart-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-secondary);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .chart-card-header {
+            background: var(--bg-secondary);
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .chart-title i {
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+        
+        .chart-card-body {
+            padding: var(--spacing-lg);
+            position: relative;
+            min-height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+        }
+        
+        .chart-card-body canvas {
+            max-width: 100%;
+            max-height: 350px !important;
+            display: block;
+        }
+        
+        /* 图表加载状态 */
+        .chart-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            height: 200px;
+        }
+        
+        .chart-loading i {
+            font-size: 32px;
+            margin-bottom: var(--spacing-md);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 图表错误状态 */
+        .chart-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--error-color);
+            font-size: 14px;
+            height: 200px;
+        }
+        
+        .chart-error i {
+            font-size: 32px;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-metrics-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .charts-toolbar {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: stretch;
+            }
+            
+            .toolbar-left,
+            .toolbar-right {
+                justify-content: center;
+            }
+            
+            .charts-metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .distribution-item {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .section-title {
+                font-size: 18px;
+            }
+        }
+        
+        /* 按钮样式扩展 */
+        .btn-outline-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--bg-secondary);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline-primary {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: var(--text-inverse);
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+        
+        /* 帮助文本容器 */
+        .help-text-container {
+            text-align: center;
+            padding: var(--spacing-xxl);
+            color: var(--text-secondary);
+        }
+        
+        .help-text-container .help-text {
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        /* Bootstrap兼容的间距类 */
+        .me-1 { margin-right: var(--spacing-xs) !important; }
+        .me-2 { margin-right: var(--spacing-sm) !important; }
+        .ms-1 { margin-left: var(--spacing-xs) !important; }
+        .ms-2 { margin-left: var(--spacing-sm) !important; }
+        .mt-1 { margin-top: var(--spacing-xs) !important; }
+        .mt-2 { margin-top: var(--spacing-sm) !important; }
+        .mb-1 { margin-bottom: var(--spacing-xs) !important; }
+        .mb-2 { margin-bottom: var(--spacing-sm) !important; }
     </style>
 </head>
 <body>
@@ -1336,7 +1765,96 @@
                         </div>
 
                         <div id="chartContainer">
-                            <p class="help-text">请先完成计算步骤</p>
+                            <!-- 初始状态提示 -->
+                            <div id="chartInitialState" class="help-text-container">
+                                <p class="help-text">请先完成计算步骤</p>
+                            </div>
+                            
+                            <!-- 图表分析内容 -->
+                            <div id="chartAnalysisContent" style="display: none;">
+                                <!-- 工具栏 -->
+                                <div class="charts-toolbar">
+                                    <div class="toolbar-left">
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshCharts()">
+                                            <i class="fas fa-sync-alt me-1"></i>
+                                            刷新数据
+                                        </button>
+                                    </div>
+                                    <div class="toolbar-right">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="exportChartReport()">
+                                            <i class="fas fa-download me-1"></i>
+                                            导出报告
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- 核心指标仪表盘 -->
+                                <div class="charts-section">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-tachometer-alt me-2"></i>
+                                        核心指标仪表盘
+                                    </h3>
+                                    <div class="charts-metrics-grid" id="chartsMetricsGrid">
+                                        <!-- 8个核心指标卡片将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                                
+                                <!-- 分配情况概览 -->
+                                <div class="charts-section">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-chart-pie me-2"></i>
+                                        分配情况概览
+                                    </h3>
+                                    <div class="distribution-overview" id="distributionOverview">
+                                        <!-- 分配概览内容将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                                
+                                <!-- 可视化图表 -->
+                                <div class="charts-section">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                        可视化图表
+                                    </h3>
+                                    <div class="charts-grid">
+                                        <div class="chart-card">
+                                            <div class="chart-card-header">
+                                                <h4 class="chart-title">
+                                                    <i class="fas fa-chart-line me-2"></i>
+                                                    现金流回收分析
+                                                </h4>
+                                            </div>
+                                            <div class="chart-card-body">
+                                                <canvas id="cashFlowChart"></canvas>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="chart-card">
+                                            <div class="chart-card-header">
+                                                <h4 class="chart-title">
+                                                    <i class="fas fa-chart-bar me-2"></i>
+                                                    现金流分配结构
+                                                </h4>
+                                            </div>
+                                            <div class="chart-card-body">
+                                                <canvas id="distributionChart"></canvas>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="chart-card">
+                                            <div class="chart-card-header">
+                                                <h4 class="chart-title">
+                                                    <i class="fas fa-chart-pie me-2"></i>
+                                                    整体分配结构
+                                                </h4>
+                                            </div>
+                                            <div class="chart-card-body">
+                                                <canvas id="pieChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="action-bar">
@@ -2432,9 +2950,11 @@
                     displayCalculationResults(result);
                     showTab('results');
                     
-                    // 启用导出和可视化按钮
+                    // 启用导出按钮
                     document.getElementById('exportBtn').disabled = false;
-                    document.getElementById('visualizeBtn').disabled = false;
+                    
+                    // 启用第5步骤：图表分析
+                    enableVisualizationStep();
                 } else {
                     console.error('计算失败:', result.message);
                     showAlert(result.message, 'error');
@@ -2904,7 +3424,8 @@
             const iconMap = {
                 'success': 'fas fa-check-circle',
                 'error': 'fas fa-exclamation-circle',
-                'warning': 'fas fa-exclamation-triangle'
+                'warning': 'fas fa-exclamation-triangle',
+                'info': 'fas fa-info-circle'
             };
             
             alertDiv.innerHTML = `
@@ -3285,6 +3806,270 @@
             
             return html;
         }
+
+        // ==================== 图表分析相关功能 ====================
+        
+        /**
+         * 启用第5步骤：图表分析
+         */
+        function enableVisualizationStep() {
+            try {
+                console.log('启用图表分析步骤');
+                
+                // 标记第4步骤（结果）为完成状态
+                markStepCompleted(3);
+                
+                // 启用第5步骤的点击功能
+                const visualizationStep = document.querySelectorAll('.step-item')[4];
+                if (visualizationStep) {
+                    visualizationStep.style.opacity = '1';
+                    visualizationStep.style.pointerEvents = 'auto';
+                    console.log('图表分析步骤已启用');
+                }
+                
+            } catch (error) {
+                console.error('启用图表分析步骤失败:', error);
+            }
+        }
+        
+        /**
+         * 加载并显示图表分析
+         */
+        async function loadChartAnalysis() {
+            try {
+                console.log('开始加载图表分析');
+                
+                // 显示初始状态
+                const chartInitialState = document.getElementById('chartInitialState');
+                const chartAnalysisContent = document.getElementById('chartAnalysisContent');
+                
+                if (!chartInitialState || !chartAnalysisContent) {
+                    console.error('图表容器元素未找到');
+                    return;
+                }
+                
+                // 显示加载状态
+                chartInitialState.innerHTML = '<p class="help-text">正在加载图表数据...</p>';
+                chartAnalysisContent.style.display = 'none';
+                
+                // 获取图表数据
+                const response = await fetch('/api/chart-data');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    chartInitialState.innerHTML = `<p class="help-text">加载失败: ${result.message}</p>`;
+                    return;
+                }
+                
+                console.log('图表数据获取成功:', result.data);
+                
+                // 隐藏初始状态，显示图表内容
+                chartInitialState.style.display = 'none';
+                chartAnalysisContent.style.display = 'block';
+                
+                // 渲染核心指标
+                renderCoreMetrics(result.data.core_metrics);
+                
+                // 渲染分配情况概览
+                renderDistributionOverview(result.data.distribution_summary);
+                
+                // 渲染图表
+                await renderCharts(result.data.chart_configs);
+                
+                console.log('图表分析加载完成');
+                
+            } catch (error) {
+                console.error('加载图表分析失败:', error);
+                const chartInitialState = document.getElementById('chartInitialState');
+                if (chartInitialState) {
+                    chartInitialState.innerHTML = `<p class="help-text">加载失败: ${error.message}</p>`;
+                }
+            }
+        }
+        
+        /**
+         * 渲染核心指标卡片
+         */
+        function renderCoreMetrics(metrics) {
+            const container = document.getElementById('chartsMetricsGrid');
+            if (!container) return;
+            
+            const metricsOrder = ['irr', 'dpi', 'distribution_rate', 'static_payback', 'calculation_mode', 'investment_amount', 'investment_period', 'hurdle_rate'];
+            
+            let html = '';
+            
+            metricsOrder.forEach(key => {
+                const metric = metrics[key];
+                if (metric) {
+                    html += `
+                        <div class="charts-metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">${metric.title}</div>
+                                <div class="metric-value">${metric.value} ${metric.unit || ''}</div>
+                                <div class="metric-subtitle">${metric.subtitle}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        /**
+         * 渲染分配情况概览
+         */
+        function renderDistributionOverview(summary) {
+            const container = document.getElementById('distributionOverview');
+            if (!container) return;
+            
+            let html = `
+                <div class="distribution-header">
+                    <h4>${summary.mode}</h4>
+                    <p>分配顺序与金额分布</p>
+                </div>
+                <div class="distribution-flow">
+            `;
+            
+            summary.items.forEach((item, index) => {
+                html += `
+                    <div class="distribution-item ${item.class}">
+                        <div class="distribution-step">${index + 1}</div>
+                        <div class="distribution-content">
+                            <div class="distribution-name">${item.name}</div>
+                            <div class="distribution-amount">${item.amount}</div>
+                            <div class="distribution-percentage">${item.percentage}</div>
+                        </div>
+                    </div>
+                `;
+                
+                if (index < summary.items.length - 1) {
+                    html += '<div class="distribution-arrow"><i class="fas fa-arrow-down"></i></div>';
+                }
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        /**
+         * 渲染图表
+         */
+        async function renderCharts(chartConfigs) {
+            try {
+                // 确保Chart.js已加载
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js未加载');
+                    return;
+                }
+                
+                // 销毁现有图表
+                destroyExistingCharts();
+                
+                // 渲染各个图表
+                await Promise.all([
+                    renderChart('cashFlowChart', chartConfigs.cash_flow_chart),
+                    renderChart('distributionChart', chartConfigs.distribution_chart),
+                    renderChart('pieChart', chartConfigs.pie_chart)
+                ]);
+                
+                console.log('所有图表渲染完成');
+                
+            } catch (error) {
+                console.error('渲染图表失败:', error);
+            }
+        }
+        
+        /**
+         * 渲染单个图表
+         */
+        function renderChart(canvasId, config) {
+            return new Promise((resolve) => {
+                try {
+                    const canvas = document.getElementById(canvasId);
+                    if (!canvas) {
+                        console.warn(`图表容器 ${canvasId} 未找到`);
+                        resolve();
+                        return;
+                    }
+                    
+                    const ctx = canvas.getContext('2d');
+                    const chart = new Chart(ctx, config);
+                    
+                    // 保存图表实例以便后续销毁
+                    if (!window.chartInstances) {
+                        window.chartInstances = {};
+                    }
+                    window.chartInstances[canvasId] = chart;
+                    
+                    console.log(`图表 ${canvasId} 渲染成功`);
+                    resolve();
+                    
+                } catch (error) {
+                    console.error(`渲染图表 ${canvasId} 失败:`, error);
+                    resolve(); // 即使失败也继续
+                }
+            });
+        }
+        
+        /**
+         * 销毁现有图表
+         */
+        function destroyExistingCharts() {
+            if (window.chartInstances) {
+                Object.values(window.chartInstances).forEach(chart => {
+                    if (chart && typeof chart.destroy === 'function') {
+                        chart.destroy();
+                    }
+                });
+                window.chartInstances = {};
+            }
+        }
+        
+        /**
+         * 刷新图表
+         */
+        async function refreshCharts() {
+            try {
+                showAlert('正在刷新图表数据...', 'info');
+                await loadChartAnalysis();
+                showAlert('图表数据已刷新', 'success');
+            } catch (error) {
+                console.error('刷新图表失败:', error);
+                showAlert('刷新图表失败: ' + error.message, 'error');
+            }
+        }
+        
+        /**
+         * 导出图表报告
+         */
+        async function exportChartReport() {
+            try {
+                showAlert('图表报告导出功能开发中...', 'info');
+            } catch (error) {
+                console.error('导出图表报告失败:', error);
+                showAlert('导出失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 监听步骤切换，当切换到图表分析时自动加载
+        const originalShowTab = window.showTab;
+        window.showTab = function(tabId) {
+            // 调用原始的showTab函数
+            if (originalShowTab) {
+                originalShowTab(tabId);
+            }
+            
+            // 如果切换到图表分析且有计算结果，则加载图表
+            if (tabId === 'visualization' && calculationResults) {
+                setTimeout(() => {
+                    loadChartAnalysis();
+                }, 100);
+            }
+        };
     </script>
     
     <!-- 外部JavaScript库 -->

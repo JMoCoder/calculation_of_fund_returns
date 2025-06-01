@@ -1,7 +1,26 @@
 /**
- * 基金收益分配计算系统 - 图表模块（简化版）
- * 使用后端格式化数据，避免前端数值计算错误
+ * 基金收益分配计算系统 - 图表模块
+ * 提供简化的图表初始化和管理功能
  */
+
+// 确保Chart.js加载完成后再执行
+document.addEventListener('DOMContentLoaded', function() {
+    // 基本的图表初始化
+    console.log('图表模块已加载');
+    
+    // 如果Chart.js存在，进行基本配置
+    if (typeof Chart !== 'undefined') {
+        // 设置Chart.js默认配置
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.font.size = 12;
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+        
+        console.log('Chart.js配置完成');
+    } else {
+        console.warn('Chart.js未加载，图表功能可能不可用');
+    }
+});
 
 /**
  * 创建现金流图表
@@ -375,5 +394,8 @@ window.ChartUtils = {
     destroyAllCharts,
     exportChartAsImage,
     updateChartTheme,
-    redrawAllCharts
+    redrawAllCharts,
+    getChart: function(canvasId) {
+        return window.chartInstances ? window.chartInstances[canvasId] : null;
+    }
 }; 

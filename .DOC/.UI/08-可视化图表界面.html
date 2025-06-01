@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可视化图表界面 - 高保真UI设计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #f8fafc;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 页面标题区域 */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+
+        .calculation-mode-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* 核心指标仪表盘 - 8个指标卡片 */
+        .metrics-dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .metric-subtitle {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* 分配情况概览 */
+        .distribution-overview {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .overview-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .distribution-order {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .order-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .order-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .order-step {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .order-arrow {
+            color: #6b7280;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .distribution-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .distribution-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .distribution-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .distribution-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .distribution-card.principal::before { background: #3b82f6; }
+        .distribution-card.hurdle::before { background: #10b981; }
+        .distribution-card.carry::before { background: #8b5cf6; }
+
+        .distribution-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .distribution-percentage {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .distribution-card.principal .distribution-percentage { color: #3b82f6; }
+        .distribution-card.hurdle .distribution-percentage { color: #10b981; }
+        .distribution-card.carry .distribution-percentage { color: #8b5cf6; }
+
+        .distribution-amount {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        /* 图表区域 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            position: relative;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .chart-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chart-control-btn {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chart-control-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .chart-control-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* 模拟图表区域 */
+        .chart-area {
+            height: 350px;
+            position: relative;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            margin-bottom: 16px;
+        }
+
+        .chart-placeholder {
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .chart-placeholder .chart-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* 现金流回收图样式 */
+        .cashflow-chart {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        }
+
+        .cashflow-chart .chart-area {
+            background: linear-gradient(45deg, #dbeafe, #bfdbfe);
+            border-color: #93c5fd;
+        }
+
+        /* 分配图样式 */
+        .distribution-chart {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        }
+
+        .distribution-chart .chart-area {
+            background: linear-gradient(45deg, #dcfce7, #bbf7d0);
+            border-color: #86efac;
+        }
+
+        /* 图表图例 */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .legend-color.cashflow { background: #3b82f6; }
+        .legend-color.cumulative { background: #06b6d4; }
+        .legend-color.principal { background: #3b82f6; }
+        .legend-color.hurdle { background: #10b981; }
+        .legend-color.carry-lp { background: #8b5cf6; }
+        .legend-color.carry-gp { background: #f59e0b; }
+
+        /* 底部图表区域 */
+        .bottom-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .pie-chart-container {
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+        }
+
+        .pie-chart-container .chart-area {
+            background: linear-gradient(45deg, #f3e8ff, #e9d5ff);
+            border-color: #c4b5fd;
+        }
+
+        .trend-chart-container {
+            background: linear-gradient(135deg, #fff7ed, #fed7aa);
+        }
+
+        .trend-chart-container .chart-area {
+            background: linear-gradient(45deg, #fed7aa, #fdba74);
+            border-color: #fb923c;
+        }
+
+        /* 工具栏 */
+        .chart-toolbar {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .toolbar-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .toolbar-select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+            color: #374151;
+            min-width: 120px;
+        }
+
+        .toolbar-btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toolbar-btn:hover {
+            background: #2563eb;
+        }
+
+        .toolbar-btn.secondary {
+            background: #6b7280;
+        }
+
+        .toolbar-btn.secondary:hover {
+            background: #4b5563;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .metrics-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .charts-grid,
+            .bottom-charts {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-area {
+                height: 300px;
+            }
+
+            .order-flow {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .order-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .metrics-dashboard {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .distribution-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-area {
+                height: 250px;
+            }
+            
+            .toolbar-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* 图表动画效果 */
+        .chart-container {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .chart-container:nth-child(1) { animation-delay: 0.1s; }
+        .chart-container:nth-child(2) { animation-delay: 0.2s; }
+        .chart-container:nth-child(3) { animation-delay: 0.3s; }
+        .chart-container:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 交互提示 */
+        .interaction-hint {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题区域 -->
+        <div class="page-header">
+            <h1 class="page-title">📊 投资收益分配可视化分析</h1>
+            <p class="page-subtitle">通过专业图表深度解析投资回收情况与分配结构</p>
+            <div class="calculation-mode-badge">
+                当前计算模式：平层结构-优先还本
+            </div>
+        </div>
+
+        <!-- 图表工具栏 -->
+        <div class="chart-toolbar">
+            <div class="toolbar-section">
+                <span class="toolbar-label">图表模式:</span>
+                <select class="toolbar-select">
+                    <option value="overview">总览模式</option>
+                    <option value="detail">详细模式</option>
+                    <option value="comparison">对比模式</option>
+                </select>
+            </div>
+            <div class="toolbar-section">
+                <span class="toolbar-label">时间范围:</span>
+                <select class="toolbar-select">
+                    <option value="all">全部年份</option>
+                    <option value="recent">近3年</option>
+                    <option value="custom">自定义</option>
+                </select>
+            </div>
+            <div class="toolbar-section">
+                <button class="toolbar-btn">📸 导出图表</button>
+                <button class="toolbar-btn secondary">📋 生成报告</button>
+            </div>
+        </div>
+
+        <!-- 核心指标仪表盘 - 8个指标卡片 -->
+        <div class="metrics-dashboard">
+            <div class="metric-card">
+                <div class="metric-title">内部收益率</div>
+                <div class="metric-value">15.25%</div>
+                <div class="metric-subtitle">IRR</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">分配倍数</div>
+                <div class="metric-value">1.85</div>
+                <div class="metric-subtitle">DPI</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">分派率</div>
+                <div class="metric-value">5.2%-12.8%</div>
+                <div class="metric-subtitle">年度分派率范围</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">静态回本周期</div>
+                <div class="metric-value">3.2年</div>
+                <div class="metric-subtitle">不含时间价值</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">计算模式</div>
+                <div class="metric-value">平层结构</div>
+                <div class="metric-subtitle">优先还本</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">投资金额</div>
+                <div class="metric-value">1,000万元</div>
+                <div class="metric-subtitle">总投资</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">投资期限</div>
+                <div class="metric-value">5年</div>
+                <div class="metric-subtitle">投资周期</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">门槛收益率</div>
+                <div class="metric-value">8%</div>
+                <div class="metric-subtitle">最低预期收益</div>
+            </div>
+        </div>
+
+        <!-- 分配情况概览 -->
+        <div class="distribution-overview">
+            <div class="overview-title">
+                🎯 分配情况概览
+            </div>
+            
+            <div class="distribution-order">
+                <div class="order-title">分配优先级顺序</div>
+                <div class="order-flow">
+                    <div class="order-step">① 本金归还</div>
+                    <div class="order-arrow">→</div>
+                    <div class="order-step">② 门槛收益</div>
+                    <div class="order-arrow">→</div>
+                    <div class="order-step">③ Carry分配</div>
+                </div>
+            </div>
+
+            <div class="distribution-cards">
+                <div class="distribution-card principal">
+                    <div class="distribution-name">本金归还</div>
+                    <div class="distribution-percentage">65%</div>
+                    <div class="distribution-amount">1,000万元</div>
+                </div>
+
+                <div class="distribution-card hurdle">
+                    <div class="distribution-name">门槛收益</div>
+                    <div class="distribution-percentage">25%</div>
+                    <div class="distribution-amount">680万元</div>
+                </div>
+
+                <div class="distribution-card carry">
+                    <div class="distribution-name">Carry分配</div>
+                    <div class="distribution-percentage">10%</div>
+                    <div class="distribution-amount">170万元</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要图表区域 -->
+        <div class="charts-grid">
+            <!-- 现金流回收图 -->
+            <div class="chart-container cashflow-chart">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">💧 现金流回收分析</div>
+                        <div class="chart-subtitle">展示各年度现金流入流出及累计回收进度</div>
+                    </div>
+                    <div class="chart-controls">
+                        <button class="chart-control-btn active">年度视图</button>
+                        <button class="chart-control-btn">季度视图</button>
+                        <button class="chart-control-btn">累计视图</button>
+                    </div>
+                </div>
+                <div class="chart-area">
+                    <div class="chart-placeholder">
+                        <div class="chart-icon">📊</div>
+                        <div>现金流回收瀑布图</div>
+                        <div style="font-size: 12px; margin-top: 8px;">
+                            横轴: 年限 | 纵轴: 现金流量(万元)<br>
+                            向下: 初始投资 | 向上: 年度回收
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color cashflow"></div>
+                        <span>年度现金流</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color cumulative"></div>
+                        <span>累计回收线</span>
+                    </div>
+                </div>
+                <div class="interaction-hint">悬停查看详情</div>
+            </div>
+
+            <!-- 现金流分配图 -->
+            <div class="chart-container distribution-chart">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">🎯 现金流分配结构</div>
+                        <div class="chart-subtitle">展示每期现金流的分配比例和优先级</div>
+                    </div>
+                    <div class="chart-controls">
+                        <button class="chart-control-btn active">比例视图</button>
+                        <button class="chart-control-btn">金额视图</button>
+                        <button class="chart-control-btn">优先级</button>
+                    </div>
+                </div>
+                <div class="chart-area">
+                    <div class="chart-placeholder">
+                        <div class="chart-icon">📈</div>
+                        <div>分配结构堆叠柱状图</div>
+                        <div style="font-size: 12px; margin-top: 8px;">
+                            横轴: 年限 | 纵轴: 分配比例(%)<br>
+                            不同颜色代表不同分配类型
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color principal"></div>
+                        <span>本金归还</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color hurdle"></div>
+                        <span>门槛收益</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color carry-lp"></div>
+                        <span>Carry LP</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color carry-gp"></div>
+                        <span>Carry GP</span>
+                    </div>
+                </div>
+                <div class="interaction-hint">点击切换年份</div>
+            </div>
+        </div>
+
+        <!-- 底部图表区域 -->
+        <div class="bottom-charts">
+            <!-- 分配结构饼图 -->
+            <div class="chart-container pie-chart-container">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">🥧 整体分配结构</div>
+                        <div class="chart-subtitle">投资回收的整体构成比例</div>
+                    </div>
+                    <div class="chart-controls">
+                        <button class="chart-control-btn active">总体</button>
+                        <button class="chart-control-btn">分层</button>
+                        <button class="chart-control-btn">3D视图</button>
+                    </div>
+                </div>
+                <div class="chart-area">
+                    <div class="chart-placeholder">
+                        <div class="chart-icon">🍰</div>
+                        <div>分配结构饼图</div>
+                        <div style="font-size: 12px; margin-top: 8px;">
+                            展示各类收益分配的占比<br>
+                            支持分层展开查看详情
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color principal"></div>
+                        <span>本金归还 (65%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color hurdle"></div>
+                        <span>门槛收益 (25%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color carry-lp"></div>
+                        <span>Carry分配 (10%)</span>
+                    </div>
+                </div>
+                <div class="interaction-hint">双击展开分层</div>
+            </div>
+
+            <!-- 趋势分析图 -->
+            <div class="chart-container trend-chart-container">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">📈 收益趋势分析</div>
+                        <div class="chart-subtitle">核心指标的时间趋势变化</div>
+                    </div>
+                    <div class="chart-controls">
+                        <button class="chart-control-btn active">IRR</button>
+                        <button class="chart-control-btn">DPI</button>
+                        <button class="chart-control-btn">回本期</button>
+                    </div>
+                </div>
+                <div class="chart-area">
+                    <div class="chart-placeholder">
+                        <div class="chart-icon">📉</div>
+                        <div>指标趋势折线图</div>
+                        <div style="font-size: 12px; margin-top: 8px;">
+                            展示关键指标随时间变化<br>
+                            支持多指标对比分析
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3b82f6;"></div>
+                        <span>IRR趋势</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #10b981;"></div>
+                        <span>DPI趋势</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f59e0b;"></div>
+                        <span>目标基准</span>
+                    </div>
+                </div>
+                <div class="interaction-hint">拖拽缩放时间</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模拟Chart.js加载 -->
+    <script>
+        // 模拟图表加载和交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 模拟图表控制按钮交互
+            document.querySelectorAll('.chart-control-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 移除同组其他按钮的active状态
+                    this.parentElement.querySelectorAll('.chart-control-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    // 添加当前按钮的active状态
+                    this.classList.add('active');
+                    
+                    // 模拟图表重新渲染
+                    const chartArea = this.closest('.chart-container').querySelector('.chart-area');
+                    chartArea.style.opacity = '0.5';
+                    setTimeout(() => {
+                        chartArea.style.opacity = '1';
+                    }, 300);
+                });
+            });
+
+            // 指标卡片点击效果
+            document.querySelectorAll('.metric-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 100);
+                });
+            });
+
+            // 分配卡片点击效果
+            document.querySelectorAll('.distribution-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    setTimeout(() => {
+                        this.style.transform = 'translateY(-3px)';
+                    }, 100);
+                });
+            });
+
+            // 工具栏控件交互
+            document.querySelectorAll('.toolbar-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    console.log('图表参数更新:', this.value);
+                    // 模拟根据不同计算模式更新分配情况
+                    updateDistributionOverview(this.value);
+                });
+            });
+
+            document.querySelectorAll('.toolbar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.textContent.includes('导出') ? '导出图表' : '生成报告';
+                    alert(`${action}功能开发中...`);
+                });
+            });
+        });
+
+        // 模拟根据计算模式更新分配情况
+        function updateDistributionOverview(mode) {
+            const distributionData = {
+                'overview': {
+                    mode: '平层结构-优先还本',
+                    order: ['本金归还', '门槛收益', 'Carry分配'],
+                    data: [
+                        { name: '本金归还', percentage: '65%', amount: '1,000万元', class: 'principal' },
+                        { name: '门槛收益', percentage: '25%', amount: '680万元', class: 'hurdle' },
+                        { name: 'Carry分配', percentage: '10%', amount: '170万元', class: 'carry' }
+                    ]
+                },
+                'detail': {
+                    mode: '结构化-优先劣后',
+                    order: ['优先级还本', '优先级收益', '劣后级还本', 'Carry分配'],
+                    data: [
+                        { name: '优先级还本', percentage: '50%', amount: '500万元', class: 'principal' },
+                        { name: '优先级收益', percentage: '20%', amount: '200万元', class: 'hurdle' },
+                        { name: '劣后级还本', percentage: '20%', amount: '200万元', class: 'principal' },
+                        { name: 'Carry分配', percentage: '10%', amount: '100万元', class: 'carry' }
+                    ]
+                }
+            };
+
+            const data = distributionData[mode] || distributionData['overview'];
+            
+            // 更新模式标签
+            document.querySelector('.calculation-mode-badge').textContent = `当前计算模式：${data.mode}`;
+            
+            // 更新分配顺序
+            const orderFlow = document.querySelector('.order-flow');
+            orderFlow.innerHTML = '';
+            data.order.forEach((step, index) => {
+                if (index > 0) {
+                    orderFlow.innerHTML += '<div class="order-arrow">→</div>';
+                }
+                orderFlow.innerHTML += `<div class="order-step">① ${step}</div>`;
+            });
+
+            // 更新分配卡片
+            const cardsContainer = document.querySelector('.distribution-cards');
+            cardsContainer.innerHTML = '';
+            data.data.forEach(item => {
+                cardsContainer.innerHTML += `
+                    <div class="distribution-card ${item.class}">
+                        <div class="distribution-name">${item.name}</div>
+                        <div class="distribution-percentage">${item.percentage}</div>
+                        <div class="distribution-amount">${item.amount}</div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html> 
