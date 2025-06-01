@@ -1492,6 +1492,8 @@ def calculate():
         
         # 格式化结果并返回
         if result.get('success'):
+            # 保存最后的计算结果供图表使用
+            calculator.last_calculation_result = result
             formatted_result = format_calculation_results(result)
             logger.info("结果格式化完成")
             return jsonify(formatted_result)
@@ -1681,9 +1683,501 @@ def download_template():
         logger.error(f"下载模板错误: {str(e)}")
         return jsonify({'success': False, 'message': f'下载模板失败: {str(e)}'}), 500
 
+@app.route('/api/chart-data', methods=['GET'])
+def get_chart_data():
+    """获取图表数据"""
+    try:
+        # 检查是否有计算结果
+        if not hasattr(calculator, 'last_calculation_result') or not calculator.last_calculation_result:
+            return jsonify({'success': False, 'message': '请先完成计算'}), 400
+        
+        result = calculator.last_calculation_result
+        
+        # 格式化核心指标数据
+        core_metrics = result.get('core_metrics', {})
+        basic_params = calculator.basic_params
+        
+        # 8个核心指标
+        metrics_data = {
+            'irr': {
+                'title': '内部收益率',
+                'value': core_metrics.get('irr', 0),
+                'subtitle': 'IRR',
+                'unit': '%'
+            },
+            'dpi': {
+                'title': '分配倍数', 
+                'value': core_metrics.get('dpi', 0),
+                'subtitle': 'DPI',
+                'unit': ''
+            },
+            'distribution_rate': {
+                'title': '分派率',
+                'value': get_distribution_rate_range(result.get('cash_flow_table', [])),
+                'subtitle': '年度分派率范围',
+                'unit': ''
+            },
+            'static_payback': {
+                'title': '静态回本周期',
+                'value': core_metrics.get('static_payback_period', '无法回本'),
+                'subtitle': '不含时间价值',
+                'unit': ''
+            },
+            'calculation_mode': {
+                'title': '计算模式',
+                'value': format_mode_display(result.get('calculation_mode', '')),
+                'subtitle': get_mode_subtitle(result.get('calculation_mode', '')),
+                'unit': ''
+            },
+            'investment_amount': {
+                'title': '投资金额',
+                'value': f"{basic_params.get('investment_amount', 0):,.0f}",
+                'subtitle': '总投资',
+                'unit': '万元'
+            },
+            'investment_period': {
+                'title': '投资期限',
+                'value': f"{basic_params.get('investment_period', 0)}",
+                'subtitle': '投资周期',
+                'unit': '年'
+            },
+            'hurdle_rate': {
+                'title': '门槛收益率',
+                'value': f"{basic_params.get('hurdle_rate', 0)}",
+                'subtitle': '最低预期收益',
+                'unit': '%'
+            }
+        }
+        
+        # 获取原始数据的totals用于图表计算
+        raw_totals = calculate_totals(result.get('cash_flow_table', []), result.get('calculation_mode', ''))
+        
+        # 分配情况概览
+        try:
+            distribution_summary = get_distribution_summary(
+                result.get('calculation_mode', ''),
+                result.get('cash_flow_table', []),
+                raw_totals  # 使用原始数据totals
+            )
+        except Exception as e:
+            logger.error(f"获取分配概览错误: {str(e)}")
+            return jsonify({'success': False, 'message': f'获取分配概览失败: {str(e)}'}), 500
+        
+        # 构建图表配置
+        chart_configs = {
+            'cash_flow_chart': get_cash_flow_chart_config(calculator.calculation_results),
+            'distribution_chart': get_distribution_chart_config(calculator.calculation_results),
+            'pie_chart': get_pie_chart_config(calculator.calculation_results)
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'core_metrics': metrics_data,
+                'distribution_summary': distribution_summary,
+                'chart_configs': chart_configs
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取图表数据错误: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({'success': False, 'message': f'获取图表数据失败: {str(e)}'}), 500
+
+def get_distribution_rate_range(cash_flow_table):
+    """计算分派率范围"""
+    try:
+        rates = []
+        for row in cash_flow_table:
+            rate = row.get('cash_flow_distribution_rate', 0)
+            if isinstance(rate, (int, float)) and rate > 0:
+                rates.append(rate)
+        
+        if not rates:
+            return '0.00%'
+        
+        min_rate = min(rates)
+        max_rate = max(rates)
+        
+        if min_rate == max_rate:
+            return f'{min_rate:.2f}%'
+        else:
+            return f'{min_rate:.2f}%-{max_rate:.2f}%'
+    except:
+        return '0.00%'
+
+def format_mode_display(mode):
+    """格式化计算模式显示"""
+    mode_map = {
+        '平层结构-优先还本': '平层结构',
+        '平层结构-期间分配': '平层结构',
+        '结构化-优先劣后': '结构化',
+        '结构化-包含夹层': '结构化',
+        '结构化-息息本本': '结构化'
+    }
+    return mode_map.get(mode, mode)
+
+def get_mode_subtitle(mode):
+    """获取计算模式副标题"""
+    subtitle_map = {
+        '平层结构-优先还本': '优先还本',
+        '平层结构-期间分配': '期间分配',
+        '结构化-优先劣后': '优先劣后',
+        '结构化-包含夹层': '包含夹层',
+        '结构化-息息本本': '息息本本'
+    }
+    return subtitle_map.get(mode, '')
+
+def get_distribution_summary(calculation_mode, cash_flow_table, totals):
+    """获取分配情况概览"""
+    try:
+        # 根据不同计算模式定义分配类型和顺序
+        mode_configs = {
+            '平层结构-优先还本': {
+                'order': ['本金归还', '门槛收益', 'Carry分配'],
+                'fields': {
+                    '本金归还': 'principal_repayment',
+                    '门槛收益': 'distributed_hurdle_return',
+                    'Carry分配': ['carry_lp', 'carry_gp']
+                }
+            },
+            '平层结构-期间分配': {
+                'order': ['期间分配', '本金归还', '门槛收益', 'Carry分配'],
+                'fields': {
+                    '期间分配': 'periodic_distribution',
+                    '本金归还': 'principal_repayment',
+                    '门槛收益': 'distributed_hurdle_return',
+                    'Carry分配': ['carry_lp', 'carry_gp']
+                }
+            },
+            '结构化-优先劣后': {
+                'order': ['优先级还本', '优先级收益', '劣后级还本', 'Carry分配'],
+                'fields': {
+                    '优先级还本': 'senior_principal_repayment',
+                    '优先级收益': 'senior_periodic_return',
+                    '劣后级还本': 'subordinate_principal_repayment',
+                    'Carry分配': ['carry_lp', 'carry_gp']
+                }
+            },
+            '结构化-包含夹层': {
+                'order': ['优先级收益', '夹层收益', '优先级还本', '夹层还本', '劣后级还本', 'Carry分配'],
+                'fields': {
+                    '优先级收益': 'senior_hurdle_distribution',
+                    '夹层收益': 'mezzanine_hurdle_distribution',
+                    '优先级还本': 'senior_principal_repayment',
+                    '夹层还本': 'mezzanine_principal_repayment',
+                    '劣后级还本': 'subordinate_principal_repayment',
+                    'Carry分配': ['carry_lp', 'carry_gp']
+                }
+            },
+            '结构化-息息本本': {
+                'order': ['优先级收益', '劣后级收益', '优先级还本', '劣后级还本', 'Carry分配'],
+                'fields': {
+                    '优先级收益': 'senior_periodic_return',
+                    '劣后级收益': 'subordinate_periodic_return',
+                    '优先级还本': 'senior_principal_repayment',
+                    '劣后级还本': 'subordinate_principal_repayment',
+                    'Carry分配': ['carry_lp', 'carry_gp']
+                }
+            }
+        }
+        
+        config = mode_configs.get(calculation_mode, mode_configs['平层结构-优先还本'])
+        
+        # 计算各项金额和比例
+        total_amount = totals.get('net_cash_flow', 0)
+        items = []
+        
+        for name in config['order']:
+            field = config['fields'].get(name)
+            if isinstance(field, list):
+                # Carry分配需要合并LP和GP
+                amount = 0
+                for f in field:
+                    amount += totals.get(f, 0)
+            else:
+                amount = totals.get(field, 0)
+            
+            percentage = (amount / total_amount * 100) if total_amount > 0 else 0
+            
+            items.append({
+                'name': name,
+                'amount': f'{amount:,.0f}万元',
+                'percentage': f'{percentage:.1f}%',
+                'class': get_distribution_class(name)
+            })
+        
+        return {
+            'mode': calculation_mode,
+            'order': config['order'],
+            'items': items
+        }
+        
+    except Exception as e:
+        logger.error(f"获取分配概览错误: {str(e)}")
+        return {
+            'mode': calculation_mode,
+            'order': ['本金归还', '门槛收益', 'Carry分配'],
+            'items': []
+        }
+
+def get_distribution_class(name):
+    """获取分配类型的CSS类名"""
+    if '本金' in name or '还本' in name:
+        return 'principal'
+    elif '收益' in name or '门槛' in name or '期间' in name:
+        return 'hurdle'  
+    elif 'Carry' in name:
+        return 'carry'
+    else:
+        return 'other'
+
+def get_cash_flow_chart_config(result):
+    """
+    生成现金流回收分析图表配置
+    """
+    try:
+        years = [f"第{i}年" for i in range(1, len(result['cash_flow_table']) + 1)]
+        cash_flows = []
+        cumulative_recovery = []
+        
+        cumulative = 0
+        for row in result['cash_flow_table']:
+            # 解析净现金流 - 移除逗号并转换为浮点数
+            cash_flow_str = row.get('net_cash_flow', '0')
+            if isinstance(cash_flow_str, str):
+                cash_flow_str = cash_flow_str.replace(',', '')
+            cash_flow = safe_parse_float(cash_flow_str, 0)
+            
+            cash_flows.append(cash_flow)
+            cumulative += cash_flow
+            cumulative_recovery.append(cumulative)
+        
+        # 图表配置
+        config = {
+            "type": "bar",
+            "data": {
+                "labels": years,
+                "datasets": [
+                    {
+                        "label": "年度现金流",
+                        "data": cash_flows,
+                        "backgroundColor": "#1e40af",  # 深蓝色
+                        "borderColor": "#1e3a8a",      # 更深蓝色
+                        "borderWidth": 1
+                    },
+                    {
+                        "label": "累计回收",
+                        "data": cumulative_recovery,
+                        "type": "line",
+                        "backgroundColor": "transparent",
+                        "borderColor": "#dc2626",       # 红色
+                        "borderWidth": 3,               # 加粗线条
+                        "pointBackgroundColor": "#dc2626",
+                        "pointRadius": 4,               # 增大点的大小
+                        "yAxisID": "y1"
+                    }
+                ]
+            },
+            "options": {
+                "responsive": True,
+                "plugins": {
+                    "title": {
+                        "display": True,
+                        "text": "现金流回收分析"
+                    },
+                    "legend": {
+                        "position": "top"
+                    }
+                },
+                "scales": {
+                    "y": {
+                        "beginAtZero": True,
+                        "title": {
+                            "display": True,
+                            "text": "现金流量(万元)"
+                        }
+                    },
+                    "y1": {
+                        "type": "linear",
+                        "display": True,
+                        "position": "right",
+                        "title": {
+                            "display": True,
+                            "text": "累计金额(万元)"
+                        },
+                        "grid": {
+                            "drawOnChartArea": False
+                        }
+                    }
+                }
+            }
+        }
+        
+        return config
+        
+    except Exception as e:
+        logger.error(f"生成现金流图表配置时出错: {e}")
+        return {
+            "type": "bar",
+            "data": {"labels": [], "datasets": []},
+            "options": {"responsive": True}
+        }
+
+def get_distribution_chart_config(result):
+    """获取现金流分配图配置"""
+    cash_flow_table = result.get('cash_flow_table', [])
+    calculation_mode = result.get('calculation_mode', '')
+    
+    labels = []
+    datasets = []
+    
+    # 根据计算模式确定数据字段
+    field_configs = {
+        '平层结构-优先还本': [
+            {'field': 'principal_repayment', 'label': '本金归还', 'color': '#3b82f6'},
+            {'field': 'distributed_hurdle_return', 'label': '门槛收益', 'color': '#10b981'},
+            {'field': 'carry_lp', 'label': 'Carry LP', 'color': '#8b5cf6'},
+            {'field': 'carry_gp', 'label': 'Carry GP', 'color': '#f59e0b'}
+        ],
+        '平层结构-期间分配': [
+            {'field': 'periodic_distribution', 'label': '期间分配', 'color': '#3b82f6'},
+            {'field': 'principal_repayment', 'label': '本金归还', 'color': '#10b981'},
+            {'field': 'distributed_hurdle_return', 'label': '门槛收益', 'color': '#8b5cf6'},
+            {'field': 'carry_lp', 'label': 'Carry LP', 'color': '#f59e0b'},
+            {'field': 'carry_gp', 'label': 'Carry GP', 'color': '#ef4444'}
+        ]
+    }
+    
+    fields = field_configs.get(calculation_mode, field_configs['平层结构-优先还本'])
+    
+    # 准备数据
+    for row in cash_flow_table:
+        year = row.get('year', 0)
+        labels.append(f'第{year}年')
+    
+    for field_config in fields:
+        field = field_config['field']
+        label = field_config['label']
+        color = field_config['color']
+        
+        data = []
+        for row in cash_flow_table:
+            value = row.get(field, 0)
+            net_flow = row.get('net_cash_flow', 0)
+            percentage = (value / net_flow * 100) if net_flow > 0 else 0
+            data.append(percentage)
+        
+        datasets.append({
+            'label': label,
+            'data': data,
+            'backgroundColor': color,
+            'borderColor': color,
+            'borderWidth': 1
+        })
+    
+    return {
+        'type': 'bar',
+        'data': {
+            'labels': labels,
+            'datasets': datasets
+        },
+        'options': {
+            'responsive': True,
+            'plugins': {
+                'title': {
+                    'display': True,
+                    'text': '现金流分配结构'
+                },
+                'legend': {
+                    'position': 'top'
+                }
+            },
+            'scales': {
+                'x': {
+                    'stacked': True
+                },
+                'y': {
+                    'stacked': True,
+                    'beginAtZero': True,
+                    'max': 100,
+                    'title': {
+                        'display': True,
+                        'text': '分配比例(%)'
+                    }
+                }
+            }
+        }
+    }
+
+def get_pie_chart_config(result):
+    """获取分配结构饼图配置"""
+    # 使用原始数据计算totals
+    raw_totals = calculate_totals(result.get('cash_flow_table', []), result.get('calculation_mode', ''))
+    calculation_mode = result.get('calculation_mode', '')
+    
+    # 根据计算模式获取分配数据
+    distribution_summary = get_distribution_summary(calculation_mode, [], raw_totals)
+    
+    labels = []
+    data = []
+    colors = []
+    
+    color_map = {
+        'principal': '#3b82f6',
+        'hurdle': '#10b981', 
+        'carry': '#8b5cf6',
+        'other': '#f59e0b'
+    }
+    
+    for item in distribution_summary['items']:
+        # 安全处理amount字段
+        amount_str = str(item['amount'])
+        try:
+            amount = float(amount_str.replace('万元', '').replace(',', ''))
+            if amount > 0:
+                labels.append(item['name'])
+                data.append(amount)
+                colors.append(color_map.get(item['class'], '#6b7280'))
+        except:
+            continue
+    
+    return {
+        'type': 'pie',
+        'data': {
+            'labels': labels,
+            'datasets': [{
+                'data': data,
+                'backgroundColor': colors,
+                'borderColor': '#ffffff',
+                'borderWidth': 2
+            }]
+        },
+        'options': {
+            'responsive': True,
+            'plugins': {
+                'title': {
+                    'display': True,
+                    'text': '整体分配结构'
+                },
+                'legend': {
+                    'position': 'bottom'
+                }
+            }
+        }
+    }
+
+def get_trend_chart_config(result):
+    """
+    删除收益趋势分析图表函数
+    """
+    pass
+
 if __name__ == '__main__':
     # 初始化全局计算器
     calculator = FundCalculator()
+    # 添加最后计算结果属性
+    calculator.last_calculation_result = None
     logger.info("后端服务启动，计算器已初始化")
     
     # 启动开发服务器
