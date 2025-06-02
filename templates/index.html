@@ -1844,6 +1844,21 @@
                                         <div class="chart-card">
                                             <div class="chart-card-header">
                                                 <h4 class="chart-title">
+                                                    <i class="fas fa-chart-area me-2"></i>
+                                                    资本结构变化
+                                                </h4>
+                                            </div>
+                                            <div class="chart-card-body">
+                                                <canvas id="capitalStructureChart"></canvas>
+                                            </div>
+                                        </div>
+                                        
+                                        
+                                        </div>
+                                        
+                                        <div class="chart-card">
+                                            <div class="chart-card-header">
+                                                <h4 class="chart-title">
                                                     <i class="fas fa-chart-pie me-2"></i>
                                                     整体分配结构
                                                 </h4>
@@ -3973,6 +3988,7 @@
                 await Promise.all([
                     renderChart('cashFlowChart', chartConfigs.cash_flow_chart),
                     renderChart('distributionChart', chartConfigs.distribution_chart),
+                    renderChart('capitalStructureChart', chartConfigs.capital_structure_chart),
                     renderChart('pieChart', chartConfigs.pie_chart)
                 ]);
                 
