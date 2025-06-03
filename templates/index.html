@@ -1557,8 +1557,9 @@
             border: 1px solid var(--border-secondary);
             border-radius: var(--border-radius-md);
             overflow: hidden;
-            min-height: 200px;
-            max-height: 400px;
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
         }
         
         .preview-header {
@@ -1570,6 +1571,7 @@
             display: flex;
             align-items: center;
             gap: var(--spacing-xs);
+            flex-shrink: 0;
         }
         
         .preview-header i {
@@ -1578,18 +1580,20 @@
         
         .preview-content {
             padding: var(--spacing-md);
-            max-height: 300px;
-            overflow-y: auto;
+            flex: 1;
+            min-height: auto;
         }
         
         .preview-placeholder {
             text-align: center;
             color: var(--text-secondary);
-            padding: var(--spacing-xl) var(--spacing-md);
+            padding: var(--spacing-lg) var(--spacing-md);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: var(--spacing-sm);
+            min-height: 120px;
+            justify-content: center;
         }
         
         .preview-placeholder i {
@@ -1637,11 +1641,10 @@
         }
 
         .preview-table-wrapper {
-            max-height: 280px;
-            overflow-y: auto;
             border: 1px solid var(--border-secondary);
             border-radius: var(--border-radius-sm);
             margin-bottom: var(--spacing-sm);
+            overflow: visible;
         }
 
         .preview-summary {
@@ -1692,19 +1695,16 @@
         .input-with-unit {
             display: flex;
             align-items: center;
-            gap: var(--spacing-xs);
             background: var(--bg-primary);
             border-radius: var(--border-radius-sm);
             border: 1px solid var(--border-primary);
             padding: 2px;
-            flex-wrap: nowrap;
-            justify-content: space-between;
+            position: relative;
+            gap: 2px;
         }
         
         .input-compact {
             flex: 1;
-            min-width: 120px;
-            max-width: 200px;
             border: none;
             background: transparent;
             padding: 8px 10px;

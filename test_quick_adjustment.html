@@ -181,19 +181,15 @@
         .input-with-unit {
             display: flex;
             align-items: center;
-            gap: var(--spacing-xs);
             background: var(--bg-primary);
             border-radius: var(--border-radius-sm);
             border: 1px solid var(--border-primary);
             padding: 2px;
-            flex-wrap: nowrap;
-            justify-content: space-between;
+            gap: 2px;
         }
 
         .input-compact {
             flex: 1;
-            min-width: 120px;
-            max-width: 200px;
             border: none;
             background: transparent;
             padding: 8px 10px;
@@ -218,8 +214,8 @@
         .unit-prefix {
             background: var(--bg-tertiary);
             color: var(--text-secondary);
-            padding: 8px 10px;
-            font-size: 13px;
+            padding: 6px 8px;
+            font-size: 12px;
             font-weight: 500;
             border-radius: var(--border-radius-sm);
             white-space: nowrap;
@@ -229,13 +225,12 @@
         .unit-label {
             background: var(--bg-tertiary);
             color: var(--text-secondary);
-            padding: 8px 10px;
-            font-size: 13px;
+            padding: 6px 8px;
+            font-size: 12px;
             font-weight: 500;
             border-radius: var(--border-radius-sm);
             white-space: nowrap;
             flex-shrink: 0;
-            margin-left: auto;
         }
 
         .help-text {
@@ -278,6 +273,9 @@
             border: 1px solid var(--border-secondary);
             border-radius: var(--border-radius-md);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
         }
 
         .preview-header {
@@ -289,22 +287,25 @@
             display: flex;
             align-items: center;
             gap: var(--spacing-xs);
+            flex-shrink: 0;
         }
 
         .preview-content {
             padding: var(--spacing-md);
-            max-height: 300px;
-            overflow-y: auto;
+            flex: 1;
+            min-height: auto;
         }
 
         .preview-placeholder {
             text-align: center;
             color: var(--text-secondary);
-            padding: var(--spacing-xl) var(--spacing-md);
+            padding: var(--spacing-lg) var(--spacing-md);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: var(--spacing-sm);
+            min-height: 120px;
+            justify-content: center;
         }
 
         .preview-placeholder i {
@@ -348,22 +349,25 @@
         .input-spinner {
             display: flex;
             flex-direction: column;
-            margin-left: var(--spacing-xs);
+            gap: 1px;
+            margin-left: 2px;
+            margin-right: 2px;
         }
         
         .spinner-btn {
-            width: 24px;
-            height: 16px;
+            width: 20px;
+            height: 14px;
             border: 1px solid var(--border-primary);
             background: var(--bg-tertiary);
             color: var(--text-secondary);
-            font-size: 10px;
+            font-size: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
+            border-radius: 2px;
         }
         
         .spinner-btn:hover {
@@ -376,21 +380,15 @@
             transform: scale(0.95);
         }
         
-        .spinner-btn.up {
-            border-radius: 2px 2px 0 0;
-            border-bottom: none;
-        }
-        
-        .spinner-btn.down {
-            border-radius: 0 0 2px 2px;
+        .spinner-btn i {
+            font-size: 8px;
         }
 
         .preview-table-wrapper {
-            max-height: 280px;
-            overflow-y: auto;
             border: 1px solid var(--border-secondary);
             border-radius: var(--border-radius-sm);
             margin-bottom: var(--spacing-sm);
+            overflow: visible;
         }
 
         .preview-summary {
