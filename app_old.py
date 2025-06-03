@@ -703,7 +703,7 @@ class FundCalculator:
                     'year': year + 1,
                     'net_cash_flow': self.cash_flows[year],
                     'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
-                    'beginning_principal_balance': remaining_principal,
+                    'beginning_principal_balance': remaining_principal,  # 直接使用当前剩余本金
                     'principal_repayment': 0.0,
                     'accrued_hurdle_return': 0.0,
                     'distributed_hurdle_return': 0.0,
@@ -713,7 +713,7 @@ class FundCalculator:
                 
                 remaining_cash = self.cash_flows[year]
                 
-                # 步骤1：计提门槛收益
+                # 步骤1：计提门槛收益（基于年初本金余额）
                 if remaining_principal > 0:
                     hurdle_accrual = remaining_principal * hurdle_rate
                     year_data['accrued_hurdle_return'] = hurdle_accrual
@@ -723,7 +723,7 @@ class FundCalculator:
                 if remaining_principal > 0 and remaining_cash > 0:
                     principal_payment = min(remaining_cash, remaining_principal)
                     year_data['principal_repayment'] = principal_payment
-                    remaining_principal -= principal_payment
+                    remaining_principal -= principal_payment  # 更新剩余本金
                     remaining_cash -= principal_payment
                 
                 # 步骤3：分配门槛收益
@@ -2034,6 +2034,31 @@ def get_cash_flow_chart_config(result):
                     },
                     "legend": {
                         "position": "top"
+                    },
+                    "tooltip": {
+                        "mode": "index",
+                        "intersect": False,
+                        "backgroundColor": "rgba(0, 0, 0, 0.8)",
+                        "titleColor": "#ffffff",
+                        "bodyColor": "#ffffff",
+                        "borderColor": "#e5e7eb",
+                        "borderWidth": 1,
+                        "cornerRadius": 8,
+                        "displayColors": True,
+                        "callbacks": {
+                            "title": """function(tooltipItems) {
+                                return tooltipItems[0].label + ' 现金流回收';
+                            }""",
+                            "label": """function(context) {
+                                let label = context.dataset.label || '';
+                                let value = context.parsed.y;
+                                let formattedValue = new Intl.NumberFormat('zh-CN', {
+                                    maximumFractionDigits: 0
+                                }).format(value);
+                                
+                                return label + ': ' + formattedValue + ' 万元';
+                            }"""
+                        }
                     }
                 },
                 "scales": {
@@ -2091,6 +2116,7 @@ def get_pie_chart_config(result):
     labels = []
     data = []
     colors = []
+    legend_table_data = []  # 新增：表格数据
     
     # 使用与前两张图一致的颜色映射
     field_configs = {
@@ -2133,11 +2159,30 @@ def get_pie_chart_config(result):
         ]
     }
     
-    # 创建颜色映射
-    color_map = {}
-    fields = field_configs.get(calculation_mode, field_configs['平层结构-优先还本'])
-    for field_config in fields:
-        color_map[field_config['label']] = field_config['color']
+    # 创建颜色映射 - 需要映射distribution_summary的标签到颜色
+    color_map = {
+        '本金归还': '#3b82f6',
+        '门槛收益': '#10b981', 
+        '期间分配': '#3b82f6',
+        'Carry分配': '#8b5cf6',  # 合并的Carry标签
+        '优先级还本': '#3b82f6',
+        '优先级收益': '#10b981',
+        '劣后级还本': '#8b5cf6',
+        '劣后级收益': '#10b981',
+        '夹层收益': '#10b981',
+        '夹层还本': '#f59e0b'
+    }
+    
+    # 计算总金额用于百分比计算
+    total_amount = 0
+    for item in distribution_summary['items']:
+        amount_str = str(item['amount'])
+        try:
+            amount = float(amount_str.replace('万元', '').replace(',', ''))
+            if amount > 0:
+                total_amount += amount
+        except:
+            continue
     
     for item in distribution_summary['items']:
         # 安全处理amount字段
@@ -2150,6 +2195,19 @@ def get_pie_chart_config(result):
                 # 使用一致的颜色映射
                 color = color_map.get(item['name'], '#6b7280')
                 colors.append(color)
+                
+                # 计算百分比
+                percentage = (amount / total_amount * 100) if total_amount > 0 else 0
+                
+                # 添加表格数据
+                legend_table_data.append({
+                    'label': item['name'],
+                    'color': color,
+                    'amount': amount,
+                    'percentage': percentage,
+                    'formatted_amount': f"{amount:,.0f} 万元",
+                    'formatted_percentage': f"{percentage:.1f}%"
+                })
         except:
             continue
     
@@ -2167,10 +2225,27 @@ def get_pie_chart_config(result):
         },
         'options': {
             'responsive': True,
+            'maintainAspectRatio': False,  # 改为False以避免椭圆形压缩
+            'aspectRatio': 1,  # 设置宽高比为1:1，确保圆形
+            'layout': {
+                'padding': {
+                    'top': 10,
+                    'bottom': 10,
+                    'left': 10,
+                    'right': 10
+                }
+            },
             'plugins': {
                 'title': {
                     'display': True,
-                    'text': '整体分配结构'
+                    'text': '整体分配结构',
+                    'font': {
+                        'size': 16,
+                        'weight': 'bold'
+                    },
+                    'padding': {
+                        'bottom': 20
+                    }
                 },
                 'subtitle': {
                     'display': True,
@@ -2186,25 +2261,48 @@ def get_pie_chart_config(result):
                     }
                 },
                 'legend': {
+                    'display': True,
                     'position': 'bottom',
+                    'align': 'center',
                     'labels': {
+                        'usePointStyle': True,
+                        'pointStyle': 'circle',
                         'padding': 20,
-                        'usePointStyle': True
+                        'boxWidth': 12,
+                        'boxHeight': 12,
+                        'font': {
+                            'size': 13
+                        }
                     }
                 },
                 'tooltip': {
+                    'backgroundColor': 'rgba(0, 0, 0, 0.8)',
+                    'titleColor': '#ffffff',
+                    'bodyColor': '#ffffff',
+                    'borderColor': '#e5e7eb',
+                    'borderWidth': 1,
+                    'cornerRadius': 8,
+                    'displayColors': True,
                     'callbacks': {
+                        'title': """function(tooltipItems) {
+                            return tooltipItems[0].label + ' - 分配详情';
+                        }""",
                         'label': """function(context) {
-                            let label = context.label || '';
-                            let value = context.parsed;
-                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            let percentage = ((value / total) * 100).toFixed(1);
-                            return label + ': ' + new Intl.NumberFormat('zh-CN').format(value) + ' 万元 (' + percentage + '%)';
+                            return context.label;
                         }"""
                     }
                 }
+            },
+            'interaction': {
+                'intersect': False
+            },
+            'animation': {
+                'animateRotate': True,
+                'animateScale': True,
+                'duration': 1000
             }
-        }
+        },
+        'legend_table_data': legend_table_data  # 添加表格数据
     }
     
     return config
@@ -2315,13 +2413,32 @@ def get_distribution_chart_config(result):
         },
         'options': {
             'responsive': True,
-            'plugins': {
+            "plugins": {
                 'title': {
                     'display': True,
                     'text': '现金流分配结构'
                 },
                 'legend': {
                     'position': 'top'
+                },
+                "tooltip": {
+                    "mode": "index",
+                    "intersect": False,
+                    "backgroundColor": "rgba(0, 0, 0, 0.8)",
+                    "titleColor": "#ffffff",
+                    "bodyColor": "#ffffff",
+                    "borderColor": "#e5e7eb",
+                    "borderWidth": 1,
+                    "cornerRadius": 8,
+                    "displayColors": True,
+                    "callbacks": {
+                        "title": """function(tooltipItems) {
+                            return tooltipItems[0].label + ' 分配结构';
+                        }""",
+                        "label": """function(context) {
+                            return context.label;
+                        }"""
+                    }
                 }
             },
             'scales': {
@@ -2343,10 +2460,11 @@ def get_distribution_chart_config(result):
 
 def get_capital_structure_chart_config(result):
     """
-    获取剩余本金分析图配置
-    - 横轴：年份（第0年-第N年）
-    - 纵轴主轴：剩余本金比例柱状图（剩余本金/初始投资金额）
-    - 纵轴副轴：年累计分派率折线图（年累计已回收净现金流/初始投资金额）
+    获取资本结构变化图配置 - 展现本金回收进度和收益积累过程
+    
+    图表设计：
+    1. 剩余本金比例：柱状图，左轴0-100%，公式=(初始投资-累计已还本金)/初始投资
+    2. 累计收益比例：折线图，右轴，公式=累计已分配收益/初始投资（最后一年≈DPI）
     """
     try:
         cash_flow_table = result.get('cash_flow_table', [])
@@ -2361,144 +2479,114 @@ def get_capital_structure_chart_config(result):
                 "options": {"responsive": True}
             }
         
-        # 准备年份标签（包含第0年）
-        years = [f"第{i}年" for i in range(len(cash_flow_table) + 1)]
+        # 准备年份标签
+        years = [f"第{row.get('year', i+1)}年" for i, row in enumerate(cash_flow_table)]
         
-        # 剩余本金比例数据
-        remaining_principal_ratio_data = []
-        # 年累计分派率数据
-        cumulative_distribution_rate_data = []
-        
-        # 第0年初始状态
-        remaining_principal_ratio_data.append(100.0)  # 初始时剩余本金比例为100%
-        cumulative_distribution_rate_data.append(0.0)  # 初始时累计分派率为0%
+        # 数据数组
+        remaining_principal_data = []  # 剩余本金比例（柱状图）
+        cumulative_returns_data = []   # 累计收益比例（线图）
         
         # 累计变量
-        cumulative_distributed_cash = 0  # 累计已回收净现金流
+        cumulative_principal_repaid = 0    # 累计已还本金
+        cumulative_net_cash_flow = 0       # 累计已分配净现金流
+        
+        # 解析数值的通用函数
+        def parse_value(value_str):
+            """安全解析数值字符串"""
+            if value_str is None:
+                return 0
+            value_str = str(value_str).replace(',', '').replace('万元', '').strip()
+            try:
+                value = float(value_str)
+                return value if not (math.isnan(value) or math.isinf(value)) else 0
+            except (ValueError, TypeError):
+                return 0
         
         for i, row in enumerate(cash_flow_table):
-            # 解析数值的通用函数
-            def parse_value(field_name):
-                """解析字段值为数值"""
-                value_str = str(row.get(field_name, '0'))
-                value_str = value_str.replace(',', '').replace('万元', '').strip()
-                try:
-                    value = float(value_str)
-                    return value if not (math.isnan(value) or math.isinf(value)) else 0
-                except (ValueError, TypeError):
-                    return 0
+            # 累计净现金流（本年度净现金流）
+            net_cash_flow = parse_value(row.get('net_cash_flow', 0))
+            cumulative_net_cash_flow += net_cash_flow
             
-            # 计算剩余本金（根据不同计算模式）
+            # 根据不同模式提取本金归还数据（用于计算剩余本金）
             if calculation_mode in ['平层结构-优先还本', '平层结构-期间分配']:
-                # 获取期初本金余额
-                remaining_principal = parse_value('beginning_principal_balance')
-                
-                # 计算期间分配的净现金流
-                period_distribution = parse_value('periodic_distribution') if calculation_mode == '平层结构-期间分配' else 0
-                principal_repayment = parse_value('principal_repayment')
-                distributed_hurdle = parse_value('distributed_hurdle_return')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                # 净现金流 = 期间分配 + 本金归还 + 门槛收益分配 + carry分配
-                period_net_cash_flow = period_distribution + principal_repayment + distributed_hurdle + carry_lp + carry_gp
+                # 本年还本
+                principal_repayment = parse_value(row.get('principal_repayment', 0))
+                cumulative_principal_repaid += principal_repayment
                 
             elif calculation_mode == '结构化-优先劣后':
-                # 获取各级别剩余本金
-                senior_principal = parse_value('senior_beginning_principal')
-                subordinate_principal = parse_value('subordinate_principal_balance')
-                remaining_principal = senior_principal + subordinate_principal
-                
-                # 计算净现金流
-                senior_return = parse_value('senior_periodic_return')
-                senior_principal_repay = parse_value('senior_principal_repayment')
-                subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                period_net_cash_flow = senior_return + senior_principal_repay + subordinate_principal_repay + carry_lp + carry_gp
+                # 本年还本
+                senior_repayment = parse_value(row.get('senior_principal_repayment', 0))
+                subordinate_repayment = parse_value(row.get('subordinate_principal_repayment', 0))
+                total_repayment = senior_repayment + subordinate_repayment
+                cumulative_principal_repaid += total_repayment
                 
             elif calculation_mode == '结构化-包含夹层':
-                # 获取各级别剩余本金
-                senior_principal = parse_value('senior_beginning_principal')
-                mezzanine_principal = parse_value('mezzanine_beginning_principal')
-                subordinate_principal = parse_value('subordinate_beginning_principal')
-                remaining_principal = senior_principal + mezzanine_principal + subordinate_principal
-                
-                # 计算净现金流
-                senior_return = parse_value('senior_hurdle_distribution')
-                mezzanine_return = parse_value('mezzanine_hurdle_distribution')
-                senior_principal_repay = parse_value('senior_principal_repayment')
-                mezzanine_principal_repay = parse_value('mezzanine_principal_repayment')
-                subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                period_net_cash_flow = (senior_return + mezzanine_return + 
-                                      senior_principal_repay + mezzanine_principal_repay + subordinate_principal_repay +
-                                      carry_lp + carry_gp)
+                # 本年还本
+                senior_repayment = parse_value(row.get('senior_principal_repayment', 0))
+                mezzanine_repayment = parse_value(row.get('mezzanine_principal_repayment', 0))
+                subordinate_repayment = parse_value(row.get('subordinate_principal_repayment', 0))
+                total_repayment = senior_repayment + mezzanine_repayment + subordinate_repayment
+                cumulative_principal_repaid += total_repayment
                 
             elif calculation_mode == '结构化-息息本本':
-                # 获取各级别剩余本金
-                senior_principal = parse_value('senior_beginning_principal')
-                subordinate_principal = parse_value('subordinate_beginning_principal')
-                remaining_principal = senior_principal + subordinate_principal
+                # 本年还本
+                senior_repayment = parse_value(row.get('senior_principal_repayment', 0))
+                subordinate_repayment = parse_value(row.get('subordinate_principal_repayment', 0))
+                total_repayment = senior_repayment + subordinate_repayment
+                cumulative_principal_repaid += total_repayment
                 
-                # 计算净现金流
-                senior_return = parse_value('senior_periodic_return')
-                subordinate_return = parse_value('subordinate_periodic_return')
-                senior_principal_repay = parse_value('senior_principal_repayment')
-                subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                period_net_cash_flow = (senior_return + subordinate_return + 
-                                      senior_principal_repay + subordinate_principal_repay +
-                                      carry_lp + carry_gp)
-                
-            else:
-                # 默认处理
-                remaining_principal = initial_investment
-                period_net_cash_flow = 0
-            
-            # 累计净现金流
-            cumulative_distributed_cash += period_net_cash_flow
+            # 计算年末状态
+            remaining_principal = max(0, initial_investment - cumulative_principal_repaid)
             
             # 计算比例
-            remaining_principal_ratio = (remaining_principal / initial_investment) * 100 if initial_investment > 0 else 0
-            cumulative_distribution_rate = (cumulative_distributed_cash / initial_investment) * 100 if initial_investment > 0 else 0
+            # 剩余本金比例 = (初始投资金额-累计已还本金)/初始投资金额
+            remaining_principal_pct = (remaining_principal / initial_investment) * 100
             
-            # 添加到数据数组
-            remaining_principal_ratio_data.append(round(remaining_principal_ratio, 2))
-            cumulative_distribution_rate_data.append(round(cumulative_distribution_rate, 2))
+            # 累计收益比例 = 累计已分配净现金流/初始投资金额（最后一年等于DPI）
+            cumulative_returns_pct = (cumulative_net_cash_flow / initial_investment) * 100
+            
+            # 确保百分比在合理范围内
+            remaining_principal_pct = max(0, min(100, remaining_principal_pct))
+            cumulative_returns_pct = max(0, cumulative_returns_pct)  # 可以超过100%（DPI>1时）
+            
+            # 保存数据
+            remaining_principal_data.append(round(remaining_principal_pct, 2))
+            cumulative_returns_data.append(round(cumulative_returns_pct, 2))
         
-        # 构建数据集
+        # 获取DPI用于验证（从核心指标中获取）
+        core_metrics = result.get('core_metrics', {})
+        dpi_value = core_metrics.get('dpi', 0)
+        final_returns_pct = cumulative_returns_data[-1] if cumulative_returns_data else 0
+        
+        # 构建数据集：柱状图+折线图组合
         datasets = [
             {
                 'label': '剩余本金比例',
-                'type': 'bar',
-                'data': remaining_principal_ratio_data,
-                'backgroundColor': 'rgba(54, 162, 235, 0.6)',  # 蓝色柱状图
-                'borderColor': 'rgba(54, 162, 235, 1)',
+                'data': remaining_principal_data,
+                'type': 'bar',  # 柱状图
+                'backgroundColor': 'rgba(59, 130, 246, 0.6)',  # 蓝色柱状图
+                'borderColor': '#3b82f6',
                 'borderWidth': 1,
-                'yAxisID': 'y'  # 使用主Y轴
+                'yAxisID': 'y'  # 左轴
             },
             {
-                'label': '年累计分派率',
-                'type': 'line',
-                'data': cumulative_distribution_rate_data,
-                'borderColor': 'rgba(34, 197, 94, 1)',  # 绿色折线图
-                'backgroundColor': 'rgba(34, 197, 94, 0.1)',
-                'borderWidth': 2,
+                'label': '累计收益比例',
+                'data': cumulative_returns_data,
+                'type': 'line',  # 折线图
+                'borderColor': '#10b981',     # 绿色线
+                'backgroundColor': 'rgba(16, 185, 129, 0.1)',
+                'borderWidth': 3,
                 'fill': False,
                 'tension': 0.1,
-                'yAxisID': 'y1'  # 使用副Y轴
+                'pointRadius': 5,
+                'pointBackgroundColor': '#10b981',
+                'yAxisID': 'y1'  # 右轴
             }
         ]
         
         # 图表配置
         config = {
-            "type": "bar",  # 主类型为柱状图
+            "type": "bar",  # 主类型为bar，但数据集中可以混合line
             "data": {
                 "labels": years,
                 "datasets": datasets
@@ -2512,24 +2600,66 @@ def get_capital_structure_chart_config(result):
                 "plugins": {
                     "title": {
                         "display": True,
-                        "text": "剩余本金分析"
+                        "text": "投资回收与收益积累分析",
+                        "font": {
+                            "size": 16,
+                            "weight": "bold"
+                        }
                     },
                     "legend": {
-                        "position": "top"
+                        "position": "bottom",
+                        "labels": {
+                            "usePointStyle": True,
+                            "padding": 20,
+                            "boxWidth": 15,
+                            "boxHeight": 15
+                        }
+                    },
+                    "annotation": {
+                        "annotations": {
+                            "zero_line": {
+                                "type": "line",
+                                "yMin": 0,
+                                "yMax": 0,
+                                "borderColor": "rgba(0, 0, 0, 0.8)",
+                                "borderWidth": 3,
+                                "borderDash": [],
+                                "label": {
+                                    "enabled": True,
+                                    "content": "0线 (基准)",
+                                    "position": "start"
+                                }
+                            }
+                        }
                     },
                     "tooltip": {
                         "mode": "index",
                         "intersect": False,
+                        "position": "nearest",
+                        "backgroundColor": "rgba(0, 0, 0, 0.8)",
+                        "titleColor": "#ffffff",
+                        "bodyColor": "#ffffff",
+                        "borderColor": "#e5e7eb",
+                        "borderWidth": 1,
+                        "cornerRadius": 8,
+                        "displayColors": True,
                         "callbacks": {
-                            "label": "function(context) { if(context.datasetIndex === 0) { return '剩余本金比例: ' + context.parsed.y.toFixed(2) + '%'; } else { return '年累计分派率: ' + context.parsed.y.toFixed(2) + '%'; } }"
+                            "title": """function(tooltipItems) {
+                                return tooltipItems[0].label + '年 数据';
+                            }""",
+                            "label": """function(context) {
+                                return context.label;
+                            }"""
                         }
                     }
                 },
                 "scales": {
                     "x": {
                         "title": {
-                            "display": True,
-                            "text": "年份"
+                            "display": False
+                        },
+                        "grid": {
+                            "display": False
                         }
                     },
                     "y": {
@@ -2537,12 +2667,20 @@ def get_capital_structure_chart_config(result):
                         "display": True,
                         "position": "left",
                         "beginAtZero": True,
+                        "max": 100,
                         "title": {
                             "display": True,
                             "text": "剩余本金比例 (%)"
                         },
                         "ticks": {
-                            "callback": "function(value) { return value + '%'; }"
+                            "stepSize": 20
+                        },
+                        "grid": {
+                            "display": True,
+                            "drawOnChartArea": False,  # 右轴网格线不在图表区域显示，避免冲突
+                            "drawBorder": True,
+                            "color": "rgba(16, 185, 129, 0.3)",
+                            "lineWidth": 1
                         }
                     },
                     "y1": {
@@ -2550,15 +2688,20 @@ def get_capital_structure_chart_config(result):
                         "display": True,
                         "position": "right",
                         "beginAtZero": True,
+                        "max": max(100, dpi_value * 100 * 1.1),
                         "title": {
                             "display": True,
-                            "text": "年累计分派率 (%)"
-                        },
-                        "grid": {
-                            "drawOnChartArea": False  # 避免网格线重叠
+                            "text": "累计收益比例 (%)"
                         },
                         "ticks": {
-                            "callback": "function(value) { return value + '%'; }"
+                            "stepSize": max(20, dpi_value * 100 * 1.1 / 5)
+                        },
+                        "grid": {
+                            "display": True,
+                            "drawOnChartArea": False,  # 右轴网格线不在图表区域显示，避免冲突
+                            "drawBorder": True,
+                            "color": "rgba(16, 185, 129, 0.3)",
+                            "lineWidth": 1
                         }
                     }
                 }
@@ -2568,7 +2711,7 @@ def get_capital_structure_chart_config(result):
         return config
         
     except Exception as e:
-        logger.error(f"生成剩余本金分析图表配置时出错: {e}")
+        logger.error(f"生成资本结构图表配置时出错: {e}")
         return {
             "type": "bar",
             "data": {"labels": [], "datasets": []},
@@ -2577,15 +2720,18 @@ def get_capital_structure_chart_config(result):
 
 def get_cumulative_cash_flow_chart_config(result):
     """
-    获取累计现金流分析图配置
-    - 横轴：年份
-    - 纵轴主轴：累计现金流柱状图（第0年为负的初始投资金额，之后每年累计现金流=上年累计现金流+当年净现金流）
-    - 纵轴副轴：现金流分派率折线图（每年的现金流分派率=当年净现金流/初始投资金额，第0年不展示）
-    - 鼠标悬停展示标签数据
+    获取累计现金流量分析图配置
+    
+    图表设计：
+    1. 累计现金流：柱状图，负值红色，正值蓝色（左轴）
+    2. 现金流分派率：折线图，绿色，右轴显示（-50%到50%），从第1年开始
+    
+    计算逻辑：
+    - 初始年（第0年）：累计现金流 = -初始投资金额，分派率不显示
+    - 后续年份：累计现金流 = 上年累计现金流 + 本年净现金流，分派率 = 本年净现金流/初始投资*100%
     """
     try:
         cash_flow_table = result.get('cash_flow_table', [])
-        calculation_mode = result.get('calculation_mode', '')
         basic_params = calculator.basic_params if hasattr(calculator, 'basic_params') else {}
         initial_investment = basic_params.get('investment_amount', 0)
         
@@ -2596,89 +2742,123 @@ def get_cumulative_cash_flow_chart_config(result):
                 "options": {"responsive": True}
             }
         
-        # 准备年份标签（包含第0年）
-        years = [f"第{i}年" for i in range(len(cash_flow_table) + 1)]
+        # 准备年份标签 - 包括第0年（投资年）
+        years = ['第0年'] + [f"第{row.get('year', i+1)}年" for i, row in enumerate(cash_flow_table)]
         
-        # 累计现金流数据
-        cumulative_cash_flow_data = []
-        # 现金流分派率数据
-        cash_flow_distribution_rate_data = []
+        # 数据数组
+        cumulative_cash_flow_data = []  # 累计现金流
+        cash_flow_distribution_rate_data = []  # 现金流分派率
         
-        # 第0年初始状态 - 负的初始投资金额
-        cumulative_cash_flow_data.append(-initial_investment)
-        # 第0年不展示分派率（用null表示）
-        cash_flow_distribution_rate_data.append(None)
+        # 解析数值的通用函数
+        def parse_value(value_str):
+            """安全解析数值字符串"""
+            if value_str is None:
+                return 0
+            value_str = str(value_str).replace(',', '').replace('万元', '').strip()
+            try:
+                value = float(value_str)
+                return value if not (math.isnan(value) or math.isinf(value)) else 0
+            except (ValueError, TypeError):
+                return 0
         
-        # 累计现金流变量
-        cumulative_cash_flow = -initial_investment  # 第0年为负的初始投资
+        def parse_percentage(value_str):
+            """安全解析百分比字符串"""
+            if value_str is None:
+                return 0
+            value_str = str(value_str).replace('%', '').strip()
+            try:
+                value = float(value_str)
+                return value if not (math.isnan(value) or math.isinf(value)) else 0
+            except (ValueError, TypeError):
+                return 0
         
+        # 初始年（第0年）数据
+        cumulative_cash_flow = -initial_investment  # 初始投资为负值
+        cumulative_cash_flow_data.append(round(cumulative_cash_flow, 2))
+        cash_flow_distribution_rate_data.append(None)  # 第0年分派率不显示
+        
+        # 后续年份数据
         for i, row in enumerate(cash_flow_table):
-            # 解析净现金流的通用函数
-            def parse_net_cash_flow():
-                """解析当年净现金流"""
-                net_flow_str = str(row.get('net_cash_flow', '0'))
-                net_flow_str = net_flow_str.replace(',', '').replace('万元', '').strip()
-                try:
-                    net_flow = float(net_flow_str)
-                    return net_flow if not (math.isnan(net_flow) or math.isinf(net_flow)) else 0
-                except (ValueError, TypeError):
-                    return 0
+            # 本年净现金流
+            net_cash_flow = parse_value(row.get('net_cash_flow', 0))
             
-            # 获取当年净现金流
-            current_net_cash_flow = parse_net_cash_flow()
-            
-            # 计算累计现金流 = 上年累计现金流 + 当年净现金流
-            cumulative_cash_flow += current_net_cash_flow
-            
-            # 计算现金流分派率 = 当年净现金流 / 初始投资金额
-            distribution_rate = (current_net_cash_flow / initial_investment) * 100 if initial_investment > 0 else 0
-            
-            # 添加到数据数组
+            # 累计现金流
+            cumulative_cash_flow += net_cash_flow
             cumulative_cash_flow_data.append(round(cumulative_cash_flow, 2))
+            
+            # 现金流分派率（已经是百分比数值）
+            distribution_rate = parse_percentage(row.get('cash_flow_distribution_rate', 0))
             cash_flow_distribution_rate_data.append(round(distribution_rate, 2))
+        
+        # 找到数据范围以设置Y轴 - 确保以0为中心
+        min_value = min(cumulative_cash_flow_data) if cumulative_cash_flow_data else -initial_investment
+        max_value = max(cumulative_cash_flow_data) if cumulative_cash_flow_data else 0
+        
+        # 计算总净现金流
+        total_net_cash_flow = sum(parse_value(row.get('net_cash_flow', 0)) for row in cash_flow_table)
+        
+        # Y轴范围设置 - 确保以0为中心，并且0是一个刻度点
+        abs_max = max(abs(min_value), abs(max_value), abs(initial_investment))
+        y_min = -abs_max * 1.1  # 对称设置，确保0在中心
+        y_max = abs_max * 1.1
+        
+        # 计算合适的步长（整数万元），确保能被y_min和y_max整除，且包含0刻度
+        y_range = y_max - y_min
+        rough_step = y_range / 8  # 期望8-10个刻度
+        # 步长规范化为合适的整数
+        if rough_step < 1000:
+            step_size = 500
+        elif rough_step < 2000:
+            step_size = 1000
+        elif rough_step < 5000:
+            step_size = 2000
+        elif rough_step < 10000:
+            step_size = 5000
+        else:
+            step_size = round(rough_step / 5000) * 5000
+        
+        # 调整y_min和y_max，确保它们是step_size的倍数，并且0是刻度点
+        y_min = -((abs(int(y_min)) // step_size) + 1) * step_size
+        y_max = ((abs(int(y_max)) // step_size) + 1) * step_size
         
         # 构建数据集
         datasets = [
             {
                 'label': '累计现金流',
-                'type': 'bar',
                 'data': cumulative_cash_flow_data,
+                'type': 'bar',  # 柱状图
                 'backgroundColor': [
-                    # 根据数值正负设置不同颜色
-                    'rgba(239, 68, 68, 0.6)' if val < 0 else 'rgba(34, 197, 94, 0.6)' 
-                    for val in cumulative_cash_flow_data
+                    'rgba(59, 130, 246, 0.7)' if value >= 0 else 'rgba(239, 68, 68, 0.7)'
+                    for value in cumulative_cash_flow_data
                 ],
                 'borderColor': [
-                    'rgba(239, 68, 68, 1)' if val < 0 else 'rgba(34, 197, 94, 1)' 
-                    for val in cumulative_cash_flow_data
+                    '#3b82f6' if value >= 0 else '#ef4444'
+                    for value in cumulative_cash_flow_data
                 ],
                 'borderWidth': 1,
-                'yAxisID': 'y'  # 使用主Y轴
+                'yAxisID': 'y'
             },
             {
                 'label': '现金流分派率',
-                'type': 'line',
-                'data': cash_flow_distribution_rate_data,
-                'borderColor': 'rgba(59, 130, 246, 1)',  # 蓝色折线图
-                'backgroundColor': 'rgba(59, 130, 246, 0.1)',
-                'borderWidth': 2,
+                'data': cash_flow_distribution_rate_data,  # 现金流分派率数据（第0年为null）
+                'type': 'line',  # 折线图
+                'borderColor': '#10b981',     # 绿色线
+                'backgroundColor': 'rgba(16, 185, 129, 0.1)',
+                'borderWidth': 3,
                 'fill': False,
                 'tension': 0.1,
-                'pointBackgroundColor': [
-                    'transparent' if val is None else 'rgba(59, 130, 246, 1)' 
-                    for val in cash_flow_distribution_rate_data
-                ],
-                'pointBorderColor': [
-                    'transparent' if val is None else 'rgba(59, 130, 246, 1)' 
-                    for val in cash_flow_distribution_rate_data
-                ],
-                'yAxisID': 'y1'  # 使用副Y轴
+                'pointRadius': 6,
+                'pointBackgroundColor': '#10b981',
+                'pointBorderColor': '#ffffff',
+                'pointBorderWidth': 2,
+                'yAxisID': 'y1',  # 使用右侧副坐标轴
+                'spanGaps': True  # 跳过null值，从第1年开始连线
             }
         ]
         
         # 图表配置
         config = {
-            "type": "bar",  # 主类型为柱状图
+            "type": "bar",  # 主类型为bar，但数据集中可以混合line
             "data": {
                 "labels": years,
                 "datasets": datasets
@@ -2692,55 +2872,127 @@ def get_cumulative_cash_flow_chart_config(result):
                 "plugins": {
                     "title": {
                         "display": True,
-                        "text": "累计现金流分析"
+                        "text": "累计现金流量分析",
+                        "font": {
+                            "size": 16,
+                            "weight": "bold"
+                        }
                     },
                     "legend": {
-                        "position": "top"
+                        "position": "bottom",
+                        "labels": {
+                            "usePointStyle": True,
+                            "padding": 20,
+                            "boxWidth": 15,
+                            "boxHeight": 15
+                        }
+                    },
+                    "annotation": {
+                        "annotations": {
+                            "zero_line": {
+                                "type": "line",
+                                "yMin": 0,
+                                "yMax": 0,
+                                "borderColor": "rgba(0, 0, 0, 0.8)",
+                                "borderWidth": 3,
+                                "borderDash": [],
+                                "label": {
+                                    "enabled": True,
+                                    "content": "0线 (基准)",
+                                    "position": "start"
+                                }
+                            }
+                        }
                     },
                     "tooltip": {
                         "mode": "index",
                         "intersect": False,
-                        "filter": "function(tooltipItem) { return tooltipItem.datasetIndex === 0 || (tooltipItem.datasetIndex === 1 && tooltipItem.parsed.y !== null); }",
+                        "position": "nearest",
+                        "backgroundColor": "rgba(0, 0, 0, 0.8)",
+                        "titleColor": "#ffffff",
+                        "bodyColor": "#ffffff",
+                        "borderColor": "#e5e7eb",
+                        "borderWidth": 1,
+                        "cornerRadius": 8,
+                        "displayColors": True,
                         "callbacks": {
-                            "label": "function(context) { if(context.datasetIndex === 0) { let value = context.parsed.y; let color = value >= 0 ? '✅' : '❌'; return color + ' 累计现金流: ' + new Intl.NumberFormat('zh-CN').format(value) + ' 万元'; } else if(context.parsed.y !== null) { let value = context.parsed.y; let color = value >= 0 ? '📈' : '📉'; return color + ' 现金流分派率: ' + value.toFixed(2) + '%'; } }"
+                            "title": """function(tooltipItems) {
+                                return tooltipItems[0].label + ' 数据详情';
+                            }""",
+                            "label": """function(context) {
+                                return context.label;
+                            }"""
                         }
                     }
                 },
                 "scales": {
                     "x": {
-                        "title": {
-                            "display": True,
-                            "text": "年份"
+                        "grid": {
+                            "display": False
                         }
                     },
                     "y": {
                         "type": "linear",
                         "display": True,
                         "position": "left",
+                        "min": y_min,
+                        "max": y_max,
                         "title": {
                             "display": True,
-                            "text": "累计现金流 (万元)"
-                        },
-                        "grid": {
-                            "drawOnChartArea": True
+                            "text": "累计现金流量 (万元)"
                         },
                         "ticks": {
-                            "callback": "function(value) { return new Intl.NumberFormat('zh-CN').format(value) + ' 万元'; }"
+                            "stepSize": step_size,
+                            "callback": """function(value, index, ticks) {
+                                // 显示整数，不带单位（因为轴标题已有单位说明）
+                                let formatted = new Intl.NumberFormat('zh-CN', {
+                                    maximumFractionDigits: 0
+                                }).format(value);
+                                return formatted;
+                            }""",
+                            "includeBounds": True,  # 确保边界值显示
+                            "maxTicksLimit": 10
+                        },
+                        "grid": {
+                            "display": True,
+                            "color": "rgba(0, 0, 0, 0.1)",
+                            "lineWidth": 1,
+                            "drawBorder": True,
+                            "drawOnChartArea": True,
+                            "zeroLineColor": "rgba(0, 0, 0, 0.8)",  # 0线颜色
+                            "zeroLineWidth": 3,  # 0线宽度
+                            "zeroLineBorderDash": []  # 0线样式：实线
                         }
                     },
                     "y1": {
                         "type": "linear",
                         "display": True,
                         "position": "right",
+                        "min": -50,
+                        "max": 50,
                         "title": {
                             "display": True,
                             "text": "现金流分派率 (%)"
                         },
-                        "grid": {
-                            "drawOnChartArea": False  # 避免网格线重叠
-                        },
                         "ticks": {
-                            "callback": "function(value) { return value + '%'; }"
+                            "stepSize": 10,
+                            "callback": """function(value, index, ticks) {
+                                return value + '%';
+                            }"""
+                        },
+                        "grid": {
+                            "drawOnChartArea": """function(context) {
+                                // 只绘制0%线，其他网格线不在图表区域显示
+                                return context.tick.value === 0;
+                            }""",
+                            "color": """function(context) {
+                                // 0%线使用绿色系，与折线颜色一致
+                                return context.tick.value === 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(16, 185, 129, 0.1)';
+                            }""",
+                            "lineWidth": """function(context) {
+                                return context.tick.value === 0 ? 3 : 1;
+                            }""",
+                            "drawBorder": True
                         }
                     }
                 }
@@ -2750,19 +3002,28 @@ def get_cumulative_cash_flow_chart_config(result):
         return config
         
     except Exception as e:
-        logger.error(f"生成累计现金流分析图表配置时出错: {e}")
+        logger.error(f"生成累计现金流量图表配置时出错: {e}")
         return {
             "type": "bar",
             "data": {"labels": [], "datasets": []},
             "options": {"responsive": True}
         }
 
+# 初始化全局变量
+calculator = None
+
+def get_calculator():
+    """获取计算器实例，如果未初始化则创建一个"""
+    global calculator
+    if calculator is None:
+        calculator = FundCalculator()
+        calculator.last_calculation_result = None
+    return calculator
+
 if __name__ == '__main__':
     # 初始化全局计算器
-    calculator = FundCalculator()
-    # 添加最后计算结果属性
-    calculator.last_calculation_result = None
+    calculator = get_calculator()
     logger.info("后端服务启动，计算器已初始化")
     
     # 启动开发服务器
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5000, debug=True)

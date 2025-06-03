@@ -1845,7 +1845,7 @@
                                             <div class="chart-card-header">
                                                 <h4 class="chart-title">
                                                     <i class="fas fa-chart-area me-2"></i>
-                                                    资本结构变化
+                                                    剩余本金分析
                                                 </h4>
                                             </div>
                                             <div class="chart-card-body">
@@ -1853,7 +1853,16 @@
                                             </div>
                                         </div>
                                         
-                                        
+                                        <div class="chart-card">
+                                            <div class="chart-card-header">
+                                                <h4 class="chart-title">
+                                                    <i class="fas fa-chart-line me-2"></i>
+                                                    累计现金流分析
+                                                </h4>
+                                            </div>
+                                            <div class="chart-card-body">
+                                                <canvas id="cumulativeCashFlowChart"></canvas>
+                                            </div>
                                         </div>
                                         
                                         <div class="chart-card">
@@ -3989,6 +3998,7 @@
                     renderChart('cashFlowChart', chartConfigs.cash_flow_chart),
                     renderChart('distributionChart', chartConfigs.distribution_chart),
                     renderChart('capitalStructureChart', chartConfigs.capital_structure_chart),
+                    renderChart('cumulativeCashFlowChart', chartConfigs.cumulative_cash_flow_chart),
                     renderChart('pieChart', chartConfigs.pie_chart)
                 ]);
                 
@@ -4012,8 +4022,14 @@
                         return;
                     }
                     
+                    // 深度克隆配置以避免修改原始配置
+                    const chartConfig = JSON.parse(JSON.stringify(config));
+                    
+                    // 处理配置中的字符串函数，转换为实际函数
+                    processCallbackFunctions(chartConfig);
+                    
                     const ctx = canvas.getContext('2d');
-                    const chart = new Chart(ctx, config);
+                    const chart = new Chart(ctx, chartConfig);
                     
                     // 保存图表实例以便后续销毁
                     if (!window.chartInstances) {
@@ -4086,6 +4102,32 @@
                 }, 100);
             }
         };
+        
+        /**
+         * 递归处理配置对象中的字符串函数，转换为实际的JavaScript函数
+         * @param {Object} obj - 要处理的配置对象
+         */
+        function processCallbackFunctions(obj) {
+            if (typeof obj !== 'object' || obj === null) {
+                return;
+            }
+            
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    if (typeof obj[key] === 'string' && obj[key].startsWith('function(')) {
+                        // 将字符串函数转换为实际函数
+                        try {
+                            obj[key] = new Function('return ' + obj[key])();
+                        } catch (e) {
+                            console.warn(`无法转换函数字符串: ${obj[key]}`, e);
+                        }
+                    } else if (typeof obj[key] === 'object') {
+                        // 递归处理嵌套对象
+                        processCallbackFunctions(obj[key]);
+                    }
+                }
+            }
+        }
     </script>
     
     <!-- 外部JavaScript库 -->
