@@ -1549,7 +1549,7 @@ def calculate():
 
 @app.route('/api/export', methods=['POST'])
 def export_results():
-    """导出计算结果到Excel"""
+    """导出计算结果到Excel - 与页面展示结构一致"""
     try:
         data = request.get_json()
         results = data.get('results')
@@ -1561,23 +1561,293 @@ def export_results():
         output = io.BytesIO()
         
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            # 基本信息表
-            basic_info = pd.DataFrame([
-                ['投资标的', calculator.basic_params.get('investment_target', '')],
-                ['投资金额(万元)', calculator.basic_params.get('investment_amount', 0)],
-                ['投资期限(年)', calculator.basic_params.get('investment_period', 0)],
-                ['门槛收益率(%)', calculator.basic_params.get('hurdle_rate', 0)],
-                ['管理人Carry(%)', calculator.basic_params.get('management_carry', 0)],
-                ['计算模式', results.get('calculation_mode', '')],
-                ['IRR(%)', results.get('core_metrics', {}).get('irr', 0)],
-                ['DPI', results.get('core_metrics', {}).get('dpi', 0)]
-            ], columns=['项目', '数值'])
-            basic_info.to_excel(writer, sheet_name='基本信息', index=False)
+            # 第一个工作表：投资收益分析（8个核心指标）
+            core_metrics = results.get('core_metrics', {})
+            basic_params = calculator.basic_params
             
-            # 现金流分配表
-            if 'cash_flow_table' in results:
-                df = pd.DataFrame(results['cash_flow_table'])
-                df.to_excel(writer, sheet_name='现金流分配表', index=False)
+            # 计算分派率范围
+            cash_flow_table = results.get('cash_flow_table', [])
+            rates = []
+            for row in cash_flow_table:
+                rate_str = row.get('cash_flow_distribution_rate', '0.00%')
+                rate_value = float(rate_str.replace('%', '')) if rate_str != '0.00%' else 0
+                if rate_value > 0:
+                    rates.append(rate_value)
+            
+            if rates:
+                min_rate = min(rates)
+                max_rate = max(rates)
+                distribution_rate = f"{min_rate:.2f}%" if min_rate == max_rate else f"{min_rate:.2f}%-{max_rate:.2f}%"
+            else:
+                distribution_rate = "0.00%"
+            
+            # 投资收益分析数据
+            investment_analysis = pd.DataFrame([
+                ['内部收益率', core_metrics.get('irr', '0.00%')],
+                ['分配倍数', core_metrics.get('dpi', '0.00')],
+                ['分派率', distribution_rate],
+                ['静态回本周期', core_metrics.get('static_payback_period', '无法回本')],
+                ['计算模式', results.get('calculation_mode', '')],
+                ['投资金额', f"{basic_params.get('investment_amount', 0)} 万元"],
+                ['投资期限', f"{basic_params.get('investment_period', 0)} 年"],
+                ['门槛收益率', f"{basic_params.get('hurdle_rate', 0)}%"]
+            ], columns=['指标名称', '指标值'])
+            
+            investment_analysis.to_excel(writer, sheet_name='投资收益分析', index=False)
+            
+            # 第二个工作表：计算详情（现金流分配表）- 根据计算模式动态生成
+            calculation_mode = results.get('calculation_mode', '')
+            
+            # 根据不同计算模式构建表头和数据
+            if calculation_mode == '平层结构-优先还本':
+                columns = [
+                    '年份', '净现金流(万元)', '分派率(%)', '期初本金余额(万元)', 
+                    '归还本金(万元)', '计提门槛收益(万元)', '分配门槛收益(万元)', 
+                    'CarryLP(万元)', 'CarryGP(万元)'
+                ]
+                data_rows = []
+                for row in cash_flow_table:
+                    data_rows.append([
+                        row.get('year', '0'),
+                        row.get('net_cash_flow', '0'),
+                        row.get('cash_flow_distribution_rate', '0.00%'),
+                        row.get('beginning_principal_balance', '0'),
+                        row.get('principal_repayment', '0'),
+                        row.get('accrued_hurdle_return', '0'),
+                        row.get('distributed_hurdle_return', '0'),
+                        row.get('carry_lp', '0'),
+                        row.get('carry_gp', '0')
+                    ])
+                
+                # 添加总计行
+                totals = results.get('totals', {})
+                if totals:
+                    data_rows.append([
+                        '总计',
+                        totals.get('net_cash_flow', '0'),
+                        '-',
+                        '-',
+                        totals.get('principal_repayment', '0'),
+                        totals.get('accrued_hurdle_return', '0'),
+                        totals.get('distributed_hurdle_return', '0'),
+                        totals.get('carry_lp', '0'),
+                        totals.get('carry_gp', '0')
+                    ])
+                    
+            elif calculation_mode == '平层结构-期间分配':
+                columns = [
+                    '年份', '净现金流(万元)', '分派率(%)', '期初本金余额(万元)', 
+                    '期间分配(万元)', '计提门槛收益(万元)', '归还本金(万元)', 
+                    '分配门槛收益(万元)', 'CarryLP(万元)', 'CarryGP(万元)'
+                ]
+                data_rows = []
+                for row in cash_flow_table:
+                    data_rows.append([
+                        row.get('year', '0'),
+                        row.get('net_cash_flow', '0'),
+                        row.get('cash_flow_distribution_rate', '0.00%'),
+                        row.get('beginning_principal_balance', '0'),
+                        row.get('periodic_distribution', '0'),
+                        row.get('accrued_hurdle_return', '0'),
+                        row.get('principal_repayment', '0'),
+                        row.get('distributed_hurdle_return', '0'),
+                        row.get('carry_lp', '0'),
+                        row.get('carry_gp', '0')
+                    ])
+                
+                # 添加总计行
+                totals = results.get('totals', {})
+                if totals:
+                    data_rows.append([
+                        '总计',
+                        totals.get('net_cash_flow', '0'),
+                        '-',
+                        '-',
+                        totals.get('periodic_distribution', '0'),
+                        totals.get('accrued_hurdle_return', '0'),
+                        totals.get('principal_repayment', '0'),
+                        totals.get('distributed_hurdle_return', '0'),
+                        totals.get('carry_lp', '0'),
+                        totals.get('carry_gp', '0')
+                    ])
+                    
+            elif calculation_mode == '结构化-优先劣后':
+                columns = [
+                    '年份', '净现金流(万元)', '分派率(%)', '优先级期初本金(万元)',
+                    '优先级本金归还(万元)', '优先级收益计提(万元)', '优先级收益分配(万元)',
+                    '劣后级本金余额(万元)', '劣后级本金归还(万元)', 'CarryLP(万元)', 'CarryGP(万元)'
+                ]
+                data_rows = []
+                for row in cash_flow_table:
+                    data_rows.append([
+                        row.get('year', '0'),
+                        row.get('net_cash_flow', '0'),
+                        row.get('cash_flow_distribution_rate', '0.00%'),
+                        row.get('senior_beginning_principal', '0'),
+                        row.get('senior_principal_repayment', '0'),
+                        row.get('senior_hurdle_accrual', '0'),
+                        row.get('senior_periodic_return', '0'),
+                        row.get('subordinate_principal_balance', '0'),
+                        row.get('subordinate_principal_repayment', '0'),
+                        row.get('carry_lp', '0'),
+                        row.get('carry_gp', '0')
+                    ])
+                
+                # 添加总计行
+                totals = results.get('totals', {})
+                if totals:
+                    data_rows.append([
+                        '总计',
+                        totals.get('net_cash_flow', '0'),
+                        '-',
+                        '-',
+                        totals.get('senior_principal_repayment', '0'),
+                        totals.get('senior_hurdle_accrual', '0'),
+                        totals.get('senior_periodic_return', '0'),
+                        '-',
+                        totals.get('subordinate_principal_repayment', '0'),
+                        totals.get('carry_lp', '0'),
+                        totals.get('carry_gp', '0')
+                    ])
+                    
+            elif calculation_mode == '结构化-包含夹层':
+                columns = [
+                    '年份', '净现金流(万元)', '分派率(%)', '优先级期初本金(万元)',
+                    '夹层期初本金(万元)', '劣后级期初本金(万元)', '优先级收益分配(万元)',
+                    '夹层收益分配(万元)', '优先级本金归还(万元)', '夹层本金归还(万元)',
+                    '劣后级本金归还(万元)', 'CarryLP(万元)', 'CarryGP(万元)'
+                ]
+                data_rows = []
+                for row in cash_flow_table:
+                    data_rows.append([
+                        row.get('year', '0'),
+                        row.get('net_cash_flow', '0'),
+                        row.get('cash_flow_distribution_rate', '0.00%'),
+                        row.get('senior_beginning_principal', '0'),
+                        row.get('mezzanine_beginning_principal', '0'),
+                        row.get('subordinate_beginning_principal', '0'),
+                        row.get('senior_hurdle_distribution', '0'),
+                        row.get('mezzanine_hurdle_distribution', '0'),
+                        row.get('senior_principal_repayment', '0'),
+                        row.get('mezzanine_principal_repayment', '0'),
+                        row.get('subordinate_principal_repayment', '0'),
+                        row.get('carry_lp', '0'),
+                        row.get('carry_gp', '0')
+                    ])
+                
+                # 添加总计行
+                totals = results.get('totals', {})
+                if totals:
+                    data_rows.append([
+                        '总计',
+                        totals.get('net_cash_flow', '0'),
+                        '-',
+                        '-',
+                        '-',
+                        '-',
+                        totals.get('senior_hurdle_distribution', '0'),
+                        totals.get('mezzanine_hurdle_distribution', '0'),
+                        totals.get('senior_principal_repayment', '0'),
+                        totals.get('mezzanine_principal_repayment', '0'),
+                        totals.get('subordinate_principal_repayment', '0'),
+                        totals.get('carry_lp', '0'),
+                        totals.get('carry_gp', '0')
+                    ])
+                    
+            elif calculation_mode == '结构化-息息本本':
+                columns = [
+                    '年份', '净现金流(万元)', '分派率(%)', '优先级期初本金(万元)',
+                    '优先级期间收益(万元)', '劣后级期初本金(万元)', '劣后级期间收益(万元)',
+                    '优先级本金归还(万元)', '劣后级本金归还(万元)', 'CarryLP(万元)', 'CarryGP(万元)'
+                ]
+                data_rows = []
+                for row in cash_flow_table:
+                    data_rows.append([
+                        row.get('year', '0'),
+                        row.get('net_cash_flow', '0'),
+                        row.get('cash_flow_distribution_rate', '0.00%'),
+                        row.get('senior_beginning_principal', '0'),
+                        row.get('senior_periodic_return', '0'),
+                        row.get('subordinate_beginning_principal', '0'),
+                        row.get('subordinate_periodic_return', '0'),
+                        row.get('senior_principal_repayment', '0'),
+                        row.get('subordinate_principal_repayment', '0'),
+                        row.get('carry_lp', '0'),
+                        row.get('carry_gp', '0')
+                    ])
+                
+                # 添加总计行
+                totals = results.get('totals', {})
+                if totals:
+                    data_rows.append([
+                        '总计',
+                        totals.get('net_cash_flow', '0'),
+                        '-',
+                        '-',
+                        totals.get('senior_periodic_return', '0'),
+                        '-',
+                        totals.get('subordinate_periodic_return', '0'),
+                        totals.get('senior_principal_repayment', '0'),
+                        totals.get('subordinate_principal_repayment', '0'),
+                        totals.get('carry_lp', '0'),
+                        totals.get('carry_gp', '0')
+                    ])
+            else:
+                # 默认通用格式
+                columns = ['年份', '净现金流(万元)', '分派率(%)']
+                data_rows = []
+                for row in cash_flow_table:
+                    data_rows.append([
+                        row.get('year', '0'),
+                        row.get('net_cash_flow', '0'),
+                        row.get('cash_flow_distribution_rate', '0.00%')
+                    ])
+            
+            # 创建计算详情DataFrame
+            calculation_details_df = pd.DataFrame(data_rows, columns=columns)
+            calculation_details_df.to_excel(writer, sheet_name='计算详情', index=False)
+            
+            # 第三个工作表：基本参数（保留原有功能）
+            basic_info = pd.DataFrame([
+                ['投资标的', basic_params.get('investment_target', '')],
+                ['投资金额(万元)', basic_params.get('investment_amount', 0)],
+                ['投资期限(年)', basic_params.get('investment_period', 0)],
+                ['门槛收益率(%)', basic_params.get('hurdle_rate', 0)],
+                ['管理人Carry(%)', basic_params.get('management_carry', 0)],
+                ['计算模式', calculation_mode]
+            ], columns=['参数名称', '参数值'])
+            basic_info.to_excel(writer, sheet_name='基本参数', index=False)
+            
+            # 美化Excel格式
+            workbook = writer.book
+            
+            # 设置投资收益分析工作表格式
+            ws1 = workbook['投资收益分析']
+            for col in ws1.columns:
+                max_length = 0
+                column = col[0].column_letter
+                for cell in col:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = min(max_length, 50)
+                ws1.column_dimensions[column].width = adjusted_width
+            
+            # 设置计算详情工作表格式
+            ws2 = workbook['计算详情']
+            for col in ws2.columns:
+                max_length = 0
+                column = col[0].column_letter
+                for cell in col:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = min(max_length, 20)
+                ws2.column_dimensions[column].width = adjusted_width
         
         output.seek(0)
         
