@@ -386,26 +386,26 @@
         
         /* 输入组（带单位） */
         .input-group {
+            position: relative;
             display: flex;
             align-items: center;
         }
         
         .input-group .input {
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-            border-right: none;
+            padding-right: 50px; /* 为右侧单位留出空间 */
+            width: 100%;
         }
         
         .input-addon {
-            padding: 12px 16px;
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-primary);
-            border-left: none;
-            border-top-right-radius: var(--border-radius-md);
-            border-bottom-right-radius: var(--border-radius-md);
+            position: absolute;
+            right: 12px; /* 单位距离右边界的距离 */
+            top: 50%;
+            transform: translateY(-50%);
             color: var(--text-secondary);
             font-size: 14px;
             white-space: nowrap;
+            pointer-events: none; /* 避免影响输入框的点击 */
+            z-index: 1;
         }
         
         /* 帮助文本 */
@@ -1511,28 +1511,36 @@
         }
         
         .quick-adjustment-form .input-group {
-            background: var(--bg-primary);
-            border-radius: var(--border-radius-sm);
-            overflow: hidden;
-            border: 1px solid var(--border-primary);
+            position: relative;
+            display: flex;
+            align-items: center;
         }
         
         .quick-adjustment-form .input {
-            border: none;
-            background: transparent;
-            padding: 10px 12px;
+            padding-right: 50px; /* 为右侧单位留出空间 */
+            width: 100%;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-sm);
+            background: var(--bg-primary);
+            padding: 10px 50px 10px 12px; /* 右侧留出更多空间给单位 */
         }
         
         .quick-adjustment-form .input:focus {
-            box-shadow: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+            border-color: var(--primary-color);
         }
         
         .quick-adjustment-form .input-addon {
-            background: var(--bg-tertiary);
-            border: none;
-            padding: 10px 12px;
+            position: absolute;
+            right: 12px; /* 单位距离右边界的距离 */
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
             font-size: 13px;
             font-weight: 500;
+            white-space: nowrap;
+            pointer-events: none; /* 避免影响输入框的点击 */
+            z-index: 1;
         }
         
         /* 快速调整操作按钮 */
@@ -1693,51 +1701,56 @@
 
         /* 新的输入框布局样式 */
         .input-with-unit {
+            position: relative;
             display: flex;
             align-items: center;
-            background: var(--bg-primary);
-            border-radius: var(--border-radius-sm);
-            border: 1px solid var(--border-primary);
-            padding: 2px;
-            position: relative;
-            gap: 2px;
         }
         
         .input-compact {
-            flex: 1;
-            border: none;
-            background: transparent;
-            padding: 8px 10px;
+            width: 100%;
+            padding: 8px 50px 8px 10px; /* 右侧为单位留出空间，左侧为前置单位预留空间 */
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-sm);
+            background: var(--bg-primary);
             font-size: 14px;
             text-align: left;
         }
         
         .input-compact:focus {
-            box-shadow: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+            border-color: var(--primary-color);
             outline: none;
         }
         
         .unit-prefix {
-            background: var(--bg-tertiary);
+            position: absolute;
+            left: 12px; /* 前置单位距离左边界的距离 */
+            top: 50%;
+            transform: translateY(-50%);
             color: var(--text-secondary);
-            padding: 8px 10px;
             font-size: 13px;
             font-weight: 500;
-            border-radius: var(--border-radius-sm);
             white-space: nowrap;
-            flex-shrink: 0;
+            pointer-events: none;
+            z-index: 1;
         }
         
         .unit-label {
-            background: var(--bg-tertiary);
+            position: absolute;
+            right: 12px; /* 单位距离右边界的距离 */
+            top: 50%;
+            transform: translateY(-50%);
             color: var(--text-secondary);
-            padding: 8px 10px;
             font-size: 13px;
             font-weight: 500;
-            border-radius: var(--border-radius-sm);
             white-space: nowrap;
-            flex-shrink: 0;
-            margin-left: auto;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* 当有前置单位时，输入框左侧需要留出更多空间 */
+        .input-with-unit:has(.unit-prefix) .input-compact {
+            padding-left: 50px; /* 有前置单位时左侧留出更多空间 */
         }
     </style>
 </head>
