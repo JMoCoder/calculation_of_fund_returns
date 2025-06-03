@@ -1557,11 +1557,13 @@
             border: 1px solid var(--border-secondary);
             border-radius: var(--border-radius-md);
             overflow: hidden;
+            min-height: 200px;
+            max-height: 400px;
         }
         
         .preview-header {
             background: linear-gradient(135deg, var(--secondary-color) 0%, #17a2b8 100%);
-            color: var(--text-inverse);
+            color: white;
             padding: var(--spacing-sm) var(--spacing-md);
             font-size: 14px;
             font-weight: 600;
@@ -1600,6 +1602,7 @@
             width: 100%;
             font-size: 12px;
             border-collapse: collapse;
+            margin-bottom: var(--spacing-sm);
         }
         
         .preview-table th,
@@ -1631,6 +1634,36 @@
             font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
             color: var(--secondary-color);
             font-weight: 500;
+        }
+
+        .preview-table-wrapper {
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .preview-summary {
+            background: var(--bg-tertiary);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+        }
+
+        .preview-summary i {
+            color: var(--info-color);
+        }
+
+        .preview-summary strong {
+            color: var(--secondary-color);
+            font-weight: 600;
         }
         
         /* 响应式调整 */
@@ -1906,6 +1939,14 @@
                                                 <div class="input-with-unit">
                                                     <input type="number" class="input input-compact" id="firstYearCashFlow" 
                                                            placeholder="请输入首年现金流" min="0" step="0.01">
+                                                    <div class="input-spinner">
+                                                        <div class="spinner-btn up" onclick="incrementValue('firstYearCashFlow', 1000)">
+                                                            <i class="fas fa-chevron-up"></i>
+                                                        </div>
+                                                        <div class="spinner-btn down" onclick="decrementValue('firstYearCashFlow', 1000)">
+                                                            <i class="fas fa-chevron-down"></i>
+                                                        </div>
+                                                    </div>
                                                     <span class="unit-label">万元</span>
                                                 </div>
                                                 <div class="help-text">第1年的净现金流金额</div>
@@ -1920,6 +1961,14 @@
                                                     <span class="unit-prefix">每</span>
                                                     <input type="number" class="input input-compact" id="growthFrequency" 
                                                            placeholder="增长频率" min="1" max="10" step="1" value="1">
+                                                    <div class="input-spinner">
+                                                        <div class="spinner-btn up" onclick="incrementValue('growthFrequency', 1)">
+                                                            <i class="fas fa-chevron-up"></i>
+                                                        </div>
+                                                        <div class="spinner-btn down" onclick="decrementValue('growthFrequency', 1)">
+                                                            <i class="fas fa-chevron-down"></i>
+                                                        </div>
+                                                    </div>
                                                     <span class="unit-label">年</span>
                                                 </div>
                                                 <div class="help-text">每几年增长一次</div>
@@ -1934,6 +1983,14 @@
                                                     <span class="unit-prefix">增长</span>
                                                     <input type="number" class="input input-compact" id="growthRate" 
                                                            placeholder="增长率" min="0" max="1000" step="0.1" value="10">
+                                                    <div class="input-spinner">
+                                                        <div class="spinner-btn up" onclick="incrementValue('growthRate', 1)">
+                                                            <i class="fas fa-chevron-up"></i>
+                                                        </div>
+                                                        <div class="spinner-btn down" onclick="decrementValue('growthRate', 1)">
+                                                            <i class="fas fa-chevron-down"></i>
+                                                        </div>
+                                                    </div>
                                                     <span class="unit-label">%</span>
                                                 </div>
                                                 <div class="help-text">现金流增长百分比</div>
@@ -4788,15 +4845,16 @@
         function renderPreviewTable(cashFlows, container) {
             try {
                 let html = `
-                    <table class="preview-table">
-                        <thead>
-                            <tr>
-                                <th>年份</th>
-                                <th>净现金流</th>
-                                <th>增长标识</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <div class="preview-table-wrapper">
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>年份</th>
+                                    <th>净现金流</th>
+                                    <th>增长标识</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
                 
                 cashFlows.forEach(item => {
@@ -4820,11 +4878,12 @@
                 const formattedTotal = safeFormatCurrency(totalAmount);
                 
                 html += `
-                        </tbody>
-                    </table>
-                    <div style="margin-top: var(--spacing-sm); font-size: 12px; color: var(--text-secondary); text-align: center;">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="preview-summary">
                         <i class="fas fa-info-circle"></i>
-                        总计: ${formattedTotal} 万元
+                        <span>总计: <strong>${formattedTotal} 万元</strong></span>
                     </div>
                 `;
                 
@@ -4977,6 +5036,56 @@
             
             // 默认值
             return 5;
+        }
+
+        /**
+         * 增加输入框数值
+         * @param {string} inputId - 输入框ID
+         * @param {number} step - 增加步长
+         */
+        function incrementValue(inputId, step) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            
+            const currentValue = safeParseFloat(input.value) || 0;
+            const minValue = parseFloat(input.min) || 0;
+            const maxValue = parseFloat(input.max) || Number.MAX_SAFE_INTEGER;
+            
+            let newValue = currentValue + step;
+            
+            // 应用限制
+            if (newValue > maxValue) newValue = maxValue;
+            if (newValue < minValue) newValue = minValue;
+            
+            input.value = newValue;
+            
+            // 触发input事件以更新预览
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        /**
+         * 减少输入框数值
+         * @param {string} inputId - 输入框ID  
+         * @param {number} step - 减少步长
+         */
+        function decrementValue(inputId, step) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            
+            const currentValue = safeParseFloat(input.value) || 0;
+            const minValue = parseFloat(input.min) || 0;
+            const maxValue = parseFloat(input.max) || Number.MAX_SAFE_INTEGER;
+            
+            let newValue = currentValue - step;
+            
+            // 应用限制
+            if (newValue < minValue) newValue = minValue;
+            if (newValue > maxValue) newValue = maxValue;
+            
+            input.value = newValue;
+            
+            // 触发input事件以更新预览
+            input.dispatchEvent(new Event('input', { bubbles: true }));
         }
     </script>
     

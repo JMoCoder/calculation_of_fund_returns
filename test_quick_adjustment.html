@@ -186,7 +186,8 @@
             border-radius: var(--border-radius-sm);
             border: 1px solid var(--border-primary);
             padding: 2px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            justify-content: space-between;
         }
 
         .input-compact {
@@ -197,6 +198,16 @@
             background: transparent;
             padding: 8px 10px;
             font-size: 14px;
+            /* 隐藏默认的spinner */
+            -webkit-appearance: textfield;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        .input-compact::-webkit-outer-spin-button,
+        .input-compact::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .input-compact:focus {
@@ -212,6 +223,7 @@
             font-weight: 500;
             border-radius: var(--border-radius-sm);
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .unit-label {
@@ -222,6 +234,8 @@
             font-weight: 500;
             border-radius: var(--border-radius-sm);
             white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: auto;
         }
 
         .help-text {
@@ -330,6 +344,76 @@
             color: var(--secondary-color);
             font-weight: 500;
         }
+
+        .input-spinner {
+            display: flex;
+            flex-direction: column;
+            margin-left: var(--spacing-xs);
+        }
+        
+        .spinner-btn {
+            width: 24px;
+            height: 16px;
+            border: 1px solid var(--border-primary);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .spinner-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .spinner-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .spinner-btn.up {
+            border-radius: 2px 2px 0 0;
+            border-bottom: none;
+        }
+        
+        .spinner-btn.down {
+            border-radius: 0 0 2px 2px;
+        }
+
+        .preview-table-wrapper {
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .preview-summary {
+            background: var(--bg-tertiary);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+        }
+
+        .preview-summary i {
+            color: var(--info-color);
+        }
+
+        .preview-summary strong {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -362,6 +446,14 @@
                             <div class="input-with-unit">
                                 <input type="number" class="input input-compact" id="firstYearCashFlow" 
                                        placeholder="请输入首年现金流" min="0" step="0.01">
+                                <div class="input-spinner">
+                                    <div class="spinner-btn up" onclick="incrementValue('firstYearCashFlow', 1000)">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </div>
+                                    <div class="spinner-btn down" onclick="decrementValue('firstYearCashFlow', 1000)">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
                                 <span class="unit-label">万元</span>
                             </div>
                             <div class="help-text">第1年的净现金流金额</div>
@@ -376,6 +468,14 @@
                                 <span class="unit-prefix">每</span>
                                 <input type="number" class="input input-compact" id="growthFrequency" 
                                        placeholder="增长频率" min="1" max="10" step="1" value="1">
+                                <div class="input-spinner">
+                                    <div class="spinner-btn up" onclick="incrementValue('growthFrequency', 1)">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </div>
+                                    <div class="spinner-btn down" onclick="decrementValue('growthFrequency', 1)">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
                                 <span class="unit-label">年</span>
                             </div>
                             <div class="help-text">每几年增长一次</div>
@@ -390,6 +490,14 @@
                                 <span class="unit-prefix">增长</span>
                                 <input type="number" class="input input-compact" id="growthRate" 
                                        placeholder="增长率" min="0" max="1000" step="0.1" value="10">
+                                <div class="input-spinner">
+                                    <div class="spinner-btn up" onclick="incrementValue('growthRate', 1)">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </div>
+                                    <div class="spinner-btn down" onclick="decrementValue('growthRate', 1)">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
                                 <span class="unit-label">%</span>
                             </div>
                             <div class="help-text">现金流增长百分比</div>
@@ -602,15 +710,16 @@
         function renderPreviewTable(cashFlows, container) {
             try {
                 let html = `
-                    <table class="preview-table">
-                        <thead>
-                            <tr>
-                                <th>年份</th>
-                                <th>净现金流</th>
-                                <th>增长标识</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <div class="preview-table-wrapper">
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>年份</th>
+                                    <th>净现金流</th>
+                                    <th>增长标识</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
                 
                 cashFlows.forEach(item => {
@@ -634,10 +743,11 @@
                 html += `
                         </tbody>
                     </table>
-                    <div style="margin-top: var(--spacing-sm); font-size: 12px; color: var(--text-secondary); text-align: center;">
-                        <i class="fas fa-info-circle"></i>
-                        总计: ${formattedTotal} 万元
-                    </div>
+                </div>
+                <div class="preview-summary">
+                    <i class="fas fa-info-circle"></i>
+                    <span>总计: <strong>${formattedTotal} 万元</strong></span>
+                </div>
                 `;
                 
                 container.innerHTML = html;
@@ -651,6 +761,46 @@
                     </div>
                 `;
             }
+        }
+
+        // 增加输入框数值
+        function incrementValue(inputId, step) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            
+            const currentValue = safeParseFloat(input.value) || 0;
+            const minValue = parseFloat(input.min) || 0;
+            const maxValue = parseFloat(input.max) || Number.MAX_SAFE_INTEGER;
+            
+            let newValue = currentValue + step;
+            
+            if (newValue > maxValue) newValue = maxValue;
+            if (newValue < minValue) newValue = minValue;
+            
+            input.value = newValue;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            updateTestResult(`${inputId} 增加到 ${newValue}`);
+        }
+
+        // 减少输入框数值
+        function decrementValue(inputId, step) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            
+            const currentValue = safeParseFloat(input.value) || 0;
+            const minValue = parseFloat(input.min) || 0;
+            const maxValue = parseFloat(input.max) || Number.MAX_SAFE_INTEGER;
+            
+            let newValue = currentValue - step;
+            
+            if (newValue < minValue) newValue = minValue;
+            if (newValue > maxValue) newValue = maxValue;
+            
+            input.value = newValue;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            updateTestResult(`${inputId} 减少到 ${newValue}`);
         }
 
         // 应用快速调整
