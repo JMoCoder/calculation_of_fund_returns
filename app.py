@@ -198,99 +198,106 @@ def format_calculation_results(raw_data):
         }
 
 def calculate_totals(cash_flow_table, calculation_mode):
-    """计算各列的总计"""
+    """
+    计算各列的总计
+    
+    🔧 精度修复：在计算过程中保持原始精度，避免累积误差
+    只在最终显示时进行四舍五入
+    """
     totals = {
-        'net_cash_flow': 0,
-        'cash_flow_distribution_rate': 0
+        'net_cash_flow': 0.0,
+        'cash_flow_distribution_rate': 0.0
     }
     
     for row in cash_flow_table:
-        totals['net_cash_flow'] += safe_round(row.get('net_cash_flow', 0))
+        # 🔧 关键修复：直接累加原始数值，不使用safe_round
+        totals['net_cash_flow'] += float(row.get('net_cash_flow', 0))
         
         # 根据计算模式累计相应字段
         if calculation_mode == '平层结构-优先还本':
             if 'principal_repayment' not in totals:
                 totals.update({
-                    'principal_repayment': 0,
-                    'accrued_hurdle_return': 0,
-                    'distributed_hurdle_return': 0,
-                    'carry_lp': 0,
-                    'carry_gp': 0
+                    'principal_repayment': 0.0,
+                    'accrued_hurdle_return': 0.0,
+                    'distributed_hurdle_return': 0.0,
+                    'carry_lp': 0.0,
+                    'carry_gp': 0.0
                 })
-            totals['principal_repayment'] += safe_round(row.get('principal_repayment', 0))
-            totals['accrued_hurdle_return'] += safe_round(row.get('accrued_hurdle_return', 0))
-            totals['distributed_hurdle_return'] += safe_round(row.get('distributed_hurdle_return', 0))
-            totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
-            totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
+            # 🔧 修复：所有字段都直接累加原始数值
+            totals['principal_repayment'] += float(row.get('principal_repayment', 0))
+            totals['accrued_hurdle_return'] += float(row.get('accrued_hurdle_return', 0))
+            totals['distributed_hurdle_return'] += float(row.get('distributed_hurdle_return', 0))
+            totals['carry_lp'] += float(row.get('carry_lp', 0))
+            totals['carry_gp'] += float(row.get('carry_gp', 0))
         elif calculation_mode == '平层结构-期间分配':
             # 添加平层结构-期间分配模式的总计计算
             if 'periodic_distribution' not in totals:
                 totals.update({
-                    'periodic_distribution': 0,
-                    'accrued_hurdle_return': 0,
-                    'principal_repayment': 0,
-                    'distributed_hurdle_return': 0,
-                    'carry_lp': 0,
-                    'carry_gp': 0
+                    'periodic_distribution': 0.0,
+                    'accrued_hurdle_return': 0.0,
+                    'principal_repayment': 0.0,
+                    'distributed_hurdle_return': 0.0,
+                    'carry_lp': 0.0,
+                    'carry_gp': 0.0
                 })
-            totals['periodic_distribution'] += safe_round(row.get('periodic_distribution', 0))
-            totals['accrued_hurdle_return'] += safe_round(row.get('accrued_hurdle_return', 0))
-            totals['principal_repayment'] += safe_round(row.get('principal_repayment', 0))
-            totals['distributed_hurdle_return'] += safe_round(row.get('distributed_hurdle_return', 0))
-            totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
-            totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
+            totals['periodic_distribution'] += float(row.get('periodic_distribution', 0))
+            totals['accrued_hurdle_return'] += float(row.get('accrued_hurdle_return', 0))
+            totals['principal_repayment'] += float(row.get('principal_repayment', 0))
+            totals['distributed_hurdle_return'] += float(row.get('distributed_hurdle_return', 0))
+            totals['carry_lp'] += float(row.get('carry_lp', 0))
+            totals['carry_gp'] += float(row.get('carry_gp', 0))
         elif calculation_mode == '结构化-优先劣后':
             if 'senior_principal_repayment' not in totals:
                 totals.update({
-                    'senior_principal_repayment': 0,
-                    'senior_hurdle_accrual': 0,
-                    'senior_periodic_return': 0,
-                    'subordinate_principal_repayment': 0,
-                    'carry_lp': 0,
-                    'carry_gp': 0
+                    'senior_principal_repayment': 0.0,
+                    'senior_hurdle_accrual': 0.0,
+                    'senior_periodic_return': 0.0,
+                    'subordinate_principal_repayment': 0.0,
+                    'carry_lp': 0.0,
+                    'carry_gp': 0.0
                 })
-            totals['senior_principal_repayment'] += safe_round(row.get('senior_principal_repayment', 0))
-            totals['senior_hurdle_accrual'] += safe_round(row.get('senior_hurdle_accrual', 0))
-            totals['senior_periodic_return'] += safe_round(row.get('senior_periodic_return', 0))
-            totals['subordinate_principal_repayment'] += safe_round(row.get('subordinate_principal_repayment', 0))
-            totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
-            totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
+            totals['senior_principal_repayment'] += float(row.get('senior_principal_repayment', 0))
+            totals['senior_hurdle_accrual'] += float(row.get('senior_hurdle_accrual', 0))
+            totals['senior_periodic_return'] += float(row.get('senior_periodic_return', 0))
+            totals['subordinate_principal_repayment'] += float(row.get('subordinate_principal_repayment', 0))
+            totals['carry_lp'] += float(row.get('carry_lp', 0))
+            totals['carry_gp'] += float(row.get('carry_gp', 0))
         elif calculation_mode == '结构化-包含夹层':
             # 添加结构化-包含夹层模式的总计计算
             if 'senior_hurdle_distribution' not in totals:
                 totals.update({
-                    'senior_hurdle_distribution': 0,
-                    'mezzanine_hurdle_distribution': 0,
-                    'senior_principal_repayment': 0,
-                    'mezzanine_principal_repayment': 0,
-                    'subordinate_principal_repayment': 0,
-                    'carry_lp': 0,
-                    'carry_gp': 0
+                    'senior_hurdle_distribution': 0.0,
+                    'mezzanine_hurdle_distribution': 0.0,
+                    'senior_principal_repayment': 0.0,
+                    'mezzanine_principal_repayment': 0.0,
+                    'subordinate_principal_repayment': 0.0,
+                    'carry_lp': 0.0,
+                    'carry_gp': 0.0
                 })
-            totals['senior_hurdle_distribution'] += safe_round(row.get('senior_hurdle_distribution', 0))
-            totals['mezzanine_hurdle_distribution'] += safe_round(row.get('mezzanine_hurdle_distribution', 0))
-            totals['senior_principal_repayment'] += safe_round(row.get('senior_principal_repayment', 0))
-            totals['mezzanine_principal_repayment'] += safe_round(row.get('mezzanine_principal_repayment', 0))
-            totals['subordinate_principal_repayment'] += safe_round(row.get('subordinate_principal_repayment', 0))
-            totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
-            totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
+            totals['senior_hurdle_distribution'] += float(row.get('senior_hurdle_distribution', 0))
+            totals['mezzanine_hurdle_distribution'] += float(row.get('mezzanine_hurdle_distribution', 0))
+            totals['senior_principal_repayment'] += float(row.get('senior_principal_repayment', 0))
+            totals['mezzanine_principal_repayment'] += float(row.get('mezzanine_principal_repayment', 0))
+            totals['subordinate_principal_repayment'] += float(row.get('subordinate_principal_repayment', 0))
+            totals['carry_lp'] += float(row.get('carry_lp', 0))
+            totals['carry_gp'] += float(row.get('carry_gp', 0))
         elif calculation_mode == '结构化-息息本本':
             # 添加结构化-息息本本模式的总计计算
             if 'senior_periodic_return' not in totals:
                 totals.update({
-                    'senior_periodic_return': 0,
-                    'subordinate_periodic_return': 0,
-                    'senior_principal_repayment': 0,
-                    'subordinate_principal_repayment': 0,
-                    'carry_lp': 0,
-                    'carry_gp': 0
+                    'senior_periodic_return': 0.0,
+                    'subordinate_periodic_return': 0.0,
+                    'senior_principal_repayment': 0.0,
+                    'subordinate_principal_repayment': 0.0,
+                    'carry_lp': 0.0,
+                    'carry_gp': 0.0
                 })
-            totals['senior_periodic_return'] += safe_round(row.get('senior_periodic_return', 0))
-            totals['subordinate_periodic_return'] += safe_round(row.get('subordinate_periodic_return', 0))
-            totals['senior_principal_repayment'] += safe_round(row.get('senior_principal_repayment', 0))
-            totals['subordinate_principal_repayment'] += safe_round(row.get('subordinate_principal_repayment', 0))
-            totals['carry_lp'] += safe_round(row.get('carry_lp', 0))
-            totals['carry_gp'] += safe_round(row.get('carry_gp', 0))
+            totals['senior_periodic_return'] += float(row.get('senior_periodic_return', 0))
+            totals['subordinate_periodic_return'] += float(row.get('subordinate_periodic_return', 0))
+            totals['senior_principal_repayment'] += float(row.get('senior_principal_repayment', 0))
+            totals['subordinate_principal_repayment'] += float(row.get('subordinate_principal_repayment', 0))
+            totals['carry_lp'] += float(row.get('carry_lp', 0))
+            totals['carry_gp'] += float(row.get('carry_gp', 0))
             
     return totals
 
