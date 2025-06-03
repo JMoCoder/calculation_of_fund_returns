@@ -10,14 +10,15 @@
 4. 图表配置和数据结构验证
 """
 
-import requests
-import json
 import sys
 import os
-from datetime import datetime
+# 添加项目根目录到路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 添加项目根目录到Python路径，确保能够导入app模块
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import requests
+import json
+import time
+from datetime import datetime
 
 from app import FundCalculator, get_cumulative_cash_flow_chart_config
 

@@ -5818,30 +5818,44 @@
         }
         
         /**
-         * 复制图表为高清PNG格式到剪切板
+         * 复制图表为高清PNG格式到剪切板（修复版 - 使用放大展示高清图）
          * @param {string} chartId - 图表canvas的ID
          */
         async function copyChartAsPNG(chartId) {
             try {
-                // 检查图表实例是否存在
+                // 1. 检查图表实例是否存在
                 if (!window.chartInstances || !window.chartInstances[chartId]) {
                     showAlert('图表实例未找到，请先生成图表', 'warning');
                     return;
                 }
-                
-                // 检查浏览器是否支持剪切板API
-                if (!navigator.clipboard || !navigator.clipboard.write) {
-                    showAlert('当前浏览器不支持剪切板功能，将自动下载', 'warning');
+
+                // 2. 环境兼容性检查
+                const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                const hasClipboardAPI = navigator.clipboard && navigator.clipboard.write;
+                const hasClipboardItem = typeof ClipboardItem !== 'undefined';
+
+                console.log('环境检查:', {
+                    isSecureContext,
+                    hasClipboardAPI,
+                    hasClipboardItem,
+                    protocol: location.protocol,
+                    hostname: location.hostname
+                });
+
+                // 3. 如果环境不支持，直接降级到下载
+                if (!isSecureContext || !hasClipboardAPI || !hasClipboardItem) {
+                    console.log('环境不支持剪贴板API，使用下载方案');
                     downloadChartAsPNG(chartId);
+                    showAlert('浏览器环境不支持剪贴板功能，已自动下载图片', 'info');
                     return;
                 }
-                
+
                 showAlert('正在生成高清图片...', 'info');
-                
-                // 获取图表标题
+
+                // 4. 获取图表标题
                 const chartTitle = getChartTitle(chartId);
                 
-                // 临时打开放大展示但不显示模态框，直接复制其canvas
+                // 5. 使用放大展示的逻辑生成高清图表（不显示模态框）
                 const sourceChart = window.chartInstances[chartId];
                 const modal = document.getElementById('chartFullscreenModal');
                 const titleElement = document.getElementById('chartFullscreenTitle');
@@ -5858,33 +5872,43 @@
                 // 销毁可能存在的旧图表
                 if (window.fullscreenChartInstance) {
                     window.fullscreenChartInstance.destroy();
+                    window.fullscreenChartInstance = null;
                 }
                 
-                // 设置canvas尺寸（与放大展示相同）
-                const maxWidth = 1000; // 固定尺寸
-                const maxHeight = 600;
+                // 设置canvas尺寸（与复制功能相同）
+                const maxWidth = 1200;
+                const maxHeight = 800;
                 
-                fullscreenCanvas.style.maxWidth = maxWidth + 'px';
-                fullscreenCanvas.style.maxHeight = maxHeight + 'px';
+                // 直接设置canvas的实际尺寸
+                fullscreenCanvas.width = maxWidth;
+                fullscreenCanvas.height = maxHeight;
+                fullscreenCanvas.style.width = maxWidth + 'px';
+                fullscreenCanvas.style.height = maxHeight + 'px';
                 
-                // 获取原始图表的完整配置和数据（与放大展示完全相同的逻辑）
+                console.log('下载功能 - Canvas尺寸设置:', {
+                    width: fullscreenCanvas.width,
+                    height: fullscreenCanvas.height
+                });
+                
+                // 获取原始图表的完整配置和数据（与复制功能完全相同）
                 const originalConfig = sourceChart.config;
                 const originalData = sourceChart.data;
                 
-                // 创建新的配置对象（与放大展示完全相同）
+                // 创建新的配置对象（与复制功能完全相同）
                 const newConfig = {
                     type: originalConfig.type,
                     data: JSON.parse(JSON.stringify(originalData)),
                     options: {
-                        responsive: true,
+                        responsive: false, // 重要：关闭响应式，使用固定尺寸
                         maintainAspectRatio: false,
+                        animation: false, // 关闭动画，加快渲染
                         plugins: {
                             legend: {
                                 display: true,
                                 position: 'top',
                                 labels: {
                                     font: {
-                                        size: 14
+                                        size: 16
                                     },
                                     usePointStyle: true,
                                     padding: 20
@@ -5894,55 +5918,47 @@
                                 display: true,
                                 text: chartTitle,
                                 font: {
-                                    size: 18,
+                                    size: 20,
                                     weight: 'bold'
                                 },
                                 padding: {
-                                    top: 10,
+                                    top: 15,
                                     bottom: 30
                                 }
                             },
                             tooltip: {
-                                enabled: true,
-                                mode: 'index',
-                                intersect: false
+                                enabled: false // 下载时不需要tooltip
                             }
                         },
                         scales: {}
                     }
                 };
                 
-                // 复制原始配置的scales设置（与放大展示完全相同）
+                // 复制原始配置的scales设置（与复制功能完全相同）
                 if (originalConfig.options && originalConfig.options.scales) {
                     newConfig.options.scales = JSON.parse(JSON.stringify(originalConfig.options.scales));
                     
-                    // 增大坐标轴字体
                     Object.keys(newConfig.options.scales).forEach(scaleKey => {
                         const scale = newConfig.options.scales[scaleKey];
                         if (scale.ticks) {
-                            scale.ticks.font = { size: 12 };
+                            scale.ticks.font = { size: 14 };
                         } else {
-                            scale.ticks = { font: { size: 12 } };
+                            scale.ticks = { font: { size: 14 } };
                         }
                         if (scale.title) {
-                            scale.title.font = { size: 14, weight: 'bold' };
+                            scale.title.font = { size: 16, weight: 'bold' };
                         }
                     });
                 }
                 
-                // 复制其他重要的配置项（与放大展示完全相同）
+                // 复制其他重要的配置项（与复制功能完全相同）
                 if (originalConfig.options) {
-                    // 复制动画配置
-                    if (originalConfig.options.animation) {
-                        newConfig.options.animation = originalConfig.options.animation;
-                    }
+                    // 跳过动画配置，使用我们的设置
                     
-                    // 复制交互配置
                     if (originalConfig.options.interaction) {
                         newConfig.options.interaction = originalConfig.options.interaction;
                     }
                     
-                    // 复制其他插件配置，但保留我们的覆盖设置
                     if (originalConfig.options.plugins) {
                         Object.keys(originalConfig.options.plugins).forEach(pluginKey => {
                             if (pluginKey !== 'legend' && pluginKey !== 'title' && pluginKey !== 'tooltip') {
@@ -5952,24 +5968,40 @@
                     }
                 }
                 
-                // 创建图表（与放大展示完全相同）
+                console.log('下载功能 - 开始创建高清图表...');
+                
+                // 创建图表（与复制功能完全相同）
                 const ctx = fullscreenCanvas.getContext('2d');
+                
+                // 清空canvas确保干净的渲染环境
+                ctx.clearRect(0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+                
                 window.fullscreenChartInstance = new Chart(ctx, newConfig);
                 
-                // 等待图表渲染完成
-                await new Promise(resolve => setTimeout(resolve, 800));
+                // 等待图表渲染完成 - 增加等待时间
+                console.log('下载功能 - 等待图表渲染完成...');
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 
-                // 现在直接从放大展示的canvas复制图像，添加白色背景
-                const canvas = fullscreenCanvas;
+                // 验证图表是否真的渲染了
+                const imageData = ctx.getImageData(0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+                const hasContent = Array.from(imageData.data).some((pixel, index) => {
+                    return index % 4 === 3 && pixel > 0;
+                });
                 
-                // 创建最终的高清版本
+                if (!hasContent) {
+                    throw new Error('下载功能 - 图表渲染失败，canvas内容为空');
+                }
+                
+                console.log('下载功能 - 图表渲染验证通过');
+                
+                // 直接从放大展示的canvas创建最终图片（与复制功能完全相同）
                 const finalCanvas = document.createElement('canvas');
                 const finalCtx = finalCanvas.getContext('2d');
                 
-                // 设置高清分辨率（3倍）
+                // 设置超高清分辨率（3倍）
                 const scaleFactor = 3;
-                finalCanvas.width = canvas.width * scaleFactor;
-                finalCanvas.height = canvas.height * scaleFactor;
+                finalCanvas.width = fullscreenCanvas.width * scaleFactor;
+                finalCanvas.height = fullscreenCanvas.height * scaleFactor;
                 
                 // 设置高质量渲染
                 finalCtx.scale(scaleFactor, scaleFactor);
@@ -5978,12 +6010,13 @@
                 
                 // 填充白色背景
                 finalCtx.fillStyle = '#ffffff';
-                finalCtx.fillRect(0, 0, canvas.width, canvas.height);
+                finalCtx.fillRect(0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
                 
                 // 直接绘制放大展示的canvas
-                finalCtx.drawImage(canvas, 0, 0);
+                console.log('下载功能 - 绘制最终图片...');
+                finalCtx.drawImage(fullscreenCanvas, 0, 0);
                 
-                // 转换为Blob
+                // 7. 转换为Blob并复制到剪贴板
                 const blob = await new Promise(resolve => {
                     finalCanvas.toBlob(resolve, 'image/png', 1.0);
                 });
@@ -5997,44 +6030,91 @@
                 if (!blob) {
                     throw new Error('图表转换失败');
                 }
+
+                // 8. 复制到剪贴板
+                await copyImageBlobToClipboard(blob);
                 
-                // 创建剪切板项
-                const clipboardItem = new ClipboardItem({
-                    'image/png': blob
-                });
-                
-                // 写入剪切板
-                await navigator.clipboard.write([clipboardItem]);
-                
-                // 显示成功提示
-                showAlert('高清图表已复制到剪切板', 'success');
-                
-                console.log(`高清图表 ${chartId} 已复制为PNG格式（直接从放大展示复制）`);
-                
+                showAlert(`高清图表已复制到剪贴板 (${Math.round(blob.size / 1024)}KB, ${finalCanvas.width}x${finalCanvas.height})`, 'success');
+                console.log(`高清图表 ${chartId} 复制成功，分辨率: ${finalCanvas.width}x${finalCanvas.height}`);
+
             } catch (error) {
                 console.error('复制图表失败:', error);
                 
-                // 如果剪切板API失败，提供下载选项
+                // 自动降级到下载方案
                 try {
                     downloadChartAsPNG(chartId);
-                    showAlert('已下载高清图表为PNG文件', 'info');
+                    showAlert(`复制失败: ${error.message}，已自动下载图片`, 'warning');
                 } catch (downloadError) {
                     console.error('下载图表也失败:', downloadError);
-                    showAlert('复制和下载都失败了: ' + error.message, 'error');
+                    showAlert(`复制和下载都失败: ${error.message}`, 'error');
                 }
             }
         }
-        
+
         /**
-         * 下载图表为PNG文件（降级方案）
+         * 复制图片Blob到剪贴板
+         * @param {Blob} blob - 图片blob对象
+         * @returns {Promise<void>}
+         */
+        async function copyImageBlobToClipboard(blob) {
+            try {
+                // 创建剪贴板项
+                const clipboardItem = new ClipboardItem({
+                    'image/png': blob
+                });
+
+                // 使用requestAnimationFrame确保在用户交互上下文中执行
+                await new Promise((resolve, reject) => {
+                    requestAnimationFrame(async () => {
+                        try {
+                            await navigator.clipboard.write([clipboardItem]);
+                            resolve();
+                        } catch (clipboardError) {
+                            console.error('Clipboard API失败:', clipboardError);
+                            reject(clipboardError);
+                        }
+                    });
+                });
+
+            } catch (error) {
+                // 如果现代API失败，尝试其他方法
+                console.warn('现代剪贴板API失败，尝试替代方案:', error);
+                
+                // 方法2: 尝试文本复制（base64）
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    try {
+                        const reader = new FileReader();
+                        reader.onload = async function() {
+                            try {
+                                await navigator.clipboard.writeText(reader.result);
+                                console.log('已复制base64数据到剪贴板');
+                                return;
+                            } catch (textError) {
+                                console.error('文本复制也失败:', textError);
+                                throw error; // 抛出原始错误
+                            }
+                        };
+                        reader.readAsDataURL(blob);
+                        return;
+                    } catch (textError) {
+                        console.error('文本复制失败:', textError);
+                    }
+                }
+
+                throw new Error(`剪贴板操作失败: ${error.message}`);
+            }
+        }
+
+        /**
+         * 下载图表为PNG文件（降级方案，使用放大展示逻辑）
          * @param {string} chartId - 图表canvas的ID
          */
         async function downloadChartAsPNG(chartId) {
             try {
-                const sourceChart = window.chartInstances[chartId];
                 const chartTitle = getChartTitle(chartId);
+                const sourceChart = window.chartInstances[chartId];
                 
-                // 使用与复制功能完全相同的逻辑 - 直接从放大展示canvas复制
+                // 使用与复制功能完全相同的逻辑 - 生成放大展示高清图
                 const modal = document.getElementById('chartFullscreenModal');
                 const titleElement = document.getElementById('chartFullscreenTitle');
                 const fullscreenCanvas = document.getElementById('chartFullscreenCanvas');
@@ -6052,18 +6132,20 @@
                     window.fullscreenChartInstance.destroy();
                 }
                 
-                // 设置canvas尺寸（与放大展示和复制功能相同）
-                const maxWidth = 1000;
-                const maxHeight = 600;
+                // 设置canvas尺寸（与复制功能相同）
+                const maxWidth = 1200;
+                const maxHeight = 800;
                 
                 fullscreenCanvas.style.maxWidth = maxWidth + 'px';
                 fullscreenCanvas.style.maxHeight = maxHeight + 'px';
+                fullscreenCanvas.width = maxWidth;
+                fullscreenCanvas.height = maxHeight;
                 
-                // 获取原始图表的完整配置和数据（与放大展示和复制功能完全相同）
+                // 获取原始图表的完整配置和数据（与复制功能完全相同）
                 const originalConfig = sourceChart.config;
                 const originalData = sourceChart.data;
                 
-                // 创建新的配置对象（与放大展示和复制功能完全相同）
+                // 创建新的配置对象（与复制功能完全相同）
                 const newConfig = {
                     type: originalConfig.type,
                     data: JSON.parse(JSON.stringify(originalData)),
@@ -6076,7 +6158,7 @@
                                 position: 'top',
                                 labels: {
                                     font: {
-                                        size: 14
+                                        size: 16
                                     },
                                     usePointStyle: true,
                                     padding: 20
@@ -6086,11 +6168,11 @@
                                 display: true,
                                 text: chartTitle,
                                 font: {
-                                    size: 18,
+                                    size: 20,
                                     weight: 'bold'
                                 },
                                 padding: {
-                                    top: 10,
+                                    top: 15,
                                     bottom: 30
                                 }
                             },
@@ -6104,24 +6186,24 @@
                     }
                 };
                 
-                // 复制原始配置的scales设置（与放大展示和复制功能完全相同）
+                // 复制原始配置的scales设置（与复制功能完全相同）
                 if (originalConfig.options && originalConfig.options.scales) {
                     newConfig.options.scales = JSON.parse(JSON.stringify(originalConfig.options.scales));
                     
                     Object.keys(newConfig.options.scales).forEach(scaleKey => {
                         const scale = newConfig.options.scales[scaleKey];
                         if (scale.ticks) {
-                            scale.ticks.font = { size: 12 };
+                            scale.ticks.font = { size: 14 };
                         } else {
-                            scale.ticks = { font: { size: 12 } };
+                            scale.ticks = { font: { size: 14 } };
                         }
                         if (scale.title) {
-                            scale.title.font = { size: 14, weight: 'bold' };
+                            scale.title.font = { size: 16, weight: 'bold' };
                         }
                     });
                 }
                 
-                // 复制其他重要的配置项（与放大展示和复制功能完全相同）
+                // 复制其他重要的配置项（与复制功能完全相同）
                 if (originalConfig.options) {
                     if (originalConfig.options.animation) {
                         newConfig.options.animation = originalConfig.options.animation;
@@ -6140,23 +6222,20 @@
                     }
                 }
                 
-                // 创建图表（与放大展示和复制功能完全相同）
+                // 创建图表（与复制功能完全相同）
                 const ctx = fullscreenCanvas.getContext('2d');
                 window.fullscreenChartInstance = new Chart(ctx, newConfig);
                 
-                await new Promise(resolve => setTimeout(resolve, 800));
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // 直接从放大展示的canvas复制图像（与复制功能完全相同）
-                const canvas = fullscreenCanvas;
-                
-                // 创建最终的高清版本
+                // 直接从放大展示的canvas创建最终图片（与复制功能完全相同）
                 const finalCanvas = document.createElement('canvas');
                 const finalCtx = finalCanvas.getContext('2d');
                 
-                // 设置高清分辨率（3倍）
+                // 设置超高清分辨率（3倍）
                 const scaleFactor = 3;
-                finalCanvas.width = canvas.width * scaleFactor;
-                finalCanvas.height = canvas.height * scaleFactor;
+                finalCanvas.width = fullscreenCanvas.width * scaleFactor;
+                finalCanvas.height = fullscreenCanvas.height * scaleFactor;
                 
                 // 设置高质量渲染
                 finalCtx.scale(scaleFactor, scaleFactor);
@@ -6165,14 +6244,15 @@
                 
                 // 填充白色背景
                 finalCtx.fillStyle = '#ffffff';
-                finalCtx.fillRect(0, 0, canvas.width, canvas.height);
+                finalCtx.fillRect(0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
                 
                 // 直接绘制放大展示的canvas
-                finalCtx.drawImage(canvas, 0, 0);
+                finalCtx.drawImage(fullscreenCanvas, 0, 0);
                 
                 // 下载文件
                 const link = document.createElement('a');
-                link.download = `chart_${chartId}_${new Date().getTime()}.png`;
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                link.download = `基金收益分配图表_${chartTitle}_${timestamp}_高清.png`;
                 link.href = finalCanvas.toDataURL('image/png', 1.0);
                 document.body.appendChild(link);
                 link.click();
@@ -6184,48 +6264,35 @@
                     window.fullscreenChartInstance = null;
                 }
                 
+                console.log(`高清图表已下载: ${link.download}, 分辨率: ${finalCanvas.width}x${finalCanvas.height}`);
+
             } catch (error) {
-                throw error;
+                console.error('下载图表失败:', error);
+                
+                // 清理：确保销毁临时图表
+                if (window.fullscreenChartInstance) {
+                    window.fullscreenChartInstance.destroy();
+                    window.fullscreenChartInstance = null;
+                }
+                
+                throw new Error(`下载失败: ${error.message}`);
             }
         }
-        
-        /**
-         * 添加键盘快捷键支持
-         */
-        document.addEventListener('keydown', function(event) {
-            // ESC键关闭放大展示
-            if (event.key === 'Escape') {
-                const modal = document.getElementById('chartFullscreenModal');
-                if (modal && modal.classList.contains('show')) {
-                    closeChartFullscreen();
-                }
-            }
-        });
-        
-        /**
-         * 添加模态框点击外部关闭功能
-         */
-        document.addEventListener('click', function(event) {
-            const modal = document.getElementById('chartFullscreenModal');
-            if (modal && modal.classList.contains('show') && event.target === modal) {
-                closeChartFullscreen();
-            }
-        });
 
         /**
          * 获取图表标题
-         * @param {string} chartId - 图表ID
+         * @param {string} chartId - 图表canvas的ID
          * @returns {string} 图表标题
          */
         function getChartTitle(chartId) {
             const titleMap = {
                 'cashFlowChart': '现金流回收分析',
-                'distributionChart': '现金流分配结构',
+                'distributionChart': '现金流分配结构', 
                 'capitalStructureChart': '剩余本金分析',
-                'cumulativeCashFlowChart': '累计现金流分析',
-                'pieChart': '整体分配结构'
+                'cumulativeCashFlowChart': '累计现金流分析'
             };
-            return titleMap[chartId] || '图表';
+            
+            return titleMap[chartId] || '基金收益分配图表';
         }
     </script>
     

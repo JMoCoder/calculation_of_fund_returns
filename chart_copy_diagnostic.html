@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图表复制功能诊断工具 v1.0</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        .diagnostic-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .chart-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        .method-section {
+            border-left: 4px solid #007bff;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-supported { background: #28a745; }
+        .status-unsupported { background: #dc3545; }
+        .status-unknown { background: #ffc107; }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .version-info {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            padding: 5px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 图表复制功能诊断工具</h1>
+            <p>用于检测和修复基金收益分配测算系统中的图表复制功能问题</p>
+            <div class="version-info">
+                版本: v1.0 | 最后更新: 2024年12月 | 适用于: Chrome 90+, Firefox 85+, Edge 90+
+            </div>
+        </div>
+
+        <!-- 环境检测 -->
+        <div class="diagnostic-section">
+            <h2>🔍 环境兼容性检测</h2>
+            <div id="environmentCheck">
+                <button class="test-button" onclick="checkEnvironment()">开始环境检测</button>
+                <div id="environmentResults"></div>
+            </div>
+        </div>
+
+        <!-- 测试图表 -->
+        <div class="diagnostic-section">
+            <h2>📈 测试图表</h2>
+            <div class="chart-container">
+                <canvas id="testChart" width="600" height="400"></canvas>
+            </div>
+            <button class="test-button" onclick="createTestChart()">生成测试图表</button>
+        </div>
+
+        <!-- 复制方法测试 -->
+        <div class="diagnostic-section">
+            <h2>📋 复制方法测试</h2>
+            
+            <div class="method-section">
+                <h3>方法1: 现代Clipboard API (推荐)</h3>
+                <button class="test-button" onclick="testModernClipboard()">测试现代API复制</button>
+                <div id="modernClipboardResult"></div>
+            </div>
+
+            <div class="method-section">
+                <h3>方法2: 传统execCommand (兼容性)</h3>
+                <button class="test-button" onclick="testLegacyClipboard()">测试传统API复制</button>
+                <div id="legacyClipboardResult"></div>
+            </div>
+
+            <div class="method-section">
+                <h3>方法3: 优化版混合方法 (修复版)</h3>
+                <button class="test-button" onclick="testOptimizedClipboard()">测试优化版复制</button>
+                <div id="optimizedClipboardResult"></div>
+            </div>
+
+            <div class="method-section">
+                <h3>方法4: 下载降级方案</h3>
+                <button class="test-button" onclick="testDownloadFallback()">测试下载方案</button>
+                <div id="downloadResult"></div>
+            </div>
+        </div>
+
+        <!-- 修复建议 -->
+        <div class="diagnostic-section">
+            <h2>🔧 修复建议</h2>
+            <div id="fixRecommendations"></div>
+        </div>
+
+        <!-- 调试信息 -->
+        <div class="diagnostic-section">
+            <h2>🐛 调试信息</h2>
+            <div id="debugInfo">
+                <button class="test-button" onclick="showDebugInfo()">显示详细调试信息</button>
+                <div id="debugOutput"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let testChartInstance = null;
+
+        /**
+         * 环境兼容性检测
+         */
+        function checkEnvironment() {
+            const results = document.getElementById('environmentResults');
+            let html = '<h4>检测结果:</h4>';
+            
+            // 检测浏览器信息
+            const userAgent = navigator.userAgent;
+            const isHTTPS = location.protocol === 'https:';
+            const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            
+            html += `<div class="result info">
+                <strong>浏览器信息:</strong><br>
+                ${userAgent}<br>
+                <strong>协议:</strong> ${location.protocol}<br>
+                <strong>域名:</strong> ${location.hostname}<br>
+                <strong>是否HTTPS:</strong> ${isHTTPS ? '✅ 是' : '❌ 否'}<br>
+                <strong>是否本地环境:</strong> ${isLocalhost ? '✅ 是' : '❌ 否'}
+            </div>`;
+
+            // 检测Clipboard API支持
+            const hasClipboard = 'clipboard' in navigator;
+            const hasClipboardWrite = hasClipboard && 'write' in navigator.clipboard;
+            const hasClipboardWriteText = hasClipboard && 'writeText' in navigator.clipboard;
+            
+            html += `<div class="result ${hasClipboard ? 'success' : 'error'}">
+                <span class="status-indicator ${hasClipboard ? 'status-supported' : 'status-unsupported'}"></span>
+                <strong>Clipboard API支持:</strong> ${hasClipboard ? '✅ 支持' : '❌ 不支持'}<br>
+                <span class="status-indicator ${hasClipboardWrite ? 'status-supported' : 'status-unsupported'}"></span>
+                <strong>clipboard.write():</strong> ${hasClipboardWrite ? '✅ 支持' : '❌ 不支持'}<br>
+                <span class="status-indicator ${hasClipboardWriteText ? 'status-supported' : 'status-unsupported'}"></span>
+                <strong>clipboard.writeText():</strong> ${hasClipboardWriteText ? '✅ 支持' : '❌ 不支持'}
+            </div>`;
+
+            // 检测ClipboardItem支持
+            const hasClipboardItem = typeof ClipboardItem !== 'undefined';
+            html += `<div class="result ${hasClipboardItem ? 'success' : 'error'}">
+                <span class="status-indicator ${hasClipboardItem ? 'status-supported' : 'status-unsupported'}"></span>
+                <strong>ClipboardItem支持:</strong> ${hasClipboardItem ? '✅ 支持' : '❌ 不支持'}
+            </div>`;
+
+            // 检测权限
+            html += `<div class="result info">
+                <strong>重要提示:</strong><br>
+                ${!isHTTPS && !isLocalhost ? '⚠️ 非HTTPS环境，某些剪贴板功能可能受限<br>' : ''}
+                ${!hasClipboard ? '⚠️ 浏览器不支持现代剪贴板API<br>' : ''}
+                ${!hasClipboardItem ? '⚠️ 浏览器不支持ClipboardItem，无法复制图片<br>' : ''}
+            </div>`;
+
+            results.innerHTML = html;
+        }
+
+        /**
+         * 创建测试图表
+         */
+        function createTestChart() {
+            try {
+                const canvas = document.getElementById('testChart');
+                const ctx = canvas.getContext('2d');
+                
+                // 销毁现有图表
+                if (testChartInstance) {
+                    testChartInstance.destroy();
+                }
+
+                // 创建测试数据
+                const testData = {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{
+                        label: '收益率 (%)',
+                        data: [12, 19, 15, 8],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2
+                    }, {
+                        label: '分配率 (%)',
+                        data: [8, 14, 12, 6],
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2
+                    }]
+                };
+
+                const config = {
+                    type: 'line',
+                    data: testData,
+                    options: {
+                        responsive: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '基金收益分配测试图表',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '百分比 (%)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '季度'
+                                }
+                            }
+                        }
+                    }
+                };
+
+                testChartInstance = new Chart(ctx, config);
+                console.log('测试图表创建成功');
+                
+            } catch (error) {
+                console.error('创建测试图表失败:', error);
+                alert('创建图表失败: ' + error.message);
+            }
+        }
+
+        /**
+         * 测试现代Clipboard API
+         */
+        async function testModernClipboard() {
+            const resultDiv = document.getElementById('modernClipboardResult');
+            
+            try {
+                if (!testChartInstance) {
+                    throw new Error('请先生成测试图表');
+                }
+
+                if (!navigator.clipboard || !navigator.clipboard.write) {
+                    throw new Error('浏览器不支持现代剪贴板API');
+                }
+
+                if (typeof ClipboardItem === 'undefined') {
+                    throw new Error('浏览器不支持ClipboardItem');
+                }
+
+                resultDiv.innerHTML = '<div class="result info">正在复制图表...</div>';
+
+                // 获取canvas并转换为blob
+                const canvas = document.getElementById('testChart');
+                
+                // 创建高质量版本
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // 设置高分辨率
+                const scale = 2;
+                tempCanvas.width = canvas.width * scale;
+                tempCanvas.height = canvas.height * scale;
+                
+                // 设置渲染质量
+                tempCtx.scale(scale, scale);
+                tempCtx.imageSmoothingEnabled = true;
+                tempCtx.imageSmoothingQuality = 'high';
+                
+                // 填充白色背景
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制原始图表
+                tempCtx.drawImage(canvas, 0, 0);
+
+                // 转换为blob
+                const blob = await new Promise(resolve => {
+                    tempCanvas.toBlob(resolve, 'image/png', 1.0);
+                });
+
+                if (!blob) {
+                    throw new Error('图表转换为图片失败');
+                }
+
+                // 创建剪贴板项
+                const clipboardItem = new ClipboardItem({
+                    'image/png': blob
+                });
+
+                // 写入剪贴板
+                await navigator.clipboard.write([clipboardItem]);
+
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ 现代API复制成功！<br>
+                        <small>图片大小: ${Math.round(blob.size / 1024)}KB</small><br>
+                        <small>分辨率: ${tempCanvas.width}x${tempCanvas.height}</small><br>
+                        <strong>请尝试在其他程序中粘贴 (Ctrl+V)</strong>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('现代API复制失败:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ 现代API复制失败<br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * 测试传统execCommand
+         */
+        async function testLegacyClipboard() {
+            const resultDiv = document.getElementById('legacyClipboardResult');
+            
+            try {
+                if (!testChartInstance) {
+                    throw new Error('请先生成测试图表');
+                }
+
+                resultDiv.innerHTML = '<div class="result info">正在尝试传统方法...</div>';
+
+                const canvas = document.getElementById('testChart');
+                
+                // 创建隐藏的img元素
+                const img = document.createElement('img');
+                img.src = canvas.toDataURL('image/png');
+                img.style.position = 'fixed';
+                img.style.left = '-9999px';
+                img.style.top = '-9999px';
+                document.body.appendChild(img);
+
+                // 选择图片
+                const range = document.createRange();
+                range.selectNode(img);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                // 尝试复制
+                const success = document.execCommand('copy');
+                
+                // 清理
+                document.body.removeChild(img);
+                selection.removeAllRanges();
+
+                if (success) {
+                    resultDiv.innerHTML = `
+                        <div class="result warning">
+                            ⚠️ 传统API复制完成，但效果可能有限<br>
+                            <small>注意: execCommand已被废弃，可能不支持图片复制</small><br>
+                            <strong>请尝试在其他程序中粘贴 (Ctrl+V)</strong>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('execCommand返回false');
+                }
+
+            } catch (error) {
+                console.error('传统API复制失败:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ 传统API复制失败<br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * 测试优化版混合方法
+         */
+        async function testOptimizedClipboard() {
+            const resultDiv = document.getElementById('optimizedClipboardResult');
+            
+            try {
+                if (!testChartInstance) {
+                    throw new Error('请先生成测试图表');
+                }
+
+                resultDiv.innerHTML = '<div class="result info">正在使用优化版方法...</div>';
+
+                // 检查权限
+                if (navigator.permissions) {
+                    try {
+                        const permission = await navigator.permissions.query({name: 'clipboard-write'});
+                        console.log('剪贴板权限状态:', permission.state);
+                    } catch (e) {
+                        console.log('无法查询剪贴板权限');
+                    }
+                }
+
+                const canvas = document.getElementById('testChart');
+                
+                // 等待用户交互后再执行（避免权限问题）
+                await new Promise(resolve => {
+                    const btn = document.createElement('button');
+                    btn.textContent = '点击确认复制（需要用户交互）';
+                    btn.className = 'test-button';
+                    btn.onclick = () => {
+                        resultDiv.removeChild(btn);
+                        resolve();
+                    };
+                    resultDiv.appendChild(btn);
+                });
+
+                // 方法1: 尝试现代API
+                if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+                    try {
+                        await copyWithModernAPI(canvas);
+                        resultDiv.innerHTML += `
+                            <div class="result success">
+                                ✅ 优化版复制成功 (使用现代API)！<br>
+                                <strong>请尝试在其他程序中粘贴 (Ctrl+V)</strong>
+                            </div>
+                        `;
+                        return;
+                    } catch (modernError) {
+                        console.log('现代API失败，尝试其他方法:', modernError);
+                    }
+                }
+
+                // 方法2: 尝试文本复制（图片base64）
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    try {
+                        const dataURL = canvas.toDataURL('image/png');
+                        await navigator.clipboard.writeText(dataURL);
+                        resultDiv.innerHTML += `
+                            <div class="result warning">
+                                ⚠️ 已复制图片的base64数据到剪贴板<br>
+                                <small>您可以将此数据保存为.txt文件，然后转换为图片</small>
+                            </div>
+                        `;
+                        return;
+                    } catch (textError) {
+                        console.log('文本复制也失败:', textError);
+                    }
+                }
+
+                // 方法3: 降级到下载
+                throw new Error('所有复制方法都失败，将使用下载方案');
+
+            } catch (error) {
+                console.error('优化版复制失败:', error);
+                
+                // 自动触发下载
+                try {
+                    const canvas = document.getElementById('testChart');
+                    const link = document.createElement('a');
+                    link.download = `test_chart_${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    resultDiv.innerHTML += `
+                        <div class="result info">
+                            📥 已自动下载图表文件<br>
+                            错误: ${error.message}
+                        </div>
+                    `;
+                } catch (downloadError) {
+                    resultDiv.innerHTML += `
+                        <div class="result error">
+                            ❌ 优化版复制和下载都失败<br>
+                            复制错误: ${error.message}<br>
+                            下载错误: ${downloadError.message}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        /**
+         * 使用现代API复制的辅助函数
+         */
+        async function copyWithModernAPI(canvas) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    // 使用requestAnimationFrame确保在下一帧执行
+                    requestAnimationFrame(async () => {
+                        try {
+                            canvas.toBlob(async (blob) => {
+                                if (!blob) {
+                                    reject(new Error('Canvas转换blob失败'));
+                                    return;
+                                }
+
+                                const clipboardItem = new ClipboardItem({
+                                    'image/png': blob
+                                });
+
+                                await navigator.clipboard.write([clipboardItem]);
+                                resolve();
+                            }, 'image/png', 1.0);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        /**
+         * 测试下载降级方案
+         */
+        function testDownloadFallback() {
+            const resultDiv = document.getElementById('downloadResult');
+            
+            try {
+                if (!testChartInstance) {
+                    throw new Error('请先生成测试图表');
+                }
+
+                const canvas = document.getElementById('testChart');
+                
+                // 创建高质量版本
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // 设置更高分辨率
+                const scale = 3;
+                tempCanvas.width = canvas.width * scale;
+                tempCanvas.height = canvas.height * scale;
+                
+                tempCtx.scale(scale, scale);
+                tempCtx.imageSmoothingEnabled = true;
+                tempCtx.imageSmoothingQuality = 'high';
+                
+                // 白色背景
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制图表
+                tempCtx.drawImage(canvas, 0, 0);
+
+                // 下载
+                const link = document.createElement('a');
+                link.download = `基金收益分配图表_${new Date().toISOString().slice(0, 10)}_${Date.now()}.png`;
+                link.href = tempCanvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ 下载成功！<br>
+                        <small>文件名: ${link.download}</small><br>
+                        <small>分辨率: ${tempCanvas.width}x${tempCanvas.height}</small>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('下载失败:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ 下载失败<br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * 显示调试信息
+         */
+        function showDebugInfo() {
+            const debugOutput = document.getElementById('debugOutput');
+            
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                
+                // 位置信息
+                protocol: location.protocol,
+                hostname: location.hostname,
+                port: location.port,
+                pathname: location.pathname,
+                
+                // 屏幕信息
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                colorDepth: screen.colorDepth,
+                
+                // 窗口信息
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                
+                // 剪贴板API详细信息
+                hasNavigatorClipboard: 'clipboard' in navigator,
+                hasClipboardRead: navigator.clipboard ? 'read' in navigator.clipboard : false,
+                hasClipboardWrite: navigator.clipboard ? 'write' in navigator.clipboard : false,
+                hasClipboardReadText: navigator.clipboard ? 'readText' in navigator.clipboard : false,
+                hasClipboardWriteText: navigator.clipboard ? 'writeText' in navigator.clipboard : false,
+                hasClipboardItem: typeof ClipboardItem !== 'undefined',
+                
+                // 权限API
+                hasPermissions: 'permissions' in navigator,
+                
+                // Canvas支持
+                hasCanvas: !!document.createElement('canvas').getContext,
+                canvas2DSupport: !!document.createElement('canvas').getContext('2d'),
+                
+                // 其他功能
+                hasRequestAnimationFrame: 'requestAnimationFrame' in window,
+                hasBlob: typeof Blob !== 'undefined',
+                hasURL: 'URL' in window,
+                hasCreateObjectURL: window.URL ? 'createObjectURL' in window.URL : false,
+                
+                timestamp: new Date().toISOString()
+            };
+
+            debugOutput.innerHTML = `
+                <div class="result info">
+                    <h4>详细调试信息:</h4>
+                    <pre>${JSON.stringify(info, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        /**
+         * 生成修复建议
+         */
+        function generateFixRecommendations() {
+            const fixDiv = document.getElementById('fixRecommendations');
+            
+            const isHTTPS = location.protocol === 'https:';
+            const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const hasModernClipboard = navigator.clipboard && navigator.clipboard.write;
+            const hasClipboardItem = typeof ClipboardItem !== 'undefined';
+            
+            let recommendations = [];
+            
+            if (!isHTTPS && !isLocalhost) {
+                recommendations.push({
+                    level: 'error',
+                    title: '协议问题',
+                    content: '当前使用HTTP协议，现代剪贴板API需要HTTPS或localhost环境。建议部署到HTTPS环境或在本地测试。'
+                });
+            }
+            
+            if (!hasModernClipboard) {
+                recommendations.push({
+                    level: 'warning',
+                    title: '浏览器兼容性',
+                    content: '当前浏览器不支持现代剪贴板API。建议更新浏览器或使用Chrome/Firefox/Edge最新版本。'
+                });
+            }
+            
+            if (!hasClipboardItem) {
+                recommendations.push({
+                    level: 'error',
+                    title: 'ClipboardItem不支持',
+                    content: 'ClipboardItem不支持，无法复制图片到剪贴板。需要更新浏览器或使用降级方案。'
+                });
+            }
+            
+            recommendations.push({
+                level: 'success',
+                title: '推荐的修复代码',
+                content: `
+                    <pre>
+// 优化后的图表复制函数
+async function copyChartAsPNG(chartId) {
+    try {
+        // 1. 检查图表实例
+        if (!window.chartInstances || !window.chartInstances[chartId]) {
+            showAlert('图表实例未找到，请先生成图表', 'warning');
+            return;
+        }
+
+        // 2. 显示加载提示
+        showAlert('正在生成高清图片...', 'info');
+
+        const canvas = document.getElementById(chartId);
+        if (!canvas) {
+            throw new Error('找不到图表canvas元素');
+        }
+
+        // 3. 检查环境和权限
+        const isSecureContext = window.isSecureContext;
+        const hasClipboardAPI = navigator.clipboard && navigator.clipboard.write;
+        const hasClipboardItem = typeof ClipboardItem !== 'undefined';
+
+        if (!isSecureContext) {
+            throw new Error('需要安全上下文(HTTPS)才能使用剪切板功能');
+        }
+
+        if (!hasClipboardAPI || !hasClipboardItem) {
+            // 降级到下载
+            downloadChartAsPNG(chartId);
+            showAlert('浏览器不支持剪切板，已下载图片文件', 'info');
+            return;
+        }
+
+        // 4. 创建高质量图片
+        const blob = await createHighQualityImage(canvas);
+        
+        // 5. 复制到剪切板
+        await copyImageToClipboard(blob);
+        
+        showAlert('高清图表已复制到剪切板', 'success');
+
+    } catch (error) {
+        console.error('复制图表失败:', error);
+        
+        // 自动降级到下载
+        try {
+            downloadChartAsPNG(chartId);
+            showAlert('复制失败，已自动下载图片', 'warning');
+        } catch (downloadError) {
+            showAlert('复制和下载都失败: ' + error.message, 'error');
+        }
+    }
+}
+
+// 创建高质量图片
+async function createHighQualityImage(canvas) {
+    return new Promise((resolve, reject) => {
+        // 创建高分辨率canvas
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        const scale = 2; // 2倍分辨率
+        tempCanvas.width = canvas.width * scale;
+        tempCanvas.height = canvas.height * scale;
+        
+        // 设置高质量渲染
+        tempCtx.scale(scale, scale);
+        tempCtx.imageSmoothingEnabled = true;
+        tempCtx.imageSmoothingQuality = 'high';
+        
+        // 白色背景
+        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 绘制原图
+        tempCtx.drawImage(canvas, 0, 0);
+        
+        // 转换为blob
+        tempCanvas.toBlob((blob) => {
+            if (blob) {
+                resolve(blob);
+            } else {
+                reject(new Error('Canvas转换失败'));
+            }
+        }, 'image/png', 1.0);
+    });
+}
+
+// 复制图片到剪切板
+async function copyImageToClipboard(blob) {
+    const clipboardItem = new ClipboardItem({
+        'image/png': blob
+    });
+    
+    await navigator.clipboard.write([clipboardItem]);
+}
+                    </pre>
+                `
+            });
+            
+            let html = '<h3>修复建议:</h3>';
+            recommendations.forEach(rec => {
+                const className = rec.level === 'error' ? 'error' : rec.level === 'warning' ? 'warning' : 'success';
+                html += `
+                    <div class="result ${className}">
+                        <strong>${rec.title}:</strong><br>
+                        ${rec.content}
+                    </div>
+                `;
+            });
+            
+            fixDiv.innerHTML = html;
+        }
+
+        // 页面加载完成后自动执行环境检测
+        window.onload = function() {
+            createTestChart();
+            checkEnvironment();
+            generateFixRecommendations();
+        };
+    </script>
+</body>
+</html> 
