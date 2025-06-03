@@ -45,10 +45,38 @@ def safe_round(value, decimals=2):
     return round(float(value), decimals)
 
 def safe_format_currency(value):
-    """安全格式化货币，返回格式化字符串"""
-    safe_value = safe_round(value, 0)
+    """
+    安全格式化货币，返回格式化字符串
+    
+    🔧 精度修复：完全保持Excel导入数据的原始精度
+    - 不对小数进行四舍五入
+    - 智能处理浮点精度问题
+    - 保持有效数字精度（最多6位小数）
+    - 正确处理千分位分隔符
+    """
+    if value is None or math.isnan(value) or math.isinf(value):
+        return "0"
+    
     try:
-        return f"{safe_value:,.0f}"
+        # 将值转换为浮点数
+        float_value = float(value)
+        
+        # 如果是整数，直接格式化为整数
+        if float_value == int(float_value):
+            return f"{int(float_value):,}"
+        
+        # 智能精度处理：先尝试6位小数精度
+        formatted_6 = f"{float_value:.6f}".rstrip('0').rstrip('.')
+        
+        # 如果移除零后变成整数形式
+        if '.' not in formatted_6:
+            return f"{int(float(formatted_6)):,}"
+        else:
+            # 分离整数部分和小数部分
+            integer_part, decimal_part = formatted_6.split('.')
+            # 为整数部分添加千分位分隔符
+            integer_formatted = f"{int(integer_part):,}"
+            return f"{integer_formatted}.{decimal_part}"
     except (ValueError, TypeError):
         return "0"
 
