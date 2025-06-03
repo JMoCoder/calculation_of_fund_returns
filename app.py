@@ -1205,10 +1205,10 @@ class FundCalculator:
             subordinate_rate: 劣后级收益率（%）
         
         分配顺序：
-        1. 优先级期间收益
-        2. 劣后期间收益
+        1. 优先级期间收益（基于期初本金）
+        2. 劣后级期间收益（基于期初本金）
         3. 优先级还本
-        4. 劣后还本
+        4. 劣后级还本
         5. Carry分配
         
         Returns:
@@ -1231,11 +1231,11 @@ class FundCalculator:
             # 初始化结果表格
             results = []
             
-            # 跟踪变量
+            # 跟踪变量 - 用于跟踪剩余本金（用于还本计算）
             remaining_senior_principal = senior_amount
             remaining_subordinate_principal = subordinate_amount
             
-            # 用于记录期初本金的变量
+            # 用于记录期初本金的变量 - 用于计算期间收益
             senior_beginning_balance = senior_amount  # 首年期初本金 = 优先级投资金额
             subordinate_beginning_balance = subordinate_amount  # 首年期初本金 = 劣后投资金额
             
@@ -1244,8 +1244,8 @@ class FundCalculator:
                     'year': year + 1,
                     'net_cash_flow': self.cash_flows[year],
                     'cash_flow_distribution_rate': self.cash_flows[year] / investment_amount * 100,
-                    'senior_beginning_principal': senior_beginning_balance,  # 使用正确的期初本金
-                    'subordinate_beginning_principal': subordinate_beginning_balance,  # 使用正确的期初本金
+                    'senior_beginning_principal': senior_beginning_balance,  # 使用当年期初本金
+                    'subordinate_beginning_principal': subordinate_beginning_balance,  # 使用当年期初本金
                     'senior_periodic_return': 0.0,
                     'subordinate_periodic_return': 0.0,
                     'senior_principal_repayment': 0.0,
@@ -1262,7 +1262,7 @@ class FundCalculator:
                     year_data['senior_periodic_return'] = senior_return
                     remaining_cash -= senior_return
                 
-                # 步骤2：劣后期间收益（基于期初本金）
+                # 步骤2：劣后级期间收益（基于期初本金）
                 if subordinate_beginning_balance > 0 and remaining_cash > 0:
                     subordinate_return = min(remaining_cash, subordinate_beginning_balance * subordinate_rate_decimal)
                     year_data['subordinate_periodic_return'] = subordinate_return
@@ -1275,19 +1275,24 @@ class FundCalculator:
                     remaining_senior_principal -= senior_principal_payment
                     remaining_cash -= senior_principal_payment
                 
-                # 步骤4：劣后还本
+                # 步骤4：劣后级还本 - 修复：优先级完全还完后才能劣后级还本
                 if remaining_senior_principal == 0 and remaining_subordinate_principal > 0 and remaining_cash > 0:
                     subordinate_principal_payment = min(remaining_cash, remaining_subordinate_principal)
                     year_data['subordinate_principal_repayment'] = subordinate_principal_payment
                     remaining_subordinate_principal -= subordinate_principal_payment
                     remaining_cash -= subordinate_principal_payment
                 
-                # 步骤5：分配Carry
+                # 步骤5：分配Carry - 只有优先级和劣后级本金都还完后才分配Carry
                 if remaining_senior_principal == 0 and remaining_subordinate_principal == 0 and remaining_cash > 0:
                     year_data['carry_lp'] = remaining_cash * (1 - carry_rate)
                     year_data['carry_gp'] = remaining_cash * carry_rate
                 
                 results.append(year_data)
+                
+                # 🔧 关键修复：更新下一年的期初本金余额
+                # 下年期初本金 = 本年期初本金 - 本年归还本金
+                senior_beginning_balance = max(0, senior_beginning_balance - year_data['senior_principal_repayment'])
+                subordinate_beginning_balance = max(0, subordinate_beginning_balance - year_data['subordinate_principal_repayment'])
             
             # 计算核心指标
             irr = self.calculate_irr(self.cash_flows, investment_amount)
