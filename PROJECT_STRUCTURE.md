@@ -38,7 +38,15 @@ calculation_of_fund_returns/
 ├── 📁 templates/                     # Flask模板文件
 │   └── index.html                    # 主页面模板（完整的单页应用）
 │
+├── 📁 tests/                         # 测试套件目录
+│   ├── __init__.py                   # 测试模块初始化
+│   ├── test_api.py                   # API接口测试
+│   ├── test_calculations.py          # 计算逻辑测试
+│   ├── test_charts.py                # 图表功能测试
+│   └── test_export.py                # 导出功能测试
+│
 ├── 📄 app.py                         # Flask后端主程序
+├── 📄 run_tests.py                   # 测试运行器（统一测试入口）
 ├── 📄 requirements.txt               # Python依赖包列表
 ├── 📄 deploy.bat                     # 一键部署脚本（Windows）
 ├── 📄 start.bat                      # 快速启动脚本（Windows）
@@ -199,6 +207,42 @@ python app.py
 # 生产模式
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
+
+### 测试系统
+项目采用完整的测试体系，确保代码质量和功能稳定性：
+
+#### `run_tests.py` - 统一测试运行器
+**主要功能：**
+- 🧪 统一测试入口和管理
+- 📊 支持分类测试（API、计算逻辑、图表功能）
+- 🔍 自动服务器状态检查
+- 📈 详细的测试报告和成功率统计
+- ⚡ 灵活的命令行参数支持
+
+**使用方法：**
+```bash
+python run_tests.py                    # 运行所有测试
+python run_tests.py --api              # 只运行API测试
+python run_tests.py --calculations     # 只运行计算逻辑测试
+python run_tests.py --charts          # 只运行图表功能测试
+python run_tests.py --quick           # 快速测试模式
+```
+
+#### `tests/` - 测试套件目录
+**测试模块组织：**
+- `test_api.py`：API接口完整性测试
+- `test_calculations.py`：核心计算逻辑准确性测试
+- `test_charts.py`：图表功能和数据可视化测试
+- `test_export.py`：Excel导入导出功能测试
+
+**测试覆盖范围：**
+- ✅ 基本参数验证
+- ✅ 现金流计算逻辑
+- ✅ IRR和DPI计算准确性
+- ✅ 分配模式算法验证
+- ✅ API接口响应测试
+- ✅ 图表数据一致性
+- ✅ 文件导入导出功能
 
 ### 代码结构规范
 - 后端：遵循PEP 8 Python编码规范
