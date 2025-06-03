@@ -2039,6 +2039,15 @@ def get_cash_flow_chart_config(result):
                     },
                     "legend": {
                         "position": "top"
+                    },
+                    "tooltip": {
+                        "callbacks": {
+                            "label": """function(context) {
+                                let label = context.dataset.label || '';
+                                let value = context.parsed.y;
+                                return label + ': ' + new Intl.NumberFormat('zh-CN').format(value) + ' 万元';
+                            }"""
+                        }
                     }
                 },
                 "scales": {
@@ -2327,6 +2336,15 @@ def get_distribution_chart_config(result):
                 },
                 'legend': {
                     'position': 'top'
+                },
+                'tooltip': {
+                    'callbacks': {
+                        'label': """function(context) {
+                            let label = context.dataset.label || '';
+                            let value = context.parsed.y;
+                            return label + ': ' + value.toFixed(1) + '%';
+                        }"""
+                    }
                 }
             },
             'scales': {
@@ -2349,9 +2367,20 @@ def get_distribution_chart_config(result):
 def get_capital_structure_chart_config(result):
     """
     获取剩余本金分析图配置
+    
+    🔧 重要修复：剩余本金分析现在与静态回本周期使用相同的计算逻辑
+    - 基于累计净现金流计算剩余本金，而非仅基于本金归还
+    - 这确保了剩余本金归零的时间与静态回本周期一致
+    
+    图表配置：
     - 横轴：年份（第0年-第N年）
-    - 纵轴主轴：剩余本金比例柱状图（年末剩余本金/初始投资金额）
+    - 纵轴主轴：剩余本金比例柱状图（基于净现金流累计回收计算）
     - 纵轴副轴：年累计分派率折线图（年累计已回收净现金流/初始投资金额）
+    
+    计算逻辑：
+    - 剩余本金 = 初始投资金额 - 累计净现金流回收
+    - 剩余本金比例 = 剩余本金 / 初始投资金额 × 100%
+    - 年累计分派率 = 累计净现金流 / 初始投资金额 × 100%
     """
     try:
         cash_flow_table = result.get('cash_flow_table', [])
@@ -2380,7 +2409,8 @@ def get_capital_structure_chart_config(result):
         
         # 累计变量
         cumulative_distributed_cash = 0  # 累计已回收净现金流
-        cumulative_principal_repaid = 0  # 累计已归还本金
+        # 🔧 关键修复：使用净现金流而非本金归还来计算剩余本金
+        # 这与静态回本周期的计算逻辑保持一致
         
         for i, row in enumerate(cash_flow_table):
             # 解析数值的通用函数
@@ -2394,46 +2424,17 @@ def get_capital_structure_chart_config(result):
                 except (ValueError, TypeError):
                     return 0
             
-            # 计算当年还本金额（根据不同计算模式）
-            period_principal_repayment = 0
+            # 🔧 修复：直接使用净现金流计算累计回收金额，与静态回本周期逻辑一致
+            period_net_cash_flow = parse_value('net_cash_flow')
+            cumulative_distributed_cash += period_net_cash_flow
             
-            if calculation_mode in ['平层结构-优先还本', '平层结构-期间分配']:
-                # 平层结构：本金归还
-                period_principal_repayment = parse_value('principal_repayment')
-                
-            elif calculation_mode == '结构化-优先劣后':
-                # 结构化优先劣后：优先级还本 + 劣后级还本
-                senior_principal_repay = parse_value('senior_principal_repayment')
-                subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                period_principal_repayment = senior_principal_repay + subordinate_principal_repay
-                
-            elif calculation_mode == '结构化-包含夹层':
-                # 结构化包含夹层：优先级还本 + 夹层还本 + 劣后级还本
-                senior_principal_repay = parse_value('senior_principal_repayment')
-                mezzanine_principal_repay = parse_value('mezzanine_principal_repayment')
-                subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                period_principal_repayment = senior_principal_repay + mezzanine_principal_repay + subordinate_principal_repay
-                
-            elif calculation_mode == '结构化-息息本本':
-                # 结构化息息本本：优先级还本 + 劣后级还本
-                senior_principal_repay = parse_value('senior_principal_repayment')
-                subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                period_principal_repayment = senior_principal_repay + subordinate_principal_repay
-            
-            # 累计已归还本金
-            cumulative_principal_repaid += period_principal_repayment
-            
-            # 计算年末剩余本金比例 = (初始投资金额 - 累计已归还本金) / 初始投资金额
-            remaining_principal = initial_investment - cumulative_principal_repaid
+            # 计算年末剩余本金比例 = (初始投资金额 - 累计已回收净现金流) / 初始投资金额
+            remaining_principal = initial_investment - cumulative_distributed_cash
             remaining_principal_ratio = (remaining_principal / initial_investment) * 100 if initial_investment > 0 else 0
             
             # 确保剩余本金比例不为负
             if remaining_principal_ratio < 0:
                 remaining_principal_ratio = 0
-            
-            # 计算当年净现金流（用于累计分派率）
-            period_net_cash_flow = parse_value('net_cash_flow')
-            cumulative_distributed_cash += period_net_cash_flow
             
             # 计算年累计分派率
             cumulative_distribution_rate = (cumulative_distributed_cash / initial_investment) * 100 if initial_investment > 0 else 0

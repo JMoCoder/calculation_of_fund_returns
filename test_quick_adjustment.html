@@ -179,21 +179,34 @@
         }
 
         .input-with-unit {
+            position: relative;
             display: flex;
             align-items: center;
             background: var(--bg-primary);
-            border-radius: var(--border-radius-sm);
             border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-sm);
             padding: 2px;
             gap: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .input-with-unit:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+        }
+        
+        .input-with-unit:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
         }
 
         .input-compact {
             flex: 1;
             border: none;
             background: transparent;
-            padding: 8px 10px;
+            padding: 8px 60px 8px 10px; /* 右侧为spinner和单位留出空间 */
             font-size: 14px;
+            outline: none;
             /* 隐藏默认的spinner */
             -webkit-appearance: textfield;
             -moz-appearance: textfield;
@@ -212,31 +225,100 @@
         }
 
         .unit-prefix {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
             background: var(--bg-tertiary);
             color: var(--text-secondary);
-            padding: 6px 8px;
+            padding: 4px 8px;
             font-size: 12px;
             font-weight: 500;
             border-radius: var(--border-radius-sm);
             white-space: nowrap;
             flex-shrink: 0;
+            pointer-events: none;
+            z-index: 1;
         }
 
         .unit-label {
+            position: absolute;
+            right: 40px; /* 为spinner按钮留出空间 */
+            top: 50%;
+            transform: translateY(-50%);
             background: var(--bg-tertiary);
             color: var(--text-secondary);
-            padding: 6px 8px;
+            padding: 4px 8px;
             font-size: 12px;
             font-weight: 500;
             border-radius: var(--border-radius-sm);
             white-space: nowrap;
             flex-shrink: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 当有前置单位时，输入框左侧需要留出更多空间 */
+        .input-with-unit:has(.unit-prefix) .input-compact {
+            padding-left: 60px; /* 有前置单位时左侧留出更多空间 */
         }
 
         .help-text {
             font-size: 12px;
             color: var(--text-secondary);
             margin-top: var(--spacing-xs);
+            line-height: 1.4;
+        }
+
+        /* 输入框数字调节器样式 */
+        .input-spinner {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            z-index: 2;
+        }
+
+        .spinner-btn {
+            width: 20px;
+            height: 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .spinner-btn:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .spinner-btn:active {
+            transform: scale(0.95);
+        }
+
+        .spinner-btn i {
+            font-size: 8px;
+            line-height: 1;
+        }
+
+        .spinner-btn.up {
+            border-bottom: none;
+            border-radius: 2px 2px 0 0;
+        }
+
+        .spinner-btn.down {
+            border-top: none;
+            border-radius: 0 0 2px 2px;
         }
 
         .quick-adjustment-actions {
@@ -344,44 +426,6 @@
             font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
             color: var(--secondary-color);
             font-weight: 500;
-        }
-
-        .input-spinner {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-            margin-left: 2px;
-            margin-right: 2px;
-        }
-        
-        .spinner-btn {
-            width: 20px;
-            height: 14px;
-            border: 1px solid var(--border-primary);
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            font-size: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-            border-radius: 2px;
-        }
-        
-        .spinner-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-        
-        .spinner-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .spinner-btn i {
-            font-size: 8px;
         }
 
         .preview-table-wrapper {
