@@ -2528,8 +2528,7 @@ def get_capital_structure_chart_config(result):
                 "scales": {
                     "x": {
                         "title": {
-                            "display": True,
-                            "text": "年份"
+                            "display": False
                         }
                     },
                     "y": {
@@ -2709,8 +2708,7 @@ def get_cumulative_cash_flow_chart_config(result):
                 "scales": {
                     "x": {
                         "title": {
-                            "display": True,
-                            "text": "年份"
+                            "display": False
                         }
                     },
                     "y": {
@@ -2725,7 +2723,7 @@ def get_cumulative_cash_flow_chart_config(result):
                             "drawOnChartArea": True
                         },
                         "ticks": {
-                            "callback": "function(value) { return new Intl.NumberFormat('zh-CN').format(value) + ' 万元'; }"
+                            "callback": "function(value) { return new Intl.NumberFormat('zh-CN').format(value); }"
                         }
                     },
                     "y1": {
