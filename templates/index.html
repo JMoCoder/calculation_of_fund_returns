@@ -1654,6 +1654,58 @@
                 gap: var(--spacing-xs);
             }
         }
+
+        /* 新的输入框布局样式 */
+        .input-with-unit {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-primary);
+            padding: 2px;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+        }
+        
+        .input-compact {
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+            border: none;
+            background: transparent;
+            padding: 8px 10px;
+            font-size: 14px;
+            text-align: left;
+        }
+        
+        .input-compact:focus {
+            box-shadow: none;
+            outline: none;
+        }
+        
+        .unit-prefix {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .unit-label {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
     </style>
 </head>
 <body>
@@ -1851,10 +1903,10 @@
                                                     <i class="fas fa-calendar-alt"></i>
                                                     首年净现金流
                                                 </label>
-                                                <div class="input-group">
-                                                    <input type="number" class="input" id="firstYearCashFlow" 
+                                                <div class="input-with-unit">
+                                                    <input type="number" class="input input-compact" id="firstYearCashFlow" 
                                                            placeholder="请输入首年现金流" min="0" step="0.01">
-                                                    <span class="input-addon">万元</span>
+                                                    <span class="unit-label">万元</span>
                                                 </div>
                                                 <div class="help-text">第1年的净现金流金额</div>
                                             </div>
@@ -1864,11 +1916,11 @@
                                                     <i class="fas fa-sync-alt"></i>
                                                     增长频率
                                                 </label>
-                                                <div class="input-group">
-                                                    <span class="input-addon">每</span>
-                                                    <input type="number" class="input" id="growthFrequency" 
+                                                <div class="input-with-unit">
+                                                    <span class="unit-prefix">每</span>
+                                                    <input type="number" class="input input-compact" id="growthFrequency" 
                                                            placeholder="增长频率" min="1" max="10" step="1" value="1">
-                                                    <span class="input-addon">年</span>
+                                                    <span class="unit-label">年</span>
                                                 </div>
                                                 <div class="help-text">每几年增长一次</div>
                                             </div>
@@ -1878,11 +1930,11 @@
                                                     <i class="fas fa-chart-line"></i>
                                                     净现金流增长率
                                                 </label>
-                                                <div class="input-group">
-                                                    <span class="input-addon">增长</span>
-                                                    <input type="number" class="input" id="growthRate" 
+                                                <div class="input-with-unit">
+                                                    <span class="unit-prefix">增长</span>
+                                                    <input type="number" class="input input-compact" id="growthRate" 
                                                            placeholder="增长率" min="0" max="1000" step="0.1" value="10">
-                                                    <span class="input-addon">%</span>
+                                                    <span class="unit-label">%</span>
                                                 </div>
                                                 <div class="help-text">现金流增长百分比</div>
                                             </div>
@@ -2767,6 +2819,11 @@
             
             html += '</div></div>';
             container.innerHTML = html;
+            
+            // 在生成现金流输入框后，重新初始化快速调整模块
+            setTimeout(() => {
+                initQuickAdjustmentModule();
+            }, 100);
         }
 
         /**
@@ -4536,10 +4593,23 @@
          */
         function initQuickAdjustmentModule() {
             try {
+                // 防止重复初始化
+                if (window.quickAdjustmentInitialized) {
+                    return;
+                }
+                
+                console.log('开始初始化快速调整模块...');
+                
                 // 开关事件监听
                 const switchElement = document.getElementById('quickAdjustmentSwitch');
                 if (switchElement) {
+                    // 移除旧的事件监听器（如果有）
+                    switchElement.removeEventListener('change', toggleQuickAdjustmentPanel);
+                    // 添加新的事件监听器
                     switchElement.addEventListener('change', toggleQuickAdjustmentPanel);
+                    console.log('开关事件监听器已绑定');
+                } else {
+                    console.warn('快速调整开关元素未找到');
                 }
                 
                 // 输入框事件监听
@@ -4548,15 +4618,23 @@
                 const rateInput = document.getElementById('growthRate');
                 
                 if (firstYearInput) {
+                    firstYearInput.removeEventListener('input', updateQuickAdjustmentPreview);
                     firstYearInput.addEventListener('input', updateQuickAdjustmentPreview);
+                    console.log('首年现金流输入事件已绑定');
                 }
                 if (frequencyInput) {
+                    frequencyInput.removeEventListener('input', updateQuickAdjustmentPreview);
                     frequencyInput.addEventListener('input', updateQuickAdjustmentPreview);
+                    console.log('增长频率输入事件已绑定');
                 }
                 if (rateInput) {
+                    rateInput.removeEventListener('input', updateQuickAdjustmentPreview);
                     rateInput.addEventListener('input', updateQuickAdjustmentPreview);
+                    console.log('增长率输入事件已绑定');
                 }
                 
+                // 标记已初始化
+                window.quickAdjustmentInitialized = true;
                 console.log('快速调整模块初始化完成');
                 
             } catch (error) {
@@ -4577,22 +4655,24 @@
             quickAdjustmentData.isEnabled = isChecked;
             
             if (isChecked) {
-                // 显示面板
                 panel.style.display = 'block';
                 
-                // 初始化首年现金流值（从现有输入框获取）
-                initializeFirstYearCashFlow();
+                // 自动填入第1年现金流（如果存在）
+                const firstYearInput = document.getElementById('firstYearCashFlow');
+                const existingCashFlow1 = document.getElementById('cashFlow1');
+                if (firstYearInput && existingCashFlow1 && existingCashFlow1.value) {
+                    const existingValue = safeParseFloat(existingCashFlow1.value);
+                    if (existingValue > 0) {
+                        firstYearInput.value = existingValue;
+                    }
+                }
                 
-                // 立即更新预览
+                // 延迟更新预览，确保面板完全展开
                 setTimeout(() => {
                     updateQuickAdjustmentPreview();
                 }, 100);
-                
-                console.log('快速调整面板已打开');
             } else {
-                // 隐藏面板
                 panel.style.display = 'none';
-                console.log('快速调整面板已关闭');
             }
         }
         
@@ -4622,7 +4702,6 @@
          */
         function updateQuickAdjustmentPreview() {
             try {
-                // 获取输入参数
                 const firstYearInput = document.getElementById('firstYearCashFlow');
                 const frequencyInput = document.getElementById('growthFrequency');
                 const rateInput = document.getElementById('growthRate');
@@ -4632,13 +4711,15 @@
                     return;
                 }
                 
-                // 获取参数值
                 const firstYear = safeParseFloat(firstYearInput.value);
                 const frequency = parseInt(frequencyInput.value) || 1;
                 const rate = safeParseFloat(rateInput.value);
-                const period = basicParams.investment_period || 5;
                 
-                // 验证参数
+                // 获取实际的投资期限
+                const period = getCurrentInvestmentPeriod();
+                
+                console.log('预览参数:', { firstYear, frequency, rate, period });
+                
                 if (firstYear <= 0 || frequency <= 0 || rate < 0) {
                     previewContainer.innerHTML = `
                         <div class="preview-placeholder">
@@ -4649,20 +4730,24 @@
                     return;
                 }
                 
-                // 计算各年现金流
                 const calculatedCashFlows = calculateCashFlowsByGrowth(firstYear, frequency, rate, period);
-                
-                // 更新预览数据
-                quickAdjustmentData.firstYearCashFlow = firstYear;
-                quickAdjustmentData.growthFrequency = frequency;
-                quickAdjustmentData.growthRate = rate;
                 quickAdjustmentData.previewData = calculatedCashFlows;
                 
-                // 渲染预览表格
                 renderPreviewTable(calculatedCashFlows, previewContainer);
+                console.log(`预览更新成功，生成${calculatedCashFlows.length}年数据，投资期限${period}年`);
                 
             } catch (error) {
                 console.error('更新快速调整预览失败:', error);
+                
+                const previewContainer = document.getElementById('quickAdjustmentPreview');
+                if (previewContainer) {
+                    previewContainer.innerHTML = `
+                        <div class="preview-placeholder">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>预览数据生成失败</span>
+                        </div>
+                    `;
+                }
             }
         }
         
@@ -4715,7 +4800,8 @@
                 `;
                 
                 cashFlows.forEach(item => {
-                    const formattedAmount = formatNumber(item.amount, 'currency');
+                    // 使用安全的数字格式化函数
+                    const formattedAmount = safeFormatCurrency(item.amount);
                     const growthIcon = item.isGrowthYear ? 
                         '<i class="fas fa-arrow-up" style="color: var(--secondary-color);"></i>' : 
                         '<i class="fas fa-minus" style="color: var(--text-secondary);"></i>';
@@ -4729,12 +4815,16 @@
                     `;
                 });
                 
+                // 计算总计，使用安全的方法
+                const totalAmount = cashFlows.reduce((sum, item) => sum + (item.amount || 0), 0);
+                const formattedTotal = safeFormatCurrency(totalAmount);
+                
                 html += `
                         </tbody>
                     </table>
                     <div style="margin-top: var(--spacing-sm); font-size: 12px; color: var(--text-secondary); text-align: center;">
                         <i class="fas fa-info-circle"></i>
-                        总计: ${formatNumber(cashFlows.reduce((sum, item) => sum + item.amount, 0), 'currency')} 万元
+                        总计: ${formattedTotal} 万元
                     </div>
                 `;
                 
@@ -4752,6 +4842,30 @@
         }
         
         /**
+         * 安全的货币格式化函数
+         * @param {number} value - 数值
+         * @returns {string} 格式化后的字符串
+         */
+        function safeFormatCurrency(value) {
+            try {
+                // 确保value是数字
+                const numValue = parseFloat(value);
+                if (isNaN(numValue) || !isFinite(numValue)) {
+                    return '0';
+                }
+                
+                // 使用toLocaleString进行格式化
+                return numValue.toLocaleString('zh-CN', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                });
+            } catch (error) {
+                console.error('货币格式化失败:', error);
+                return String(value || '0');
+            }
+        }
+        
+        /**
          * 应用快速调整
          */
         function applyQuickAdjustment() {
@@ -4762,9 +4876,12 @@
                     return;
                 }
                 
+                // 获取当前投资期限
+                const currentPeriod = getCurrentInvestmentPeriod();
+                
                 // 验证期限匹配
-                if (quickAdjustmentData.previewData.length !== basicParams.investment_period) {
-                    showAlert('预览数据与投资期限不匹配，请重新设置参数', 'error');
+                if (quickAdjustmentData.previewData.length !== currentPeriod) {
+                    showAlert(`预览数据与投资期限不匹配，当前期限${currentPeriod}年，预览数据${quickAdjustmentData.previewData.length}年`, 'error');
                     return;
                 }
                 
@@ -4780,14 +4897,6 @@
                 
                 if (successCount === quickAdjustmentData.previewData.length) {
                     showAlert(`成功应用快速调整，已更新${successCount}年的现金流数据`, 'success');
-                    
-                    // 关闭快速调整面板
-                    const switchElement = document.getElementById('quickAdjustmentSwitch');
-                    if (switchElement) {
-                        switchElement.checked = false;
-                        toggleQuickAdjustmentPanel({ target: { checked: false } });
-                    }
-                    
                     console.log('快速调整应用成功，现金流数据已更新');
                 } else {
                     showAlert(`部分数据应用失败，成功更新${successCount}/${quickAdjustmentData.previewData.length}项`, 'warning');
@@ -4846,6 +4955,29 @@
                 initQuickAdjustmentModule();
             }, 500);
         });
+
+        /**
+         * 获取当前投资期限
+         * @returns {number} 投资期限
+         */
+        function getCurrentInvestmentPeriod() {
+            // 优先从basicParams获取
+            if (basicParams && basicParams.investment_period && basicParams.investment_period > 0) {
+                return basicParams.investment_period;
+            }
+            
+            // 从输入框获取
+            const periodInput = document.getElementById('investmentPeriod');
+            if (periodInput && periodInput.value) {
+                const period = parseInt(periodInput.value);
+                if (!isNaN(period) && period > 0) {
+                    return period;
+                }
+            }
+            
+            // 默认值
+            return 5;
+        }
     </script>
     
     <!-- 外部JavaScript库 -->

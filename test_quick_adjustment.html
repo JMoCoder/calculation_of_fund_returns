@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速调整功能测试</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --secondary-color: #13c2c2;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-primary: #d9d9d9;
+            --border-secondary: #e8e8e8;
+            --border-radius-sm: 4px;
+            --border-radius-md: 6px;
+            --border-radius-lg: 8px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --info-color: #1890ff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* 快速调整样式 */
+        .quick-adjustment-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-lg);
+            margin-bottom: var(--spacing-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .quick-adjustment-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #40a9ff 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .quick-adjustment-toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .quick-adjustment-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+        }
+
+        .quick-adjustment-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .switch input:checked + .slider {
+            background-color: var(--secondary-color);
+        }
+
+        .switch input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .quick-adjustment-panel {
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-secondary);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                max-height: 500px;
+                transform: translateY(0);
+            }
+        }
+
+        .quick-adjustment-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: var(--spacing-xl);
+            padding: var(--spacing-lg);
+        }
+
+        .field-wrapper {
+            background: var(--bg-secondary);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-secondary);
+            transition: all 0.3s ease;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .field-wrapper:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+        }
+
+        .label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .label i {
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .input-with-unit {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-primary);
+            padding: 2px;
+            flex-wrap: wrap;
+        }
+
+        .input-compact {
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+            border: none;
+            background: transparent;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+
+        .input-compact:focus {
+            box-shadow: none;
+            outline: none;
+        }
+
+        .unit-prefix {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            white-space: nowrap;
+        }
+
+        .unit-label {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            white-space: nowrap;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+
+        .quick-adjustment-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-secondary);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 13px;
+            min-width: 100px;
+            border: none;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .quick-adjustment-preview {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+        }
+
+        .preview-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #17a2b8 100%);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .preview-content {
+            padding: var(--spacing-md);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: var(--spacing-xl) var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .preview-placeholder i {
+            font-size: 24px;
+            color: var(--info-color);
+        }
+
+        .preview-table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 8px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+
+        .preview-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .preview-table .year-col {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .preview-table .amount-col {
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>快速调整功能测试</h1>
+        
+        <!-- 快速调整模块 -->
+        <div class="quick-adjustment-section">
+            <div class="quick-adjustment-header">
+                <div class="quick-adjustment-toggle">
+                    <label class="switch">
+                        <input type="checkbox" id="quickAdjustmentSwitch">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="quick-adjustment-label">快速调整</span>
+                    <span class="quick-adjustment-desc">根据增长率自动计算现金流</span>
+                </div>
+            </div>
+            
+            <!-- 快速调整输入面板 -->
+            <div id="quickAdjustmentPanel" class="quick-adjustment-panel" style="display: none;">
+                <div class="quick-adjustment-content">
+                    <div class="quick-adjustment-form">
+                        <div class="field-wrapper">
+                            <label class="label" for="firstYearCashFlow">
+                                <i class="fas fa-calendar-alt"></i>
+                                首年净现金流
+                            </label>
+                            <div class="input-with-unit">
+                                <input type="number" class="input input-compact" id="firstYearCashFlow" 
+                                       placeholder="请输入首年现金流" min="0" step="0.01">
+                                <span class="unit-label">万元</span>
+                            </div>
+                            <div class="help-text">第1年的净现金流金额</div>
+                        </div>
+                        
+                        <div class="field-wrapper">
+                            <label class="label" for="growthFrequency">
+                                <i class="fas fa-sync-alt"></i>
+                                增长频率
+                            </label>
+                            <div class="input-with-unit">
+                                <span class="unit-prefix">每</span>
+                                <input type="number" class="input input-compact" id="growthFrequency" 
+                                       placeholder="增长频率" min="1" max="10" step="1" value="1">
+                                <span class="unit-label">年</span>
+                            </div>
+                            <div class="help-text">每几年增长一次</div>
+                        </div>
+                        
+                        <div class="field-wrapper">
+                            <label class="label" for="growthRate">
+                                <i class="fas fa-chart-line"></i>
+                                净现金流增长率
+                            </label>
+                            <div class="input-with-unit">
+                                <span class="unit-prefix">增长</span>
+                                <input type="number" class="input input-compact" id="growthRate" 
+                                       placeholder="增长率" min="0" max="1000" step="0.1" value="10">
+                                <span class="unit-label">%</span>
+                            </div>
+                            <div class="help-text">现金流增长百分比</div>
+                        </div>
+                        
+                        <div class="quick-adjustment-actions">
+                            <button type="button" class="btn btn-secondary" onclick="resetQuickAdjustment()">
+                                <i class="fas fa-undo"></i>
+                                重置
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="applyQuickAdjustment()">
+                                <i class="fas fa-magic"></i>
+                                应用调整
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 预览区域 -->
+                    <div class="quick-adjustment-preview">
+                        <div class="preview-header">
+                            <i class="fas fa-eye"></i>
+                            <span>预览效果</span>
+                        </div>
+                        <div id="quickAdjustmentPreview" class="preview-content">
+                            <div class="preview-placeholder">
+                                <i class="fas fa-info-circle"></i>
+                                <span>请设置参数后查看预览效果</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="testResult" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+            <h3>测试结果:</h3>
+            <div id="resultContent">等待测试...</div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟基本参数
+        const basicParams = {
+            investment_period: 7
+        };
+
+        // 快速调整数据
+        let quickAdjustmentData = {
+            isEnabled: false,
+            firstYearCashFlow: 0,
+            growthFrequency: 1,
+            growthRate: 10,
+            previewData: []
+        };
+
+        // 安全的浮点数解析
+        function safeParseFloat(value) {
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        // 获取当前投资期限
+        function getCurrentInvestmentPeriod() {
+            // 优先从basicParams获取
+            if (basicParams && basicParams.investment_period && basicParams.investment_period > 0) {
+                return basicParams.investment_period;
+            }
+            
+            // 默认值
+            return 5;
+        }
+
+        // 初始化快速调整模块
+        function initQuickAdjustmentModule() {
+            try {
+                console.log('开始初始化快速调整模块...');
+                
+                const switchElement = document.getElementById('quickAdjustmentSwitch');
+                if (switchElement) {
+                    switchElement.addEventListener('change', toggleQuickAdjustmentPanel);
+                    console.log('开关事件监听器已绑定');
+                }
+                
+                const firstYearInput = document.getElementById('firstYearCashFlow');
+                const frequencyInput = document.getElementById('growthFrequency');
+                const rateInput = document.getElementById('growthRate');
+                
+                if (firstYearInput) {
+                    firstYearInput.addEventListener('input', updateQuickAdjustmentPreview);
+                }
+                if (frequencyInput) {
+                    frequencyInput.addEventListener('input', updateQuickAdjustmentPreview);
+                }
+                if (rateInput) {
+                    rateInput.addEventListener('input', updateQuickAdjustmentPreview);
+                }
+                
+                console.log('快速调整模块初始化完成');
+                updateTestResult('快速调整模块初始化成功');
+                
+            } catch (error) {
+                console.error('快速调整模块初始化失败:', error);
+                updateTestResult('初始化失败: ' + error.message);
+            }
+        }
+
+        // 切换快速调整面板
+        function toggleQuickAdjustmentPanel(event) {
+            const isChecked = event.target.checked;
+            const panel = document.getElementById('quickAdjustmentPanel');
+            
+            if (!panel) return;
+            
+            quickAdjustmentData.isEnabled = isChecked;
+            
+            if (isChecked) {
+                panel.style.display = 'block';
+                updateTestResult('快速调整面板已打开');
+                setTimeout(() => {
+                    updateQuickAdjustmentPreview();
+                }, 100);
+            } else {
+                panel.style.display = 'none';
+                updateTestResult('快速调整面板已关闭');
+            }
+        }
+
+        // 更新快速调整预览
+        function updateQuickAdjustmentPreview() {
+            try {
+                const firstYearInput = document.getElementById('firstYearCashFlow');
+                const frequencyInput = document.getElementById('growthFrequency');
+                const rateInput = document.getElementById('growthRate');
+                const previewContainer = document.getElementById('quickAdjustmentPreview');
+                
+                if (!firstYearInput || !frequencyInput || !rateInput || !previewContainer) {
+                    return;
+                }
+                
+                const firstYear = safeParseFloat(firstYearInput.value);
+                const frequency = parseInt(frequencyInput.value) || 1;
+                const rate = safeParseFloat(rateInput.value);
+                const period = getCurrentInvestmentPeriod();
+                
+                console.log('预览参数:', { firstYear, frequency, rate, period });
+                
+                if (firstYear <= 0 || frequency <= 0 || rate < 0) {
+                    previewContainer.innerHTML = `
+                        <div class="preview-placeholder">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>请输入有效的参数值</span>
+                        </div>
+                    `;
+                    updateTestResult('参数验证失败: 请输入有效值');
+                    return;
+                }
+                
+                const calculatedCashFlows = calculateCashFlowsByGrowth(firstYear, frequency, rate, period);
+                quickAdjustmentData.previewData = calculatedCashFlows;
+                
+                renderPreviewTable(calculatedCashFlows, previewContainer);
+                updateTestResult(`预览更新成功，生成${calculatedCashFlows.length}年数据`);
+                
+            } catch (error) {
+                console.error('更新快速调整预览失败:', error);
+                updateTestResult('预览更新失败: ' + error.message);
+            }
+        }
+
+        // 根据增长率计算各年现金流
+        function calculateCashFlowsByGrowth(firstYear, frequency, rate, period) {
+            const cashFlows = [];
+            let currentAmount = firstYear;
+            const growthMultiplier = 1 + (rate / 100);
+            
+            for (let year = 1; year <= period; year++) {
+                if (year > 1 && (year - 1) % frequency === 0) {
+                    currentAmount = currentAmount * growthMultiplier;
+                }
+                
+                cashFlows.push({
+                    year: year,
+                    amount: currentAmount,
+                    isGrowthYear: year > 1 && (year - 1) % frequency === 0
+                });
+            }
+            
+            return cashFlows;
+        }
+
+        // 安全的货币格式化函数
+        function safeFormatCurrency(value) {
+            try {
+                const numValue = parseFloat(value);
+                if (isNaN(numValue) || !isFinite(numValue)) {
+                    return '0';
+                }
+                
+                return numValue.toLocaleString('zh-CN', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                });
+            } catch (error) {
+                console.error('货币格式化失败:', error);
+                return String(value || '0');
+            }
+        }
+
+        // 渲染预览表格
+        function renderPreviewTable(cashFlows, container) {
+            try {
+                let html = `
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>净现金流</th>
+                                <th>增长标识</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                cashFlows.forEach(item => {
+                    const formattedAmount = safeFormatCurrency(item.amount);
+                    const growthIcon = item.isGrowthYear ? 
+                        '<i class="fas fa-arrow-up" style="color: var(--secondary-color);"></i>' : 
+                        '<i class="fas fa-minus" style="color: var(--text-secondary);"></i>';
+                    
+                    html += `
+                        <tr>
+                            <td class="year-col">第${item.year}年</td>
+                            <td class="amount-col">${formattedAmount} 万元</td>
+                            <td>${growthIcon}</td>
+                        </tr>
+                    `;
+                });
+                
+                const totalAmount = cashFlows.reduce((sum, item) => sum + (item.amount || 0), 0);
+                const formattedTotal = safeFormatCurrency(totalAmount);
+                
+                html += `
+                        </tbody>
+                    </table>
+                    <div style="margin-top: var(--spacing-sm); font-size: 12px; color: var(--text-secondary); text-align: center;">
+                        <i class="fas fa-info-circle"></i>
+                        总计: ${formattedTotal} 万元
+                    </div>
+                `;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('渲染预览表格失败:', error);
+                container.innerHTML = `
+                    <div class="preview-placeholder">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>预览数据生成失败</span>
+                    </div>
+                `;
+            }
+        }
+
+        // 应用快速调整
+        function applyQuickAdjustment() {
+            updateTestResult('应用调整功能已触发（模拟环境中无现金流输入框）');
+        }
+
+        // 重置快速调整
+        function resetQuickAdjustment() {
+            const firstYearInput = document.getElementById('firstYearCashFlow');
+            const frequencyInput = document.getElementById('growthFrequency');
+            const rateInput = document.getElementById('growthRate');
+            
+            if (firstYearInput) firstYearInput.value = '';
+            if (frequencyInput) frequencyInput.value = '1';
+            if (rateInput) rateInput.value = '10';
+            
+            const previewContainer = document.getElementById('quickAdjustmentPreview');
+            if (previewContainer) {
+                previewContainer.innerHTML = `
+                    <div class="preview-placeholder">
+                        <i class="fas fa-info-circle"></i>
+                        <span>请设置参数后查看预览效果</span>
+                    </div>
+                `;
+            }
+            
+            updateTestResult('快速调整参数已重置');
+        }
+
+        // 更新测试结果
+        function updateTestResult(message) {
+            const resultContent = document.getElementById('resultContent');
+            const timestamp = new Date().toLocaleTimeString();
+            resultContent.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                initQuickAdjustmentModule();
+            }, 100);
+        });
+    </script>
+</body>
+</html> 
