@@ -15,9 +15,9 @@
     <style>
         :root {
             /* 主色调 */
-            --primary-color: #1890ff;
-            --primary-light: #40a9ff;
-            --primary-dark: #096dd9;
+            --primary-color: #007bff;
+            --primary-light: #e3f2fd;
+            --primary-dark: #0056b3;
             
             /* 辅助色 */
             --secondary-color: #52c41a;
@@ -26,20 +26,23 @@
             --info-color: #13c2c2;
             
             /* 文字颜色 */
-            --text-primary: #262626;
-            --text-secondary: #595959;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
             --text-disabled: #bfbfbf;
             --text-inverse: #ffffff;
+            --text-tertiary: #adb5bd;
             
             /* 背景颜色 */
             --bg-primary: #ffffff;
-            --bg-secondary: #fafafa;
-            --bg-tertiary: #f5f5f5;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --bg-hover: rgba(0, 123, 255, 0.1);
             
             /* 边框颜色 */
-            --border-primary: #d9d9d9;
-            --border-secondary: #f0f0f0;
+            --border-primary: #dee2e6;
+            --border-secondary: #e9ecef;
             --border-focus: #40a9ff;
+            --border-light: #f1f3f4;
             
             /* 间距 */
             --spacing-xs: 4px;
@@ -50,13 +53,13 @@
             --spacing-xxl: 48px;
             
             /* 圆角和阴影 */
-            --border-radius-sm: 2px;
-            --border-radius-md: 4px;
+            --border-radius-sm: 4px;
+            --border-radius-md: 6px;
             --border-radius-lg: 8px;
             --border-radius-xl: 12px;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-md: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
         }
         
         * {
@@ -1185,6 +1188,7 @@
             border: 1px solid var(--border-secondary);
             overflow: hidden;
             transition: all 0.3s ease;
+            position: relative;
         }
         
         .chart-card:hover {
@@ -1196,6 +1200,9 @@
             background: var(--bg-secondary);
             padding: var(--spacing-lg);
             border-bottom: 1px solid var(--border-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .chart-title {
@@ -1211,6 +1218,124 @@
         .chart-title i {
             color: var(--primary-color);
             font-size: 18px;
+        }
+        
+        /* 图表操作按钮组 */
+        .chart-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .chart-action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+        
+        .chart-action-btn:hover {
+            background: var(--bg-hover);
+            color: var(--primary-color);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        .chart-action-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* 放大模态框样式 */
+        .chart-fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .chart-fullscreen-modal.show {
+            display: flex;
+        }
+        
+        .chart-fullscreen-content {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 95vw;
+            max-height: 95vh;
+            width: 100%;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-fullscreen-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .chart-fullscreen-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .chart-fullscreen-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s ease;
+        }
+        
+        .chart-fullscreen-close:hover {
+            background: var(--bg-hover);
+            color: var(--error-color);
+        }
+        
+        .chart-fullscreen-body {
+            padding: var(--spacing-lg);
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            overflow: hidden;
+        }
+        
+        .chart-fullscreen-body canvas {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto !important;
+            height: auto !important;
         }
         
         .chart-card-body {
@@ -2702,6 +2827,14 @@
                                                     <i class="fas fa-chart-line me-2"></i>
                                                     现金流回收分析
                                                 </h4>
+                                                <div class="chart-actions">
+                                                    <button class="chart-action-btn" title="放大展示" onclick="expandChart('cashFlowChart', '现金流回收分析')">
+                                                        <i class="fas fa-expand-alt"></i>
+                                                    </button>
+                                                    <button class="chart-action-btn" title="复制为PNG图片" onclick="copyChartAsPNG('cashFlowChart')">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="chart-card-body">
                                                 <canvas id="cashFlowChart"></canvas>
@@ -2714,6 +2847,14 @@
                                                     <i class="fas fa-chart-bar me-2"></i>
                                                     现金流分配结构
                                                 </h4>
+                                                <div class="chart-actions">
+                                                    <button class="chart-action-btn" title="放大展示" onclick="expandChart('distributionChart', '现金流分配结构')">
+                                                        <i class="fas fa-expand-alt"></i>
+                                                    </button>
+                                                    <button class="chart-action-btn" title="复制为PNG图片" onclick="copyChartAsPNG('distributionChart')">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="chart-card-body">
                                                 <canvas id="distributionChart"></canvas>
@@ -2726,6 +2867,14 @@
                                                     <i class="fas fa-chart-area me-2"></i>
                                                     剩余本金分析
                                                 </h4>
+                                                <div class="chart-actions">
+                                                    <button class="chart-action-btn" title="放大展示" onclick="expandChart('capitalStructureChart', '剩余本金分析')">
+                                                        <i class="fas fa-expand-alt"></i>
+                                                    </button>
+                                                    <button class="chart-action-btn" title="复制为PNG图片" onclick="copyChartAsPNG('capitalStructureChart')">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="chart-card-body">
                                                 <canvas id="capitalStructureChart"></canvas>
@@ -2738,6 +2887,14 @@
                                                     <i class="fas fa-chart-line me-2"></i>
                                                     累计现金流分析
                                                 </h4>
+                                                <div class="chart-actions">
+                                                    <button class="chart-action-btn" title="放大展示" onclick="expandChart('cumulativeCashFlowChart', '累计现金流分析')">
+                                                        <i class="fas fa-expand-alt"></i>
+                                                    </button>
+                                                    <button class="chart-action-btn" title="复制为PNG图片" onclick="copyChartAsPNG('cumulativeCashFlowChart')">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="chart-card-body">
                                                 <canvas id="cumulativeCashFlowChart"></canvas>
@@ -2750,6 +2907,14 @@
                                                     <i class="fas fa-chart-pie me-2"></i>
                                                     整体分配结构
                                                 </h4>
+                                                <div class="chart-actions">
+                                                    <button class="chart-action-btn" title="放大展示" onclick="expandChart('pieChart', '整体分配结构')">
+                                                        <i class="fas fa-expand-alt"></i>
+                                                    </button>
+                                                    <button class="chart-action-btn" title="复制为PNG图片" onclick="copyChartAsPNG('pieChart')">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="chart-card-body">
                                                 <canvas id="pieChart"></canvas>
@@ -2777,6 +2942,21 @@
             <div class="loading-content">
                 <div class="spinner"></div>
                 <p>正在计算中，请稍候...</p>
+            </div>
+        </div>
+        
+        <!-- 图表放大展示模态框 -->
+        <div class="chart-fullscreen-modal" id="chartFullscreenModal">
+            <div class="chart-fullscreen-content">
+                <div class="chart-fullscreen-header">
+                    <h3 class="chart-fullscreen-title" id="chartFullscreenTitle">图表详情</h3>
+                    <button class="chart-fullscreen-close" onclick="closeChartFullscreen()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="chart-fullscreen-body">
+                    <canvas id="chartFullscreenCanvas"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -5467,6 +5647,585 @@
             
             // 触发input事件以更新预览
             input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        // ==================== 图表操作功能 ====================
+        
+        /**
+         * 放大展示图表
+         * @param {string} chartId - 图表canvas的ID
+         * @param {string} chartTitle - 图表标题
+         */
+        function expandChart(chartId, chartTitle) {
+            try {
+                // 检查图表实例是否存在
+                if (!window.chartInstances || !window.chartInstances[chartId]) {
+                    showAlert('图表实例未找到，请先生成图表', 'warning');
+                    return;
+                }
+                
+                const sourceChart = window.chartInstances[chartId];
+                const modal = document.getElementById('chartFullscreenModal');
+                const titleElement = document.getElementById('chartFullscreenTitle');
+                const canvas = document.getElementById('chartFullscreenCanvas');
+                
+                if (!modal || !titleElement || !canvas) {
+                    console.error('模态框元素未找到');
+                    return;
+                }
+                
+                // 设置标题
+                titleElement.textContent = chartTitle;
+                
+                // 显示模态框
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                
+                // 等待模态框完全显示后再创建图表
+                setTimeout(() => {
+                    // 销毁可能存在的旧图表
+                    if (window.fullscreenChartInstance) {
+                        window.fullscreenChartInstance.destroy();
+                    }
+                    
+                    // 设置canvas尺寸
+                    const modalBody = canvas.parentElement;
+                    const computedStyle = window.getComputedStyle(modalBody);
+                    const maxWidth = parseInt(computedStyle.width) - 40; // 减去padding
+                    const maxHeight = parseInt(computedStyle.height) - 40;
+                    
+                    canvas.style.maxWidth = maxWidth + 'px';
+                    canvas.style.maxHeight = maxHeight + 'px';
+                    
+                    // 获取原始图表的完整配置和数据
+                    const originalConfig = sourceChart.config;
+                    const originalData = sourceChart.data;
+                    
+                    // 创建新的配置对象，使用原始数据
+                    const newConfig = {
+                        type: originalConfig.type,
+                        data: JSON.parse(JSON.stringify(originalData)), // 深度复制数据
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        font: {
+                                            size: 14
+                                        },
+                                        usePointStyle: true,
+                                        padding: 20
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: chartTitle,
+                                    font: {
+                                        size: 18,
+                                        weight: 'bold'
+                                    },
+                                    padding: {
+                                        top: 10,
+                                        bottom: 30
+                                    }
+                                },
+                                tooltip: {
+                                    enabled: true,
+                                    mode: 'index',
+                                    intersect: false
+                                }
+                            },
+                            scales: {}
+                        }
+                    };
+                    
+                    // 复制原始配置的scales设置
+                    if (originalConfig.options && originalConfig.options.scales) {
+                        newConfig.options.scales = JSON.parse(JSON.stringify(originalConfig.options.scales));
+                        
+                        // 增大坐标轴字体
+                        Object.keys(newConfig.options.scales).forEach(scaleKey => {
+                            const scale = newConfig.options.scales[scaleKey];
+                            if (scale.ticks) {
+                                scale.ticks.font = { size: 12 };
+                            } else {
+                                scale.ticks = { font: { size: 12 } };
+                            }
+                            if (scale.title) {
+                                scale.title.font = { size: 14, weight: 'bold' };
+                            }
+                        });
+                    }
+                    
+                    // 复制其他重要的配置项
+                    if (originalConfig.options) {
+                        // 复制动画配置
+                        if (originalConfig.options.animation) {
+                            newConfig.options.animation = originalConfig.options.animation;
+                        }
+                        
+                        // 复制交互配置
+                        if (originalConfig.options.interaction) {
+                            newConfig.options.interaction = originalConfig.options.interaction;
+                        }
+                        
+                        // 复制其他插件配置，但保留我们的覆盖设置
+                        if (originalConfig.options.plugins) {
+                            Object.keys(originalConfig.options.plugins).forEach(pluginKey => {
+                                if (pluginKey !== 'legend' && pluginKey !== 'title' && pluginKey !== 'tooltip') {
+                                    newConfig.options.plugins[pluginKey] = originalConfig.options.plugins[pluginKey];
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 创建图表
+                    const ctx = canvas.getContext('2d');
+                    window.fullscreenChartInstance = new Chart(ctx, newConfig);
+                    
+                    console.log(`放大展示图表成功: ${chartTitle}`);
+                    
+                }, 200); // 增加延迟确保模态框完全显示
+                
+            } catch (error) {
+                console.error('放大展示图表失败:', error);
+                showAlert('放大展示失败: ' + error.message, 'error');
+            }
+        }
+        
+        /**
+         * 关闭图表放大展示
+         */
+        function closeChartFullscreen() {
+            try {
+                const modal = document.getElementById('chartFullscreenModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                    document.body.style.overflow = '';
+                    
+                    // 销毁放大版图表实例
+                    if (window.fullscreenChartInstance) {
+                        window.fullscreenChartInstance.destroy();
+                        window.fullscreenChartInstance = null;
+                    }
+                }
+            } catch (error) {
+                console.error('关闭放大展示失败:', error);
+            }
+        }
+        
+        /**
+         * 复制图表为高清PNG格式到剪切板
+         * @param {string} chartId - 图表canvas的ID
+         */
+        async function copyChartAsPNG(chartId) {
+            try {
+                // 检查图表实例是否存在
+                if (!window.chartInstances || !window.chartInstances[chartId]) {
+                    showAlert('图表实例未找到，请先生成图表', 'warning');
+                    return;
+                }
+                
+                // 检查浏览器是否支持剪切板API
+                if (!navigator.clipboard || !navigator.clipboard.write) {
+                    showAlert('当前浏览器不支持剪切板功能，将自动下载', 'warning');
+                    downloadChartAsPNG(chartId);
+                    return;
+                }
+                
+                showAlert('正在生成高清图片...', 'info');
+                
+                // 获取图表标题
+                const chartTitle = getChartTitle(chartId);
+                
+                // 临时打开放大展示但不显示模态框，直接复制其canvas
+                const sourceChart = window.chartInstances[chartId];
+                const modal = document.getElementById('chartFullscreenModal');
+                const titleElement = document.getElementById('chartFullscreenTitle');
+                const fullscreenCanvas = document.getElementById('chartFullscreenCanvas');
+                
+                if (!modal || !titleElement || !fullscreenCanvas) {
+                    console.error('模态框元素未找到');
+                    throw new Error('无法找到放大展示组件');
+                }
+                
+                // 设置标题但不显示模态框
+                titleElement.textContent = chartTitle;
+                
+                // 销毁可能存在的旧图表
+                if (window.fullscreenChartInstance) {
+                    window.fullscreenChartInstance.destroy();
+                }
+                
+                // 设置canvas尺寸（与放大展示相同）
+                const maxWidth = 1000; // 固定尺寸
+                const maxHeight = 600;
+                
+                fullscreenCanvas.style.maxWidth = maxWidth + 'px';
+                fullscreenCanvas.style.maxHeight = maxHeight + 'px';
+                
+                // 获取原始图表的完整配置和数据（与放大展示完全相同的逻辑）
+                const originalConfig = sourceChart.config;
+                const originalData = sourceChart.data;
+                
+                // 创建新的配置对象（与放大展示完全相同）
+                const newConfig = {
+                    type: originalConfig.type,
+                    data: JSON.parse(JSON.stringify(originalData)),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14
+                                    },
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: chartTitle,
+                                font: {
+                                    size: 18,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 30
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {}
+                    }
+                };
+                
+                // 复制原始配置的scales设置（与放大展示完全相同）
+                if (originalConfig.options && originalConfig.options.scales) {
+                    newConfig.options.scales = JSON.parse(JSON.stringify(originalConfig.options.scales));
+                    
+                    // 增大坐标轴字体
+                    Object.keys(newConfig.options.scales).forEach(scaleKey => {
+                        const scale = newConfig.options.scales[scaleKey];
+                        if (scale.ticks) {
+                            scale.ticks.font = { size: 12 };
+                        } else {
+                            scale.ticks = { font: { size: 12 } };
+                        }
+                        if (scale.title) {
+                            scale.title.font = { size: 14, weight: 'bold' };
+                        }
+                    });
+                }
+                
+                // 复制其他重要的配置项（与放大展示完全相同）
+                if (originalConfig.options) {
+                    // 复制动画配置
+                    if (originalConfig.options.animation) {
+                        newConfig.options.animation = originalConfig.options.animation;
+                    }
+                    
+                    // 复制交互配置
+                    if (originalConfig.options.interaction) {
+                        newConfig.options.interaction = originalConfig.options.interaction;
+                    }
+                    
+                    // 复制其他插件配置，但保留我们的覆盖设置
+                    if (originalConfig.options.plugins) {
+                        Object.keys(originalConfig.options.plugins).forEach(pluginKey => {
+                            if (pluginKey !== 'legend' && pluginKey !== 'title' && pluginKey !== 'tooltip') {
+                                newConfig.options.plugins[pluginKey] = originalConfig.options.plugins[pluginKey];
+                            }
+                        });
+                    }
+                }
+                
+                // 创建图表（与放大展示完全相同）
+                const ctx = fullscreenCanvas.getContext('2d');
+                window.fullscreenChartInstance = new Chart(ctx, newConfig);
+                
+                // 等待图表渲染完成
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // 现在直接从放大展示的canvas复制图像，添加白色背景
+                const canvas = fullscreenCanvas;
+                
+                // 创建最终的高清版本
+                const finalCanvas = document.createElement('canvas');
+                const finalCtx = finalCanvas.getContext('2d');
+                
+                // 设置高清分辨率（3倍）
+                const scaleFactor = 3;
+                finalCanvas.width = canvas.width * scaleFactor;
+                finalCanvas.height = canvas.height * scaleFactor;
+                
+                // 设置高质量渲染
+                finalCtx.scale(scaleFactor, scaleFactor);
+                finalCtx.imageSmoothingEnabled = true;
+                finalCtx.imageSmoothingQuality = 'high';
+                
+                // 填充白色背景
+                finalCtx.fillStyle = '#ffffff';
+                finalCtx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 直接绘制放大展示的canvas
+                finalCtx.drawImage(canvas, 0, 0);
+                
+                // 转换为Blob
+                const blob = await new Promise(resolve => {
+                    finalCanvas.toBlob(resolve, 'image/png', 1.0);
+                });
+                
+                // 清理：销毁临时图表
+                if (window.fullscreenChartInstance) {
+                    window.fullscreenChartInstance.destroy();
+                    window.fullscreenChartInstance = null;
+                }
+                
+                if (!blob) {
+                    throw new Error('图表转换失败');
+                }
+                
+                // 创建剪切板项
+                const clipboardItem = new ClipboardItem({
+                    'image/png': blob
+                });
+                
+                // 写入剪切板
+                await navigator.clipboard.write([clipboardItem]);
+                
+                // 显示成功提示
+                showAlert('高清图表已复制到剪切板', 'success');
+                
+                console.log(`高清图表 ${chartId} 已复制为PNG格式（直接从放大展示复制）`);
+                
+            } catch (error) {
+                console.error('复制图表失败:', error);
+                
+                // 如果剪切板API失败，提供下载选项
+                try {
+                    downloadChartAsPNG(chartId);
+                    showAlert('已下载高清图表为PNG文件', 'info');
+                } catch (downloadError) {
+                    console.error('下载图表也失败:', downloadError);
+                    showAlert('复制和下载都失败了: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        /**
+         * 下载图表为PNG文件（降级方案）
+         * @param {string} chartId - 图表canvas的ID
+         */
+        async function downloadChartAsPNG(chartId) {
+            try {
+                const sourceChart = window.chartInstances[chartId];
+                const chartTitle = getChartTitle(chartId);
+                
+                // 使用与复制功能完全相同的逻辑 - 直接从放大展示canvas复制
+                const modal = document.getElementById('chartFullscreenModal');
+                const titleElement = document.getElementById('chartFullscreenTitle');
+                const fullscreenCanvas = document.getElementById('chartFullscreenCanvas');
+                
+                if (!modal || !titleElement || !fullscreenCanvas) {
+                    console.error('模态框元素未找到');
+                    throw new Error('无法找到放大展示组件');
+                }
+                
+                // 设置标题但不显示模态框
+                titleElement.textContent = chartTitle;
+                
+                // 销毁可能存在的旧图表
+                if (window.fullscreenChartInstance) {
+                    window.fullscreenChartInstance.destroy();
+                }
+                
+                // 设置canvas尺寸（与放大展示和复制功能相同）
+                const maxWidth = 1000;
+                const maxHeight = 600;
+                
+                fullscreenCanvas.style.maxWidth = maxWidth + 'px';
+                fullscreenCanvas.style.maxHeight = maxHeight + 'px';
+                
+                // 获取原始图表的完整配置和数据（与放大展示和复制功能完全相同）
+                const originalConfig = sourceChart.config;
+                const originalData = sourceChart.data;
+                
+                // 创建新的配置对象（与放大展示和复制功能完全相同）
+                const newConfig = {
+                    type: originalConfig.type,
+                    data: JSON.parse(JSON.stringify(originalData)),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14
+                                    },
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: chartTitle,
+                                font: {
+                                    size: 18,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 30
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {}
+                    }
+                };
+                
+                // 复制原始配置的scales设置（与放大展示和复制功能完全相同）
+                if (originalConfig.options && originalConfig.options.scales) {
+                    newConfig.options.scales = JSON.parse(JSON.stringify(originalConfig.options.scales));
+                    
+                    Object.keys(newConfig.options.scales).forEach(scaleKey => {
+                        const scale = newConfig.options.scales[scaleKey];
+                        if (scale.ticks) {
+                            scale.ticks.font = { size: 12 };
+                        } else {
+                            scale.ticks = { font: { size: 12 } };
+                        }
+                        if (scale.title) {
+                            scale.title.font = { size: 14, weight: 'bold' };
+                        }
+                    });
+                }
+                
+                // 复制其他重要的配置项（与放大展示和复制功能完全相同）
+                if (originalConfig.options) {
+                    if (originalConfig.options.animation) {
+                        newConfig.options.animation = originalConfig.options.animation;
+                    }
+                    
+                    if (originalConfig.options.interaction) {
+                        newConfig.options.interaction = originalConfig.options.interaction;
+                    }
+                    
+                    if (originalConfig.options.plugins) {
+                        Object.keys(originalConfig.options.plugins).forEach(pluginKey => {
+                            if (pluginKey !== 'legend' && pluginKey !== 'title' && pluginKey !== 'tooltip') {
+                                newConfig.options.plugins[pluginKey] = originalConfig.options.plugins[pluginKey];
+                            }
+                        });
+                    }
+                }
+                
+                // 创建图表（与放大展示和复制功能完全相同）
+                const ctx = fullscreenCanvas.getContext('2d');
+                window.fullscreenChartInstance = new Chart(ctx, newConfig);
+                
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // 直接从放大展示的canvas复制图像（与复制功能完全相同）
+                const canvas = fullscreenCanvas;
+                
+                // 创建最终的高清版本
+                const finalCanvas = document.createElement('canvas');
+                const finalCtx = finalCanvas.getContext('2d');
+                
+                // 设置高清分辨率（3倍）
+                const scaleFactor = 3;
+                finalCanvas.width = canvas.width * scaleFactor;
+                finalCanvas.height = canvas.height * scaleFactor;
+                
+                // 设置高质量渲染
+                finalCtx.scale(scaleFactor, scaleFactor);
+                finalCtx.imageSmoothingEnabled = true;
+                finalCtx.imageSmoothingQuality = 'high';
+                
+                // 填充白色背景
+                finalCtx.fillStyle = '#ffffff';
+                finalCtx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 直接绘制放大展示的canvas
+                finalCtx.drawImage(canvas, 0, 0);
+                
+                // 下载文件
+                const link = document.createElement('a');
+                link.download = `chart_${chartId}_${new Date().getTime()}.png`;
+                link.href = finalCanvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // 清理：销毁临时图表
+                if (window.fullscreenChartInstance) {
+                    window.fullscreenChartInstance.destroy();
+                    window.fullscreenChartInstance = null;
+                }
+                
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        /**
+         * 添加键盘快捷键支持
+         */
+        document.addEventListener('keydown', function(event) {
+            // ESC键关闭放大展示
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('chartFullscreenModal');
+                if (modal && modal.classList.contains('show')) {
+                    closeChartFullscreen();
+                }
+            }
+        });
+        
+        /**
+         * 添加模态框点击外部关闭功能
+         */
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('chartFullscreenModal');
+            if (modal && modal.classList.contains('show') && event.target === modal) {
+                closeChartFullscreen();
+            }
+        });
+
+        /**
+         * 获取图表标题
+         * @param {string} chartId - 图表ID
+         * @returns {string} 图表标题
+         */
+        function getChartTitle(chartId) {
+            const titleMap = {
+                'cashFlowChart': '现金流回收分析',
+                'distributionChart': '现金流分配结构',
+                'capitalStructureChart': '剩余本金分析',
+                'cumulativeCashFlowChart': '累计现金流分析',
+                'pieChart': '整体分配结构'
+            };
+            return titleMap[chartId] || '图表';
         }
     </script>
     
