@@ -1354,6 +1354,306 @@
         .mt-2 { margin-top: var(--spacing-sm) !important; }
         .mb-1 { margin-bottom: var(--spacing-xs) !important; }
         .mb-2 { margin-bottom: var(--spacing-sm) !important; }
+
+        /* ==================== 快速调整模块样式 ==================== */
+        
+        /* 快速调整主容器 */
+        .quick-adjustment-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-lg);
+            margin-bottom: var(--spacing-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-adjustment-section:hover {
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* 快速调整头部和开关 */
+        .quick-adjustment-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .quick-adjustment-toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .quick-adjustment-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-inverse);
+            margin: 0;
+        }
+        
+        .quick-adjustment-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+        
+        /* 开关样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .switch input:checked + .slider {
+            background-color: var(--secondary-color);
+        }
+        
+        .switch input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        
+        /* 快速调整面板 */
+        .quick-adjustment-panel {
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-secondary);
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                max-height: 500px;
+                transform: translateY(0);
+            }
+        }
+        
+        .quick-adjustment-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: var(--spacing-xl);
+            padding: var(--spacing-lg);
+        }
+        
+        /* 快速调整表单 */
+        .quick-adjustment-form {
+            background: var(--bg-primary);
+        }
+        
+        .quick-adjustment-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .quick-adjustment-form .field-wrapper {
+            background: var(--bg-secondary);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .quick-adjustment-form .field-wrapper:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+        }
+        
+        .quick-adjustment-form .label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .quick-adjustment-form .label i {
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+        
+        .quick-adjustment-form .input-group {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border-primary);
+        }
+        
+        .quick-adjustment-form .input {
+            border: none;
+            background: transparent;
+            padding: 10px 12px;
+        }
+        
+        .quick-adjustment-form .input:focus {
+            box-shadow: none;
+        }
+        
+        .quick-adjustment-form .input-addon {
+            background: var(--bg-tertiary);
+            border: none;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        /* 快速调整操作按钮 */
+        .quick-adjustment-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        .quick-adjustment-actions .btn {
+            padding: 10px 20px;
+            font-size: 13px;
+            min-width: 100px;
+        }
+        
+        /* 预览区域 */
+        .quick-adjustment-preview {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+        }
+        
+        .preview-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #17a2b8 100%);
+            color: var(--text-inverse);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .preview-header i {
+            font-size: 16px;
+        }
+        
+        .preview-content {
+            padding: var(--spacing-md);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .preview-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: var(--spacing-xl) var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .preview-placeholder i {
+            font-size: 24px;
+            color: var(--info-color);
+        }
+        
+        /* 预览表格 */
+        .preview-table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+        
+        .preview-table th,
+        .preview-table td {
+            padding: 8px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .preview-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .preview-table td {
+            color: var(--text-secondary);
+        }
+        
+        .preview-table .year-col {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .preview-table .amount-col {
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .quick-adjustment-content {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-md);
+            }
+            
+            .quick-adjustment-form .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-adjustment-actions {
+                justify-content: center;
+            }
+            
+            .quick-adjustment-toggle {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-xs);
+            }
+        }
     </style>
 </head>
 <body>
@@ -1526,6 +1826,95 @@
                                 净现金流输入
                             </h2>
                             <p class="content-subtitle">请输入各年度的预期净现金流金额</p>
+                        </div>
+
+                        <!-- 🆕 快速调整模块 -->
+                        <div class="quick-adjustment-section">
+                            <div class="quick-adjustment-header">
+                                <div class="quick-adjustment-toggle">
+                                    <label class="switch">
+                                        <input type="checkbox" id="quickAdjustmentSwitch">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="quick-adjustment-label">快速调整</span>
+                                    <span class="quick-adjustment-desc">根据增长率自动计算现金流</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 快速调整输入面板 -->
+                            <div id="quickAdjustmentPanel" class="quick-adjustment-panel" style="display: none;">
+                                <div class="quick-adjustment-content">
+                                    <div class="quick-adjustment-form">
+                                        <div class="form-row">
+                                            <div class="field-wrapper">
+                                                <label class="label" for="firstYearCashFlow">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    首年净现金流
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="input" id="firstYearCashFlow" 
+                                                           placeholder="请输入首年现金流" min="0" step="0.01">
+                                                    <span class="input-addon">万元</span>
+                                                </div>
+                                                <div class="help-text">第1年的净现金流金额</div>
+                                            </div>
+                                            
+                                            <div class="field-wrapper">
+                                                <label class="label" for="growthFrequency">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                    增长频率
+                                                </label>
+                                                <div class="input-group">
+                                                    <span class="input-addon">每</span>
+                                                    <input type="number" class="input" id="growthFrequency" 
+                                                           placeholder="增长频率" min="1" max="10" step="1" value="1">
+                                                    <span class="input-addon">年</span>
+                                                </div>
+                                                <div class="help-text">每几年增长一次</div>
+                                            </div>
+                                            
+                                            <div class="field-wrapper">
+                                                <label class="label" for="growthRate">
+                                                    <i class="fas fa-chart-line"></i>
+                                                    净现金流增长率
+                                                </label>
+                                                <div class="input-group">
+                                                    <span class="input-addon">增长</span>
+                                                    <input type="number" class="input" id="growthRate" 
+                                                           placeholder="增长率" min="0" max="1000" step="0.1" value="10">
+                                                    <span class="input-addon">%</span>
+                                                </div>
+                                                <div class="help-text">现金流增长百分比</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="quick-adjustment-actions">
+                                            <button type="button" class="btn btn-secondary" onclick="resetQuickAdjustment()">
+                                                <i class="fas fa-undo"></i>
+                                                重置
+                                            </button>
+                                            <button type="button" class="btn btn-primary" onclick="applyQuickAdjustment()">
+                                                <i class="fas fa-magic"></i>
+                                                应用调整
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 预览区域 -->
+                                    <div class="quick-adjustment-preview">
+                                        <div class="preview-header">
+                                            <i class="fas fa-eye"></i>
+                                            <span>预览效果</span>
+                                        </div>
+                                        <div id="quickAdjustmentPreview" class="preview-content">
+                                            <div class="preview-placeholder">
+                                                <i class="fas fa-info-circle"></i>
+                                                <span>请设置参数后查看预览效果</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div id="cashFlowInputs">
@@ -4128,6 +4517,335 @@
                 }
             }
         }
+
+        // ==================== 快速调整模块功能 ====================
+        
+        /**
+         * 快速调整模块状态管理
+         */
+        let quickAdjustmentData = {
+            isEnabled: false,
+            firstYearCashFlow: 0,
+            growthFrequency: 1,
+            growthRate: 10,
+            previewData: []
+        };
+        
+        /**
+         * 初始化快速调整模块事件监听
+         */
+        function initQuickAdjustmentModule() {
+            try {
+                // 开关事件监听
+                const switchElement = document.getElementById('quickAdjustmentSwitch');
+                if (switchElement) {
+                    switchElement.addEventListener('change', toggleQuickAdjustmentPanel);
+                }
+                
+                // 输入框事件监听
+                const firstYearInput = document.getElementById('firstYearCashFlow');
+                const frequencyInput = document.getElementById('growthFrequency');
+                const rateInput = document.getElementById('growthRate');
+                
+                if (firstYearInput) {
+                    firstYearInput.addEventListener('input', updateQuickAdjustmentPreview);
+                }
+                if (frequencyInput) {
+                    frequencyInput.addEventListener('input', updateQuickAdjustmentPreview);
+                }
+                if (rateInput) {
+                    rateInput.addEventListener('input', updateQuickAdjustmentPreview);
+                }
+                
+                console.log('快速调整模块初始化完成');
+                
+            } catch (error) {
+                console.error('快速调整模块初始化失败:', error);
+            }
+        }
+        
+        /**
+         * 切换快速调整面板显示状态
+         * @param {Event} event - 开关变化事件
+         */
+        function toggleQuickAdjustmentPanel(event) {
+            const isChecked = event.target.checked;
+            const panel = document.getElementById('quickAdjustmentPanel');
+            
+            if (!panel) return;
+            
+            quickAdjustmentData.isEnabled = isChecked;
+            
+            if (isChecked) {
+                // 显示面板
+                panel.style.display = 'block';
+                
+                // 初始化首年现金流值（从现有输入框获取）
+                initializeFirstYearCashFlow();
+                
+                // 立即更新预览
+                setTimeout(() => {
+                    updateQuickAdjustmentPreview();
+                }, 100);
+                
+                console.log('快速调整面板已打开');
+            } else {
+                // 隐藏面板
+                panel.style.display = 'none';
+                console.log('快速调整面板已关闭');
+            }
+        }
+        
+        /**
+         * 初始化首年现金流值
+         */
+        function initializeFirstYearCashFlow() {
+            try {
+                // 从现有的第1年现金流输入框获取值
+                const firstYearInput = document.getElementById('cashFlow1');
+                const quickFirstYearInput = document.getElementById('firstYearCashFlow');
+                
+                if (firstYearInput && quickFirstYearInput) {
+                    const currentValue = safeParseFloat(firstYearInput.value);
+                    if (currentValue > 0) {
+                        quickFirstYearInput.value = currentValue;
+                        quickAdjustmentData.firstYearCashFlow = currentValue;
+                    }
+                }
+            } catch (error) {
+                console.error('初始化首年现金流值失败:', error);
+            }
+        }
+        
+        /**
+         * 更新快速调整预览
+         */
+        function updateQuickAdjustmentPreview() {
+            try {
+                // 获取输入参数
+                const firstYearInput = document.getElementById('firstYearCashFlow');
+                const frequencyInput = document.getElementById('growthFrequency');
+                const rateInput = document.getElementById('growthRate');
+                const previewContainer = document.getElementById('quickAdjustmentPreview');
+                
+                if (!firstYearInput || !frequencyInput || !rateInput || !previewContainer) {
+                    return;
+                }
+                
+                // 获取参数值
+                const firstYear = safeParseFloat(firstYearInput.value);
+                const frequency = parseInt(frequencyInput.value) || 1;
+                const rate = safeParseFloat(rateInput.value);
+                const period = basicParams.investment_period || 5;
+                
+                // 验证参数
+                if (firstYear <= 0 || frequency <= 0 || rate < 0) {
+                    previewContainer.innerHTML = `
+                        <div class="preview-placeholder">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>请输入有效的参数值</span>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 计算各年现金流
+                const calculatedCashFlows = calculateCashFlowsByGrowth(firstYear, frequency, rate, period);
+                
+                // 更新预览数据
+                quickAdjustmentData.firstYearCashFlow = firstYear;
+                quickAdjustmentData.growthFrequency = frequency;
+                quickAdjustmentData.growthRate = rate;
+                quickAdjustmentData.previewData = calculatedCashFlows;
+                
+                // 渲染预览表格
+                renderPreviewTable(calculatedCashFlows, previewContainer);
+                
+            } catch (error) {
+                console.error('更新快速调整预览失败:', error);
+            }
+        }
+        
+        /**
+         * 根据增长率计算各年现金流
+         * @param {number} firstYear - 首年现金流
+         * @param {number} frequency - 增长频率（每几年）
+         * @param {number} rate - 增长率（百分比）
+         * @param {number} period - 投资期限
+         * @returns {Array} 计算后的现金流数组
+         */
+        function calculateCashFlowsByGrowth(firstYear, frequency, rate, period) {
+            const cashFlows = [];
+            let currentAmount = firstYear;
+            const growthMultiplier = 1 + (rate / 100);
+            
+            for (let year = 1; year <= period; year++) {
+                // 如果到了增长年份，应用增长率
+                if (year > 1 && (year - 1) % frequency === 0) {
+                    currentAmount = currentAmount * growthMultiplier;
+                }
+                
+                cashFlows.push({
+                    year: year,
+                    amount: currentAmount,
+                    isGrowthYear: year > 1 && (year - 1) % frequency === 0
+                });
+            }
+            
+            return cashFlows;
+        }
+        
+        /**
+         * 渲染预览表格
+         * @param {Array} cashFlows - 现金流数据
+         * @param {Element} container - 预览容器
+         */
+        function renderPreviewTable(cashFlows, container) {
+            try {
+                let html = `
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>年份</th>
+                                <th>净现金流</th>
+                                <th>增长标识</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                cashFlows.forEach(item => {
+                    const formattedAmount = formatNumber(item.amount, 'currency');
+                    const growthIcon = item.isGrowthYear ? 
+                        '<i class="fas fa-arrow-up" style="color: var(--secondary-color);"></i>' : 
+                        '<i class="fas fa-minus" style="color: var(--text-secondary);"></i>';
+                    
+                    html += `
+                        <tr>
+                            <td class="year-col">第${item.year}年</td>
+                            <td class="amount-col">${formattedAmount} 万元</td>
+                            <td>${growthIcon}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                    <div style="margin-top: var(--spacing-sm); font-size: 12px; color: var(--text-secondary); text-align: center;">
+                        <i class="fas fa-info-circle"></i>
+                        总计: ${formatNumber(cashFlows.reduce((sum, item) => sum + item.amount, 0), 'currency')} 万元
+                    </div>
+                `;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('渲染预览表格失败:', error);
+                container.innerHTML = `
+                    <div class="preview-placeholder">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>预览数据生成失败</span>
+                    </div>
+                `;
+            }
+        }
+        
+        /**
+         * 应用快速调整
+         */
+        function applyQuickAdjustment() {
+            try {
+                // 验证预览数据
+                if (!quickAdjustmentData.previewData || quickAdjustmentData.previewData.length === 0) {
+                    showAlert('请先设置有效的调整参数', 'warning');
+                    return;
+                }
+                
+                // 验证期限匹配
+                if (quickAdjustmentData.previewData.length !== basicParams.investment_period) {
+                    showAlert('预览数据与投资期限不匹配，请重新设置参数', 'error');
+                    return;
+                }
+                
+                // 应用到现金流输入框
+                let successCount = 0;
+                quickAdjustmentData.previewData.forEach((item, index) => {
+                    const inputElement = document.getElementById(`cashFlow${item.year}`);
+                    if (inputElement) {
+                        inputElement.value = item.amount.toFixed(2);
+                        successCount++;
+                    }
+                });
+                
+                if (successCount === quickAdjustmentData.previewData.length) {
+                    showAlert(`成功应用快速调整，已更新${successCount}年的现金流数据`, 'success');
+                    
+                    // 关闭快速调整面板
+                    const switchElement = document.getElementById('quickAdjustmentSwitch');
+                    if (switchElement) {
+                        switchElement.checked = false;
+                        toggleQuickAdjustmentPanel({ target: { checked: false } });
+                    }
+                    
+                    console.log('快速调整应用成功，现金流数据已更新');
+                } else {
+                    showAlert(`部分数据应用失败，成功更新${successCount}/${quickAdjustmentData.previewData.length}项`, 'warning');
+                }
+                
+            } catch (error) {
+                console.error('应用快速调整失败:', error);
+                showAlert('应用调整时发生错误: ' + error.message, 'error');
+            }
+        }
+        
+        /**
+         * 重置快速调整
+         */
+        function resetQuickAdjustment() {
+            try {
+                // 重置输入框值
+                const firstYearInput = document.getElementById('firstYearCashFlow');
+                const frequencyInput = document.getElementById('growthFrequency');
+                const rateInput = document.getElementById('growthRate');
+                
+                if (firstYearInput) firstYearInput.value = '';
+                if (frequencyInput) frequencyInput.value = '1';
+                if (rateInput) rateInput.value = '10';
+                
+                // 重置数据
+                quickAdjustmentData.firstYearCashFlow = 0;
+                quickAdjustmentData.growthFrequency = 1;
+                quickAdjustmentData.growthRate = 10;
+                quickAdjustmentData.previewData = [];
+                
+                // 重置预览
+                const previewContainer = document.getElementById('quickAdjustmentPreview');
+                if (previewContainer) {
+                    previewContainer.innerHTML = `
+                        <div class="preview-placeholder">
+                            <i class="fas fa-info-circle"></i>
+                            <span>请设置参数后查看预览效果</span>
+                        </div>
+                    `;
+                }
+                
+                showAlert('快速调整参数已重置', 'info');
+                console.log('快速调整参数已重置');
+                
+            } catch (error) {
+                console.error('重置快速调整失败:', error);
+                showAlert('重置失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 在页面加载完成后初始化快速调整模块
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟初始化，确保DOM完全加载
+            setTimeout(() => {
+                initQuickAdjustmentModule();
+            }, 500);
+        });
     </script>
     
     <!-- 外部JavaScript库 -->
