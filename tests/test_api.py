@@ -1,18 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-API功能测试脚本
-测试新增的累计现金流图表API功能
+API接口测试脚本
+
+测试Flask应用的所有API端点：
+1. 健康检查接口
+2. 基本参数设置接口
+3. 现金流设置接口
+4. 各种计算模式接口
+5. 数据导出接口
 """
+
+import sys
+import os
+# 添加项目根目录到路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import requests
 import json
+import time
 
 def test_api():
-    """测试API功能"""
-    base_url = "http://localhost:5000"
+    """
+    测试API功能
+    """
+    print("=" * 80)
+    print("开始测试API功能...")
+    print("=" * 80)
     
-    print("🚀 开始测试API功能...")
+    base_url = "http://localhost:5000"
     
     # 1. 测试健康检查
     print("\n📋 步骤1: 测试健康检查")
