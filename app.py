@@ -2345,7 +2345,7 @@ def get_capital_structure_chart_config(result):
     """
     获取剩余本金分析图配置
     - 横轴：年份（第0年-第N年）
-    - 纵轴主轴：剩余本金比例柱状图（剩余本金/初始投资金额）
+    - 纵轴主轴：剩余本金比例柱状图（年末剩余本金/初始投资金额）
     - 纵轴副轴：年累计分派率折线图（年累计已回收净现金流/初始投资金额）
     """
     try:
@@ -2375,6 +2375,7 @@ def get_capital_structure_chart_config(result):
         
         # 累计变量
         cumulative_distributed_cash = 0  # 累计已回收净现金流
+        cumulative_principal_repaid = 0  # 累计已归还本金
         
         for i, row in enumerate(cash_flow_table):
             # 解析数值的通用函数
@@ -2388,84 +2389,48 @@ def get_capital_structure_chart_config(result):
                 except (ValueError, TypeError):
                     return 0
             
-            # 计算剩余本金（根据不同计算模式）
+            # 计算当年还本金额（根据不同计算模式）
+            period_principal_repayment = 0
+            
             if calculation_mode in ['平层结构-优先还本', '平层结构-期间分配']:
-                # 获取期初本金余额
-                remaining_principal = parse_value('beginning_principal_balance')
-                
-                # 计算期间分配的净现金流
-                period_distribution = parse_value('periodic_distribution') if calculation_mode == '平层结构-期间分配' else 0
-                principal_repayment = parse_value('principal_repayment')
-                distributed_hurdle = parse_value('distributed_hurdle_return')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                # 净现金流 = 期间分配 + 本金归还 + 门槛收益分配 + carry分配
-                period_net_cash_flow = period_distribution + principal_repayment + distributed_hurdle + carry_lp + carry_gp
+                # 平层结构：本金归还
+                period_principal_repayment = parse_value('principal_repayment')
                 
             elif calculation_mode == '结构化-优先劣后':
-                # 获取各级别剩余本金
-                senior_principal = parse_value('senior_beginning_principal')
-                subordinate_principal = parse_value('subordinate_principal_balance')
-                remaining_principal = senior_principal + subordinate_principal
-                
-                # 计算净现金流
-                senior_return = parse_value('senior_periodic_return')
+                # 结构化优先劣后：优先级还本 + 劣后级还本
                 senior_principal_repay = parse_value('senior_principal_repayment')
                 subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                period_net_cash_flow = senior_return + senior_principal_repay + subordinate_principal_repay + carry_lp + carry_gp
+                period_principal_repayment = senior_principal_repay + subordinate_principal_repay
                 
             elif calculation_mode == '结构化-包含夹层':
-                # 获取各级别剩余本金
-                senior_principal = parse_value('senior_beginning_principal')
-                mezzanine_principal = parse_value('mezzanine_beginning_principal')
-                subordinate_principal = parse_value('subordinate_beginning_principal')
-                remaining_principal = senior_principal + mezzanine_principal + subordinate_principal
-                
-                # 计算净现金流
-                senior_return = parse_value('senior_hurdle_distribution')
-                mezzanine_return = parse_value('mezzanine_hurdle_distribution')
+                # 结构化包含夹层：优先级还本 + 夹层还本 + 劣后级还本
                 senior_principal_repay = parse_value('senior_principal_repayment')
                 mezzanine_principal_repay = parse_value('mezzanine_principal_repayment')
                 subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                period_net_cash_flow = (senior_return + mezzanine_return + 
-                                      senior_principal_repay + mezzanine_principal_repay + subordinate_principal_repay +
-                                      carry_lp + carry_gp)
+                period_principal_repayment = senior_principal_repay + mezzanine_principal_repay + subordinate_principal_repay
                 
             elif calculation_mode == '结构化-息息本本':
-                # 获取各级别剩余本金
-                senior_principal = parse_value('senior_beginning_principal')
-                subordinate_principal = parse_value('subordinate_beginning_principal')
-                remaining_principal = senior_principal + subordinate_principal
-                
-                # 计算净现金流
-                senior_return = parse_value('senior_periodic_return')
-                subordinate_return = parse_value('subordinate_periodic_return')
+                # 结构化息息本本：优先级还本 + 劣后级还本
                 senior_principal_repay = parse_value('senior_principal_repayment')
                 subordinate_principal_repay = parse_value('subordinate_principal_repayment')
-                carry_lp = parse_value('carry_lp')
-                carry_gp = parse_value('carry_gp')
-                
-                period_net_cash_flow = (senior_return + subordinate_return + 
-                                      senior_principal_repay + subordinate_principal_repay +
-                                      carry_lp + carry_gp)
-                
-            else:
-                # 默认处理
-                remaining_principal = initial_investment
-                period_net_cash_flow = 0
+                period_principal_repayment = senior_principal_repay + subordinate_principal_repay
             
-            # 累计净现金流
+            # 累计已归还本金
+            cumulative_principal_repaid += period_principal_repayment
+            
+            # 计算年末剩余本金比例 = (初始投资金额 - 累计已归还本金) / 初始投资金额
+            remaining_principal = initial_investment - cumulative_principal_repaid
+            remaining_principal_ratio = (remaining_principal / initial_investment) * 100 if initial_investment > 0 else 0
+            
+            # 确保剩余本金比例不为负
+            if remaining_principal_ratio < 0:
+                remaining_principal_ratio = 0
+            
+            # 计算当年净现金流（用于累计分派率）
+            period_net_cash_flow = parse_value('net_cash_flow')
             cumulative_distributed_cash += period_net_cash_flow
             
-            # 计算比例
-            remaining_principal_ratio = (remaining_principal / initial_investment) * 100 if initial_investment > 0 else 0
+            # 计算年累计分派率
             cumulative_distribution_rate = (cumulative_distributed_cash / initial_investment) * 100 if initial_investment > 0 else 0
             
             # 添加到数据数组
