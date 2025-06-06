@@ -75,5 +75,7 @@ Thumbs.db
 
 # Excel临时文件
 ~$*.xlsx
-~$*.xls 
-.DOC/.PLAN/示例：收益分配测算模板.xlsx  
+~$*.xls
+
+# 排除.DOC文件夹
+.DOC/  
