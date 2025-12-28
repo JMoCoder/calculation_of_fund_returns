@@ -78,4 +78,8 @@ Thumbs.db
 ~$*.xls
 
 # 排除.DOC文件夹
-.DOC/  
+.DOC/
+
+# Vercel
+.vercel
+
