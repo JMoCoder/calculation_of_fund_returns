@@ -1373,6 +1373,8 @@ def reset_calculator():
     """重置计算器状态"""
     try:
         global calculator
+        if calculator is None:
+            calculator = FundCalculator()
         calculator.reset_data()
         logger.info("计算器状态已重置")
         return jsonify({
@@ -1382,6 +1384,13 @@ def reset_calculator():
     except Exception as e:
         logger.error(f"重置计算器错误: {str(e)}")
         return jsonify({'success': False, 'message': f'重置失败: {str(e)}'}), 500
+
+# 初始化全局计算器实例
+try:
+    calculator = FundCalculator()
+except Exception as e:
+    logger.error(f"初始化全局计算器失败: {e}")
+    calculator = None
 
 @app.route('/')
 def index():
@@ -1428,6 +1437,10 @@ def set_basic_params():
 def set_cash_flows():
     """设置净现金流数据"""
     try:
+        global calculator
+        if calculator is None:
+            calculator = FundCalculator()
+            
         data = request.get_json()
         
         if not data:
@@ -1455,18 +1468,57 @@ def set_cash_flows():
 @app.route('/api/calculate', methods=['POST'])
 def calculate():
     """
-    执行收益分配计算
+    执行收益分配计算（无状态版本）
+    支持一次性传入所有参数进行计算，适配Serverless环境
     """
-    global calculator
-    
     try:
         data = request.get_json()
-        logger.info(f"收到计算请求: {data}")
+        logger.info(f"收到计算请求")
         
-        if not calculator:
-            calculator = FundCalculator()
+        # 每次请求创建一个新的计算器实例，确保无状态
+        calc = FundCalculator()
         
-        # 验证计算模式
+        # 1. 设置基本参数
+        basic_params = data.get('basic_params')
+        if not basic_params:
+            return jsonify({'success': False, 'message': '缺少基本参数'})
+            
+        # 验证和清理数值类型数据
+        for key in ['investment_amount', 'investment_period', 'hurdle_rate', 'management_carry']:
+            if key in basic_params:
+                try:
+                    value = float(basic_params[key])
+                    if math.isnan(value) or math.isinf(value):
+                        return jsonify({'success': False, 'message': f'{key}包含无效数值'}), 400
+                    basic_params[key] = value
+                except (ValueError, TypeError):
+                    return jsonify({'success': False, 'message': f'{key}数据格式错误'}), 400
+                    
+        param_result = calc.set_basic_params(basic_params)
+        if not param_result['success']:
+            return jsonify(param_result)
+            
+        # 2. 设置现金流
+        cash_flows = data.get('cash_flows', [])
+        if not cash_flows:
+            return jsonify({'success': False, 'message': '缺少现金流数据'})
+            
+        # 增强现金流数据验证和清理
+        cleaned_cash_flows = []
+        for i, cf in enumerate(cash_flows):
+            try:
+                value = float(cf)
+                if math.isnan(value) or math.isinf(value):
+                    return jsonify({'success': False, 'message': f'第{i+1}年现金流包含无效数值'}), 400
+                cleaned_cash_flows.append(value)
+            except (ValueError, TypeError):
+                return jsonify({'success': False, 'message': f'第{i+1}年现金流数据格式错误'}), 400
+                
+        cf_result = calc.set_cash_flows(cleaned_cash_flows)
+        if not cf_result['success']:
+            return jsonify(cf_result)
+        
+        # 3. 执行计算
         mode = data.get('mode')
         if not mode:
             return jsonify({'success': False, 'message': '缺少计算模式参数'})
@@ -1482,20 +1534,21 @@ def calculate():
             return False
         
         # 根据模式验证参数
+        result = None
         if mode == 'flat_periodic_distribution':
             periodic_rate = data.get('periodic_rate')
             if not validate_numeric_param('periodic_rate', periodic_rate, 0, 100):
                 return jsonify({'success': False, 'message': '期间收益率参数无效'})
-            result = calculator.calculate_flat_structure_periodic_distribution(periodic_rate)
+            result = calc.calculate_flat_structure_periodic_distribution(periodic_rate)
             
         elif mode == 'flat_priority_repayment':
-            result = calculator.calculate_flat_structure_priority_repayment()
+            result = calc.calculate_flat_structure_priority_repayment()
             
         elif mode == 'structured_senior_subordinate':
             senior_ratio = data.get('senior_ratio')
             if not validate_numeric_param('senior_ratio', senior_ratio, 1, 99):
                 return jsonify({'success': False, 'message': '优先级比例参数无效'})
-            result = calculator.calculate_structured_senior_subordinate(senior_ratio)
+            result = calc.calculate_structured_senior_subordinate(senior_ratio)
             
         elif mode == 'structured_mezzanine':
             senior_ratio = data.get('senior_ratio')
@@ -1513,7 +1566,7 @@ def calculate():
             if senior_ratio + mezzanine_ratio >= 100:
                 return jsonify({'success': False, 'message': '优先级和夹层比例总和必须小于100%'})
                 
-            result = calculator.calculate_structured_mezzanine(senior_ratio, mezzanine_ratio, mezzanine_rate)
+            result = calc.calculate_structured_mezzanine(senior_ratio, mezzanine_ratio, mezzanine_rate)
             
         elif mode == 'structured_interest_principal':
             senior_ratio = data.get('senior_ratio')
@@ -1524,7 +1577,7 @@ def calculate():
             if not validate_numeric_param('subordinate_rate', subordinate_rate, 0, 100):
                 return jsonify({'success': False, 'message': '劣后级收益率参数无效'})
                 
-            result = calculator.calculate_structured_interest_principal(senior_ratio, subordinate_rate)
+            result = calc.calculate_structured_interest_principal(senior_ratio, subordinate_rate)
             
         else:
             return jsonify({'success': False, 'message': f'不支持的计算模式: {mode}'})
@@ -1533,10 +1586,53 @@ def calculate():
         
         # 格式化结果并返回
         if result.get('success'):
-            # 保存最后的计算结果供图表使用
-            calculator.last_calculation_result = result
+            # 为了支持后续的图表获取（如果还是分开调用），我们可以尝试更新全局 calculator
+            # 但在 Serverless 环境下这不可靠，所以最好前端直接使用返回的数据渲染图表
+            # 或者前端把结果传回来生成图表配置（但这太重了）
+            # 这里的折衷方案是：返回的数据里直接包含图表配置！
+            
+            # 生成图表配置
+            # 需要先把结果存到临时 calc 对象里，因为 helper 函数可能依赖它
+            calc.last_calculation_result = result
+            
+            # 计算 totals
+            raw_totals = calculate_totals(result.get('cash_flow_table', []), result.get('calculation_mode', ''))
+            
+            # 8个核心指标
+            core_metrics = result.get('core_metrics', {})
+            metrics_data = {
+                'irr': {'title': '内部收益率', 'value': core_metrics.get('irr', 0), 'subtitle': 'IRR', 'unit': '%'},
+                'dpi': {'title': '分配倍数', 'value': core_metrics.get('dpi', 0), 'subtitle': 'DPI', 'unit': ''},
+                'distribution_rate': {'title': '分派率', 'value': get_distribution_rate_range(result.get('cash_flow_table', [])), 'subtitle': '年度分派率范围', 'unit': ''},
+                'static_payback': {'title': '静态回本周期', 'value': core_metrics.get('static_payback_period', '无法回本'), 'subtitle': '不含时间价值', 'unit': ''},
+                'calculation_mode': {'title': '计算模式', 'value': format_mode_display(result.get('calculation_mode', '')), 'subtitle': get_mode_subtitle(result.get('calculation_mode', '')), 'unit': ''},
+                'investment_amount': {'title': '投资金额', 'value': f"{basic_params.get('investment_amount', 0):,.0f}", 'subtitle': '总投资', 'unit': '万元'},
+                'investment_period': {'title': '投资期限', 'value': f"{basic_params.get('investment_period', 0)}", 'subtitle': '投资周期', 'unit': '年'},
+                'hurdle_rate': {'title': '门槛收益率', 'value': f"{basic_params.get('hurdle_rate', 0)}", 'subtitle': '最低预期收益', 'unit': '%'}
+            }
+            
+            # 分配概览
+            distribution_summary = get_distribution_summary(result.get('calculation_mode', ''), result.get('cash_flow_table', []), raw_totals)
+            
+            # 图表配置
+            chart_configs = {
+                'cash_flow_chart': get_cash_flow_chart_config(result),
+                'distribution_chart': get_distribution_chart_config(result),
+                'capital_structure_chart': get_capital_structure_chart_config(result),
+                'cumulative_cash_flow_chart': get_cumulative_cash_flow_chart_config(result),
+                'pie_chart': get_pie_chart_config(result)
+            }
+            
             formatted_result = format_calculation_results(result)
-            logger.info("结果格式化完成")
+            
+            # 将图表数据合并到返回结果中
+            formatted_result['chart_data'] = {
+                'core_metrics': metrics_data,
+                'distribution_summary': distribution_summary,
+                'chart_configs': chart_configs
+            }
+            
+            logger.info("结果及图表数据格式化完成")
             return jsonify(formatted_result)
         else:
             logger.error(f"计算失败: {result.get('message')}")
@@ -3039,4 +3135,4 @@ if __name__ == '__main__':
     logger.info("后端服务启动，计算器已初始化")
     
     # 启动开发服务器
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5000, debug=True) ![1766931411561](image/app/1766931411561.png)![1766931413460](image/app/1766931413460.png)![1766931417279](image/app/1766931417279.png)
