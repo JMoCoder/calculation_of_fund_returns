@@ -15,14 +15,10 @@
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import pandas as pd
-import numpy as np
-import json
 import io
-import os
 from datetime import datetime
-import tempfile
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any
 import math
 import traceback
 
@@ -34,6 +30,8 @@ app = Flask(__name__)
 CORS(app)  # 允许跨域请求
 
 # 全局计算器实例
+# 注意：在Serverless环境下，全局变量可能无法跨请求持久化
+# 因此主要逻辑已迁移至无状态的 /api/calculate 接口
 calculator = None
 
 # ==================== 数据格式化工具函数 ====================
@@ -346,9 +344,6 @@ class FundCalculator:
         """重置所有数据"""
         self.basic_params = {}
         self.cash_flows = []
-        self.distribution_params = {}
-        self.results = {}
-        self.last_calculation_result = None  # 添加这一行来存储最后的计算结果
     
     def set_basic_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -543,7 +538,7 @@ class FundCalculator:
                 simple_return = (total_cash_flow / initial_investment - 1) * 100 / len(cash_flows) * 100
                 if isinstance(simple_return, (int, float)) and not math.isnan(simple_return) and not math.isinf(simple_return):
                     return simple_return
-            except:
+            except Exception:
                 pass
             return 0.0
     
@@ -704,7 +699,7 @@ class FundCalculator:
             if math.isnan(value) or math.isinf(value):
                 return 0.0
             return round(value, digits)
-        except:
+        except Exception:
             return 0.0
     
     def calculate_flat_structure_priority_repayment(self) -> Dict[str, Any]:
@@ -1473,7 +1468,7 @@ def calculate():
     """
     try:
         data = request.get_json()
-        logger.info(f"收到计算请求")
+        logger.info("收到计算请求")
         
         # 每次请求创建一个新的计算器实例，确保无状态
         calc = FundCalculator()
@@ -1586,14 +1581,7 @@ def calculate():
         
         # 格式化结果并返回
         if result.get('success'):
-            # 为了支持后续的图表获取（如果还是分开调用），我们可以尝试更新全局 calculator
-            # 但在 Serverless 环境下这不可靠，所以最好前端直接使用返回的数据渲染图表
-            # 或者前端把结果传回来生成图表配置（但这太重了）
-            # 这里的折衷方案是：返回的数据里直接包含图表配置！
-            
             # 生成图表配置
-            # 需要先把结果存到临时 calc 对象里，因为 helper 函数可能依赖它
-            calc.last_calculation_result = result
             
             # 计算 totals
             raw_totals = calculate_totals(result.get('cash_flow_table', []), result.get('calculation_mode', ''))
@@ -1612,7 +1600,7 @@ def calculate():
             }
             
             # 分配概览
-            distribution_summary = get_distribution_summary(result.get('calculation_mode', ''), result.get('cash_flow_table', []), raw_totals)
+            distribution_summary = get_distribution_summary(result.get('calculation_mode', ''), raw_totals)
             
             # 图表配置
             chart_configs = {
@@ -1926,7 +1914,7 @@ def export_results():
                     try:
                         if len(str(cell.value)) > max_length:
                             max_length = len(str(cell.value))
-                    except:
+                    except Exception:
                         pass
                 adjusted_width = min(max_length, 50)
                 ws1.column_dimensions[column].width = adjusted_width
@@ -1940,7 +1928,7 @@ def export_results():
                     try:
                         if len(str(cell.value)) > max_length:
                             max_length = len(str(cell.value))
-                    except:
+                    except Exception:
                         pass
                 adjusted_width = min(max_length, 20)
                 ws2.column_dimensions[column].width = adjusted_width
@@ -2090,109 +2078,6 @@ def download_template():
         logger.error(f"下载模板错误: {str(e)}")
         return jsonify({'success': False, 'message': f'下载模板失败: {str(e)}'}), 500
 
-@app.route('/api/chart-data', methods=['GET'])
-def get_chart_data():
-    """获取图表数据"""
-    try:
-        # 检查是否有计算结果
-        if not hasattr(calculator, 'last_calculation_result') or not calculator.last_calculation_result:
-            return jsonify({'success': False, 'message': '请先完成计算'}), 400
-        
-        result = calculator.last_calculation_result
-        
-        # 格式化核心指标数据
-        core_metrics = result.get('core_metrics', {})
-        basic_params = calculator.basic_params
-        
-        # 8个核心指标
-        metrics_data = {
-            'irr': {
-                'title': '内部收益率',
-                'value': core_metrics.get('irr', 0),
-                'subtitle': 'IRR',
-                'unit': '%'
-            },
-            'dpi': {
-                'title': '分配倍数', 
-                'value': core_metrics.get('dpi', 0),
-                'subtitle': 'DPI',
-                'unit': ''
-            },
-            'distribution_rate': {
-                'title': '分派率',
-                'value': get_distribution_rate_range(result.get('cash_flow_table', [])),
-                'subtitle': '年度分派率范围',
-                'unit': ''
-            },
-            'static_payback': {
-                'title': '静态回本周期',
-                'value': core_metrics.get('static_payback_period', '无法回本'),
-                'subtitle': '不含时间价值',
-                'unit': ''
-            },
-            'calculation_mode': {
-                'title': '计算模式',
-                'value': format_mode_display(result.get('calculation_mode', '')),
-                'subtitle': get_mode_subtitle(result.get('calculation_mode', '')),
-                'unit': ''
-            },
-            'investment_amount': {
-                'title': '投资金额',
-                'value': f"{basic_params.get('investment_amount', 0):,.0f}",
-                'subtitle': '总投资',
-                'unit': '万元'
-            },
-            'investment_period': {
-                'title': '投资期限',
-                'value': f"{basic_params.get('investment_period', 0)}",
-                'subtitle': '投资周期',
-                'unit': '年'
-            },
-            'hurdle_rate': {
-                'title': '门槛收益率',
-                'value': f"{basic_params.get('hurdle_rate', 0)}",
-                'subtitle': '最低预期收益',
-                'unit': '%'
-            }
-        }
-        
-        # 获取原始数据的totals用于图表计算
-        raw_totals = calculate_totals(result.get('cash_flow_table', []), result.get('calculation_mode', ''))
-        
-        # 分配情况概览
-        try:
-            distribution_summary = get_distribution_summary(
-                result.get('calculation_mode', ''),
-                result.get('cash_flow_table', []),
-                raw_totals  # 使用原始数据totals
-            )
-        except Exception as e:
-            logger.error(f"获取分配概览错误: {str(e)}")
-            return jsonify({'success': False, 'message': f'获取分配概览失败: {str(e)}'}), 500
-        
-        # 构建图表配置
-        chart_configs = {
-            'cash_flow_chart': get_cash_flow_chart_config(result),
-            'distribution_chart': get_distribution_chart_config(result),
-            'capital_structure_chart': get_capital_structure_chart_config(result),
-            'cumulative_cash_flow_chart': get_cumulative_cash_flow_chart_config(result),
-            'pie_chart': get_pie_chart_config(result)
-        }
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'core_metrics': metrics_data,
-                'distribution_summary': distribution_summary,
-                'chart_configs': chart_configs
-            }
-        })
-        
-    except Exception as e:
-        logger.error(f"获取图表数据错误: {str(e)}")
-        logger.error(traceback.format_exc())
-        return jsonify({'success': False, 'message': f'获取图表数据失败: {str(e)}'}), 500
-
 def get_distribution_rate_range(cash_flow_table):
     """计算分派率范围"""
     try:
@@ -2212,7 +2097,7 @@ def get_distribution_rate_range(cash_flow_table):
             return f'{min_rate:.2f}%'
         else:
             return f'{min_rate:.2f}%-{max_rate:.2f}%'
-    except:
+    except Exception:
         return '0.00%'
 
 def format_mode_display(mode):
@@ -2237,7 +2122,7 @@ def get_mode_subtitle(mode):
     }
     return subtitle_map.get(mode, '')
 
-def get_distribution_summary(calculation_mode, cash_flow_table, totals):
+def get_distribution_summary(calculation_mode, totals):
     """获取分配情况概览"""
     try:
         # 根据不同计算模式定义分配类型和顺序
@@ -2501,7 +2386,7 @@ def get_pie_chart_config(result):
         total_net_cash_flow = 0
     
     # 根据计算模式获取分配数据
-    distribution_summary = get_distribution_summary(calculation_mode, [], raw_totals)
+    distribution_summary = get_distribution_summary(calculation_mode, raw_totals)
     
     labels = []
     data = []
@@ -2565,7 +2450,7 @@ def get_pie_chart_config(result):
                 # 使用一致的颜色映射
                 color = color_map.get(item['name'], '#6b7280')
                 colors.append(color)
-        except:
+        except Exception:
             continue
     
     # 构建图表配置
@@ -2623,10 +2508,6 @@ def get_pie_chart_config(result):
     }
     
     return config
-
-def get_trend_chart_config(result):
-    """删除收益趋势分析图表函数"""
-    pass
 
 def get_distribution_chart_config(result):
     """获取现金流分配图配置"""
@@ -2765,6 +2646,16 @@ def get_distribution_chart_config(result):
         }
     }
 
+def parse_chart_value(row, field_name):
+    """解析图表数据中的数值字段"""
+    value_str = str(row.get(field_name, '0'))
+    value_str = value_str.replace(',', '').replace('万元', '').strip()
+    try:
+        value = float(value_str)
+        return value if not (math.isnan(value) or math.isinf(value)) else 0
+    except (ValueError, TypeError):
+        return 0
+
 def get_capital_structure_chart_config(result):
     """
     获取剩余本金分析图配置
@@ -2785,7 +2676,6 @@ def get_capital_structure_chart_config(result):
     """
     try:
         cash_flow_table = result.get('cash_flow_table', [])
-        calculation_mode = result.get('calculation_mode', '')
         basic_params = calculator.basic_params if hasattr(calculator, 'basic_params') else {}
         initial_investment = basic_params.get('investment_amount', 0)
         
@@ -2814,19 +2704,8 @@ def get_capital_structure_chart_config(result):
         # 这与静态回本周期的计算逻辑保持一致
         
         for i, row in enumerate(cash_flow_table):
-            # 解析数值的通用函数
-            def parse_value(field_name):
-                """解析字段值为数值"""
-                value_str = str(row.get(field_name, '0'))
-                value_str = value_str.replace(',', '').replace('万元', '').strip()
-                try:
-                    value = float(value_str)
-                    return value if not (math.isnan(value) or math.isinf(value)) else 0
-                except (ValueError, TypeError):
-                    return 0
-            
             # 🔧 修复：直接使用净现金流计算累计回收金额，与静态回本周期逻辑一致
-            period_net_cash_flow = parse_value('net_cash_flow')
+            period_net_cash_flow = parse_chart_value(row, 'net_cash_flow')
             cumulative_distributed_cash += period_net_cash_flow
             
             # 计算年末剩余本金比例 = (初始投资金额 - 累计已回收净现金流) / 初始投资金额
@@ -2956,7 +2835,6 @@ def get_cumulative_cash_flow_chart_config(result):
     """
     try:
         cash_flow_table = result.get('cash_flow_table', [])
-        calculation_mode = result.get('calculation_mode', '')
         basic_params = calculator.basic_params if hasattr(calculator, 'basic_params') else {}
         initial_investment = basic_params.get('investment_amount', 0)
         
@@ -2984,19 +2862,8 @@ def get_cumulative_cash_flow_chart_config(result):
         cumulative_cash_flow = -initial_investment  # 第0年为负的初始投资
         
         for i, row in enumerate(cash_flow_table):
-            # 解析净现金流的通用函数
-            def parse_net_cash_flow():
-                """解析当年净现金流"""
-                net_flow_str = str(row.get('net_cash_flow', '0'))
-                net_flow_str = net_flow_str.replace(',', '').replace('万元', '').strip()
-                try:
-                    net_flow = float(net_flow_str)
-                    return net_flow if not (math.isnan(net_flow) or math.isinf(net_flow)) else 0
-                except (ValueError, TypeError):
-                    return 0
-            
             # 获取当年净现金流
-            current_net_cash_flow = parse_net_cash_flow()
+            current_net_cash_flow = parse_chart_value(row, 'net_cash_flow')
             
             # 计算累计现金流 = 上年累计现金流 + 当年净现金流
             cumulative_cash_flow += current_net_cash_flow
@@ -3135,4 +3002,4 @@ if __name__ == '__main__':
     logger.info("后端服务启动，计算器已初始化")
     
     # 启动开发服务器
-    app.run(host='0.0.0.0', port=5000, debug=True) ![1766931411561](image/app/1766931411561.png)![1766931413460](image/app/1766931413460.png)![1766931417279](image/app/1766931417279.png)
+    app.run(host='0.0.0.0', port=5000, debug=True)
