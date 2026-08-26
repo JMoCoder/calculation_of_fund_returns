@@ -41,32 +41,28 @@ jobs:
         python -c "
         import sys
         sys.path.append('.')
-        
-        # 测试应用启动
-        from app import app
-        app_context = app.app_context()
-        app_context.push()
-        
-        # 测试基本导入
-        from app import FundCalculator
+
+        from app import app, FundCalculator
+        app.app_context().push()
+
         calc = FundCalculator()
-        
-        # 测试基本计算功能
         params = {
+            'investment_target': 'CI smoke',
             'investment_amount': 10000,
             'investment_period': 5,
-            'hurdle_rate': 0.08,
-            'carry_rate': 0.20
+            'hurdle_rate': 8,
+            'management_carry': 20,
         }
-        cash_flows = [0, 1000, 2000, 3000, 4000, 5000]
-        
-        # 测试优先还本模式
-        result = calc.calculate_priority_repayment(params, cash_flows)
-        assert 'irr' in result
-        assert 'dpi' in result
-        assert 'distribution_table' in result
-        
-        print('✅ 所有基本功能测试通过')
+        assert calc.set_basic_params(params)['success']
+        assert calc.set_cash_flows([1000, 2000, 3000, 4000, 5000])['success']
+
+        result = calc.calculate_flat_structure_priority_repayment()
+        assert result['success']
+        assert 'irr' in result['core_metrics']
+        assert 'dpi' in result['core_metrics']
+        assert 'cash_flow_table' in result
+
+        print('所有基本功能测试通过')
         "
 
   build:
