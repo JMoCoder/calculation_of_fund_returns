@@ -69,7 +69,10 @@ jobs:
     name: 构建检查
     needs: test
     runs-on: windows-latest
-    
+    env:
+      PYTHONUTF8: 1
+      PYTHONIOENCODING: utf-8
+
     steps:
     - uses: actions/checkout@v4
     
@@ -91,7 +94,7 @@ jobs:
         import pandas
         import numpy
         import openpyxl
-        print('所有依赖包检查通过')
+        print('all required packages import ok')
         "
         
     - name: 验证文件完整性
@@ -109,9 +112,9 @@ jobs:
         
         for file in required_files:
             if not os.path.exists(file):
-                raise FileNotFoundError(f'缺少必需文件: {file}')
+                raise FileNotFoundError(f'missing required file: {file}')
                 
-        print('所有必需文件检查通过')
+        print('all required files present')
         "
 
   security:
