@@ -8,7 +8,7 @@
 
 🚀 **在线访问**: [https://calculation-of-fund-returns.vercel.app/](https://calculation-of-fund-returns.vercel.app/)
 
-📂 **项目地址**: [https://github.com/JMoCoder/calculation_of_fund_returns](https://github.com/JMoCoder/calculation_of_fund_returns)
+📂 **项目地址**: [https://github.com/JMoCoder/calculation-of-fund-returns](https://github.com/JMoCoder/calculation-of-fund-returns)
 
 ## 📖 项目简介
 
@@ -20,7 +20,7 @@
 
 ### 📁 标准化目录结构
 ```
-calculation_of_fund_returns/
+calculation-of-fund-returns/
 ├── 📄 app.py                    # 主应用程序 (Flask后端 + 核心计算逻辑)
 ├── 📁 tests/                   # 标准化测试目录
 │   ├── __init__.py             # 测试包初始化
@@ -400,17 +400,17 @@ A: 测试系统可以验证所有核心功能的正确性，确保计算结果�
 
 如果遇到Bug或有功能建议，欢迎通过以下方式反馈：
 
-- **GitHub Issues**: [https://github.com/JMoCoder/calculation_of_fund_returns/issues](https://github.com/JMoCoder/calculation_of_fund_returns/issues)
-- **项目仓库**: [https://github.com/JMoCoder/calculation_of_fund_returns](https://github.com/JMoCoder/calculation_of_fund_returns)
+- **GitHub Issues**: [https://github.com/JMoCoder/calculation-of-fund-returns/issues](https://github.com/JMoCoder/calculation-of-fund-returns/issues)
+- **项目仓库**: [https://github.com/JMoCoder/calculation-of-fund-returns](https://github.com/JMoCoder/calculation-of-fund-returns)
 
 ### 📥 获取最新版本
 
 ```bash
 # 克隆项目到本地
-git clone https://github.com/JMoCoder/calculation_of_fund_returns.git
+git clone https://github.com/JMoCoder/calculation-of-fund-returns.git
 
 # 进入项目目录
-cd calculation_of_fund_returns
+cd calculation-of-fund-returns
 
 # 运行一键部署
 deploy.bat
