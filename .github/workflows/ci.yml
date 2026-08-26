@@ -91,7 +91,7 @@ jobs:
         import pandas
         import numpy
         import openpyxl
-        print('✅ 所有依赖包检查通过')
+        print('所有依赖包检查通过')
         "
         
     - name: 验证文件完整性
@@ -111,7 +111,7 @@ jobs:
             if not os.path.exists(file):
                 raise FileNotFoundError(f'缺少必需文件: {file}')
                 
-        print('✅ 所有必需文件检查通过')
+        print('所有必需文件检查通过')
         "
 
   security:
